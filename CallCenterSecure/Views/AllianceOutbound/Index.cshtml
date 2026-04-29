@@ -120,7 +120,7 @@
             </div>
 
             <div class="col-md-2" style="margin-top: 17px;">
-                <input type="submit" value="Apply" class="btn btn-primary" />
+                <input type="button" value="Apply" class="btn btn-primary" id="btnApplyFilters" />
             </div>
 
 
@@ -220,61 +220,7 @@
             </tr>
         </thead>
         <tbody>
-            @{
-                var i = 1;
-                foreach (var item in Model.AllianceOutboundList.OrderByDescending(d => d.AllianceOutboundId))
-                {
-                        <tr>
-                            <td>@i</td>
-                            <td style="display:none;">@item.AllianceOutboundId</td>
-                            <td>
-                                @Html.ActionLink("Edit", "Edit", new { id = item.AllianceOutboundId }) |
-                                @Html.ActionLink("Details", "Details", new { id = item.AllianceOutboundId })
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.TicketID)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.CallStatus)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.CallType)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.Priority)
-                            </td>
-
-                            <td>@(item.DateTime?.ToString("dd-MM-yyyy") ?? "")</td>
-
-                            <td>
-                                @Html.DisplayFor(modelItem => item.BranchName)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.CustomerNameEnglish)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.PrimaryMobileNumber)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.ProductInterestedName)
-                            </td>
-                            <td title="@item.DetailConversation">
-                                @(item.DetailConversation?.Length > 20
-        ? item.DetailConversation.Substring(0, 20) + "..."
-        : item.DetailConversation)
-                            </td>
-                            <td style="display:none">
-                            </td>
-                            <td style="display:none">
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.Prev_TicketId)
-                            </td>
-
-                        </tr>
-                    i++;
-                }
-            }
+            @* Rows are loaded via DataTables server-side AJAX *@
         </tbody>
     </table>
 </div>
@@ -285,52 +231,72 @@
 <script type="text/javascript">
 
     $(document).ready(function () {
-        //if ($('#outboundTable tbody tr').length > 0) {
-        //    $('#outboundTable').DataTable({
-        //        pageLength: 10,
-        //        order: [[1, 'desc']],
-        //        responsive: true,
-        //        fixedHeader: true,
-        //        columnDefs: [
-        //            { targets: 0, orderable: false },
-        //            { responsivePriority: 1, targets: 0 },
-        //            { responsivePriority: 2, targets: -1 }
-        //        ],
-        //        scrollX: true
-        //    });
-        //} else {
-        //    console.log("No data found. Table not initialized.");
-        //}
-        if ($('#outboundTable tbody tr').length > 0) {
+        var table = $('#outboundTable').DataTable({
+            processing: true,
+            serverSide: true,
+            pageLength: 10,
+            lengthMenu: [10, 20, 50, 100],
+            searching: false,
+            order: [[1, 'desc']],
+            responsive: true,
+            fixedHeader: true,
+            scrollX: true,
+            ajax: {
+                url: '@Url.Action("GetPagedOutbound", "AllianceOutbound")',
+                type: 'POST',
+                data: function (d) {
+                    d.FromDate = $('#FromDate').val();
+                    d.ToDate = $('#ToDate').val();
+                    d.CustomerCode = $('#CustomerCode').val();
+                    d.PrimaryMobileNumberSearch = $('#PrimaryMobileNumberSearch').val();
+                    d.CallType = $('#CallType').val();
+                    d.CallStatus = $('#CallStatus').val();
+                    d.TicketID = $('#TicketID').val();
+                }
+            },
+            columns: [
+                {
+                    data: null,
+                    orderable: false,
+                    render: function (data, type, row, meta) {
+                        return meta.settings._iDisplayStart + meta.row + 1;
+                    }
+                },
+                { data: 'AllianceOutboundId', visible: false },
+                {
+                    data: 'AllianceOutboundId',
+                    orderable: false,
+                    render: function (data) {
+                        var editUrl = '@Url.Action("Edit", "AllianceOutbound", new { id = "__id__" })'.replace('__id__', data);
+                        var detailsUrl = '@Url.Action("Details", "AllianceOutbound", new { id = "__id__" })'.replace('__id__', data);
+                        return '<a href="' + editUrl + '">Edit</a> | <a href="' + detailsUrl + '">Details</a>';
+                    }
+                },
+                { data: 'TicketID' },
+                { data: 'CallStatus' },
+                { data: 'CallType' },
+                { data: 'Priority' },
+                { data: 'DateTime' },
+                { data: 'BranchName' },
+                { data: 'CustomerNameEnglish' },
+                { data: 'PrimaryMobileNumber' },
+                { data: 'ProductInterestedName' },
+                {
+                    data: 'DetailConversation',
+                    render: function (data) {
+                        if (!data) return '';
+                        return data.length > 20 ? data.substring(0, 20) + '...' : data;
+                    }
+                },
+                { data: null, visible: false, defaultContent: '' },
+                { data: null, visible: false, defaultContent: '' },
+                { data: 'Prev_TicketId' }
+            ]
+        });
 
-            if ($.fn.DataTable.isDataTable('#outboundTable')) {
-                $('#outboundTable').DataTable().destroy();
-            }
-
-            var table = $('#outboundTable').DataTable({
-                pageLength: 10,
-
-                order: [[1, 'desc']], // 👈 IMPORTANT (hidden ID column)
-
-                columnDefs: [
-                    { targets: 0, orderable: true }, // Sr No ❌ no sorting
-                    { targets: 1, visible: false }    // hide ID column
-                ],
-
-                responsive: true,
-                fixedHeader: true,
-                scrollX: true
-            });
-
-            // ✅ Fix Sr No after sorting/paging
-            table.on('order.dt search.dt', function () {
-                let i = 1;
-                table.cells(null, 0, { search: 'applied', order: 'applied' })
-                    .every(function () {
-                        this.data(i++);
-                    });
-            }).draw();
-        }
+        $('#btnApplyFilters').on('click', function () {
+            table.ajax.reload();
+        });
     });
 
     $(function () {
