@@ -6,6 +6,7 @@ using CallCenterSecure.Repositories;
 using DocumentFormat.OpenXml.EMMA;
 using Microsoft.Diagnostics.Tracing.Parsers.MicrosoftWindowsWPF;
 using System;
+using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Net;
@@ -190,63 +191,134 @@ namespace CallCenter.Controllers
         // GET: AllianceOutbound/Index
         public ActionResult Index()
         {
-            var outBound = db.AllianceOutbounds.OrderByDescending(o => o.AllianceOutboundId).ToList();
-            foreach (var item in outBound)
+            return View(new AllianceOutbound
             {
-                int num = 0;
-                num = Convert.ToInt32(item.Branch);
-                item.BranchName = db.AllianceBranches.Where(tt => tt.BranchCode == item.Branch).Select(p => p.BranchName).FirstOrDefault();
-                item.StateRegionName = db.States.Where(tt => tt.StateCode == item.StateRegion).Select(p => p.StateName).FirstOrDefault();
-                item.DistrictName = db.Districts.Where(tt => tt.DistrictCode == item.District).Select(p => p.DistrictName).FirstOrDefault();
-                item.CityTownshipName = db.Cities.Where(tt => tt.CityCode == item.CityTownship).Select(p => p.CityName).FirstOrDefault();
-                item.VillageTractTownName = db.VillageTracts.Where(tt => tt.VillageTractCode == item.VillageTractTown).Select(p => p.VillageTractName).FirstOrDefault();
-                num = Convert.ToInt32(item.ProductInterested);
-                item.ProductInterestedName = db.Products.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
+                AllianceOutboundList = new List<AllianceOutbound>()
+            });
+        }
+
+        [HttpPost]
+        public JsonResult GetPagedOutbound(int draw, int start, int length, AllianceOutbound allianceOutbound)
+        {
+            if (length <= 0)
+            {
+                length = 10;
             }
 
-            AllianceOutbound allianceOutbound = new AllianceOutbound();
-            allianceOutbound.AllianceOutboundList = outBound;
-            return View(allianceOutbound);
-        }
-        [HttpPost]
-        public ActionResult Index(AllianceOutbound allianceOutbound)
-        {
+            var totalRecords = db.AllianceOutbounds.Count();
+            var query = ApplyOutboundFilters(db.AllianceOutbounds.AsNoTracking(), allianceOutbound);
+            var filteredRecords = query.Count();
 
-            var outBound = db.AllianceOutbounds.ToList();
+            var outBound = query
+                .OrderByDescending(o => o.AllianceOutboundId)
+                .Skip(start)
+                .Take(length)
+                .ToList();
+
+            PopulateOutboundLookupNames(outBound);
+
+            var data = outBound.Select(item => new
+            {
+                item.AllianceOutboundId,
+                item.TicketID,
+                item.CallStatus,
+                item.CallType,
+                item.Priority,
+                DateTime = item.DateTime.HasValue ? item.DateTime.Value.ToString("dd-MM-yyyy") : string.Empty,
+                item.BranchName,
+                item.CustomerNameEnglish,
+                item.PrimaryMobileNumber,
+                item.ProductInterestedName,
+                item.DetailConversation,
+                item.Prev_TicketId
+            }).ToList();
+
+            return Json(new
+            {
+                draw,
+                recordsTotal = totalRecords,
+                recordsFiltered = filteredRecords,
+                data
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        private IQueryable<AllianceOutbound> ApplyOutboundFilters(IQueryable<AllianceOutbound> query, AllianceOutbound allianceOutbound)
+        {
+            if (allianceOutbound == null)
+            {
+                return query;
+            }
 
             if (allianceOutbound.FromDate != null)
-                outBound = outBound.Where(tl => tl.DateTime != null && Convert.ToDateTime(tl.DateTime).Date >= Convert.ToDateTime(allianceOutbound.FromDate).Date).ToList();
+                query = query.Where(tl => tl.DateTime != null && DbFunctions.TruncateTime(tl.DateTime) >= DbFunctions.TruncateTime(allianceOutbound.FromDate));
             if (allianceOutbound.ToDate != null)
-                outBound = outBound.Where(tl => tl.DateTime != null && Convert.ToDateTime(tl.DateTime).Date <= Convert.ToDateTime(allianceOutbound.ToDate).Date).ToList();
+                query = query.Where(tl => tl.DateTime != null && DbFunctions.TruncateTime(tl.DateTime) <= DbFunctions.TruncateTime(allianceOutbound.ToDate));
 
             if (!string.IsNullOrEmpty(allianceOutbound.CustomerCode))
-                outBound = outBound.Where(tl => tl.CustomerCode == allianceOutbound.CustomerCode).ToList();
+                query = query.Where(tl => tl.CustomerCode == allianceOutbound.CustomerCode);
             if (!string.IsNullOrEmpty(allianceOutbound.CallType))
-                outBound = outBound.Where(tl => tl.CallType == allianceOutbound.CallType).ToList();
+                query = query.Where(tl => tl.CallType == allianceOutbound.CallType);
             if (!string.IsNullOrEmpty(allianceOutbound.CallStatus))
-                outBound = outBound.Where(tl => tl.CallStatus == allianceOutbound.CallStatus).ToList();
+                query = query.Where(tl => tl.CallStatus == allianceOutbound.CallStatus);
             if (!string.IsNullOrEmpty(allianceOutbound.PrimaryMobileNumberSearch))
-                outBound = outBound.Where(tl => tl.PrimaryMobileNumber.Contains(allianceOutbound.PrimaryMobileNumberSearch)).ToList();
+                query = query.Where(tl => tl.PrimaryMobileNumber.Contains(allianceOutbound.PrimaryMobileNumberSearch));
             if (!string.IsNullOrEmpty(allianceOutbound.TicketID))
-                outBound = outBound.Where(tl => tl.TicketID == allianceOutbound.TicketID).ToList();
+                query = query.Where(tl => tl.TicketID == allianceOutbound.TicketID);
+
+            return query;
+        }
+
+        private void PopulateOutboundLookupNames(List<AllianceOutbound> outBound)
+        {
+            var branchCodes = outBound.Where(x => !string.IsNullOrEmpty(x.Branch)).Select(x => x.Branch).Distinct().ToList();
+            var stateCodes = outBound.Where(x => !string.IsNullOrEmpty(x.StateRegion)).Select(x => x.StateRegion).Distinct().ToList();
+            var districtCodes = outBound.Where(x => !string.IsNullOrEmpty(x.District)).Select(x => x.District).Distinct().ToList();
+            var cityCodes = outBound.Where(x => !string.IsNullOrEmpty(x.CityTownship)).Select(x => x.CityTownship).Distinct().ToList();
+            var villageTractCodes = outBound.Where(x => !string.IsNullOrEmpty(x.VillageTractTown)).Select(x => x.VillageTractTown).Distinct().ToList();
+            var productIds = outBound
+                .Select(x =>
+                {
+                    int parsed;
+                    return int.TryParse(x.ProductInterested, out parsed) ? (int?)parsed : null;
+                })
+                .Where(x => x.HasValue)
+                .Select(x => x.Value)
+                .Distinct()
+                .ToList();
+
+            var branchMap = db.AllianceBranches
+                .Where(x => branchCodes.Contains(x.BranchCode))
+                .ToDictionary(x => x.BranchCode, x => x.BranchName);
+            var stateMap = db.States
+                .Where(x => stateCodes.Contains(x.StateCode))
+                .ToDictionary(x => x.StateCode, x => x.StateName);
+            var districtMap = db.Districts
+                .Where(x => districtCodes.Contains(x.DistrictCode))
+                .ToDictionary(x => x.DistrictCode, x => x.DistrictName);
+            var cityMap = db.Cities
+                .Where(x => cityCodes.Contains(x.CityCode))
+                .ToDictionary(x => x.CityCode, x => x.CityName);
+            var villageTractMap = db.VillageTracts
+                .Where(x => villageTractCodes.Contains(x.VillageTractCode))
+                .ToDictionary(x => x.VillageTractCode, x => x.VillageTractName);
+            var productMap = db.Products
+                .Where(x => productIds.Contains(x.Id))
+                .ToDictionary(x => x.Id, x => x.Name);
 
             foreach (var item in outBound)
             {
-                int num = 0;
-                //num = Convert.ToInt32(item.Branch);
-                item.BranchName = db.AllianceBranches.Where(tt => tt.BranchCode == item.Branch).Select(p => p.BranchName).FirstOrDefault();
-                item.StateRegionName = db.States.Where(tt => tt.StateCode == item.StateRegion).Select(p => p.StateName).FirstOrDefault();
-                item.DistrictName = db.Districts.Where(tt => tt.DistrictCode == item.District).Select(p => p.DistrictName).FirstOrDefault();
-                item.CityTownshipName = db.Cities.Where(tt => tt.CityCode == item.CityTownship).Select(p => p.CityName).FirstOrDefault();
-                item.VillageTractTownName = db.VillageTracts.Where(tt => tt.VillageTractCode == item.VillageTractTown).Select(p => p.VillageTractName).FirstOrDefault();
-                num = Convert.ToInt32(item.ProductInterested);
-                item.ProductInterestedName = db.Products.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
+                item.BranchName = !string.IsNullOrEmpty(item.Branch) && branchMap.ContainsKey(item.Branch) ? branchMap[item.Branch] : null;
+                item.StateRegionName = !string.IsNullOrEmpty(item.StateRegion) && stateMap.ContainsKey(item.StateRegion) ? stateMap[item.StateRegion] : null;
+                item.DistrictName = !string.IsNullOrEmpty(item.District) && districtMap.ContainsKey(item.District) ? districtMap[item.District] : null;
+                item.CityTownshipName = !string.IsNullOrEmpty(item.CityTownship) && cityMap.ContainsKey(item.CityTownship) ? cityMap[item.CityTownship] : null;
+                item.VillageTractTownName = !string.IsNullOrEmpty(item.VillageTractTown) && villageTractMap.ContainsKey(item.VillageTractTown) ? villageTractMap[item.VillageTractTown] : null;
+
+                int productId;
+                if (int.TryParse(item.ProductInterested, out productId) && productMap.ContainsKey(productId))
+                {
+                    item.ProductInterestedName = productMap[productId];
+                }
             }
-
-
-            allianceOutbound.AllianceOutboundList = outBound;
-
-            return View(allianceOutbound);
         }
 
         // GET: AllianceOutbound/Details/5
