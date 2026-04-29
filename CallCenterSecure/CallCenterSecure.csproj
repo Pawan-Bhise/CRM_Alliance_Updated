@@ -316,6 +316,7 @@
     <Compile Include="Controllers\OriginsController.cs" />
     <Compile Include="Controllers\ProductsController.cs" />
     <Compile Include="Controllers\RegionsController.cs" />
+    <Compile Include="Controllers\SurveyController.cs" />
     <Compile Include="Controllers\VillageController.cs" />
     <Compile Include="Controllers\VillageTractController.cs" />
     <Compile Include="Controllers\DistrictController.cs" />
@@ -637,6 +638,7 @@
     <Content Include="Views\Origins\Details.cshtml" />
     <Content Include="Views\Origins\Edit.cshtml" />
     <Content Include="Views\Origins\Index.cshtml" />
+    <Content Include="Views\Survey\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
