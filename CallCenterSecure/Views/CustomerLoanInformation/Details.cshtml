@@ -1,0 +1,150 @@
+﻿@model CallCenterSecure.Models.CustomerLoan.CustomerLoan
+
+@{
+    ViewBag.Title = "Customer Loan Details";
+}
+<style>
+    .form-control {
+        height: 38px; /* Bootstrap default */
+        line-height: 1.5;
+    }
+</style>
+
+<div class="container-fluid mt-3">
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Customer Loan Details</h5>
+        </div>
+
+        <div class="card-body">
+
+            <!-- ACCOUNT & PRODUCT INFORMATION -->
+            <h6 class="text-primary border-bottom pb-2 mb-3">
+                Account & Product Information
+            </h6>
+
+            <div class="row">
+                @*@Html.Partial("_DisplayField", new Tuple<string, object>("ID", Model.Id))*@
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Group Code", Model.GroupCode))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("CO Cash Account", Model.COCashAccount))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("CO Staff ID", Model.COStaffId))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("CO Name", Model.COName))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Product Code", Model.ProductCode))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Product Name", Model.ProductName))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Product Category", Model.ProductCategory))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Customer Code", Model.CustomerCode))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Account Number", Model.AccountNumber))
+
+
+
+
+
+                @*@Html.Partial("_DisplayField", new Tuple<string, object>("Payment Frequency", Model.PaymentFrequency))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Purpose", Model.Purpose))*@
+            </div>
+
+            <!-- BRANCH INFORMATION -->
+            <h6 class="text-primary border-bottom pb-2 mt-4 mb-3">
+                Branch Information
+            </h6>
+
+            <div class="row">
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Branch Code", Model.BranchCode))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Branch Name", Model.BranchName))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Parent Branch", Model.ParentBranchName))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Regional Branch", Model.RegionalBranchName))
+            </div>
+
+            <!-- CUSTOMER INFORMATION -->
+            <h6 class="text-primary border-bottom pb-2 mt-4 mb-3">
+                Customer Information
+            </h6>
+
+            <div class="row">
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Salutation", Model.DateOfActOpening))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Salutation", Model.Salutation))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Customer Name", Model.CustomerName))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Gender", Model.Gender))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Father Name", Model.FatherName))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Area Type", Model.AreaType))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Area", Model.Area))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Village / Ward", Model.VillageWard))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Village Tract / Town", Model.VillageTractTown))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("City / Township", Model.CityTownship))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("District", Model.District))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Region / State", Model.RegionState))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("NRC", Model.NRC))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Mobile No 1", Model.MobileNo1))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Mobile No 2", Model.MobileNo2))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Customer Status", Model.CustomerStatus))
+                
+            </div>
+
+            <!-- ADDRESS INFORMATION -->
+            @*<h6 class="text-primary border-bottom pb-2 mt-4 mb-3">
+                Address Information
+            </h6>
+
+            <div class="row">
+                
+                
+            </div>*@
+
+            <!-- LOAN FINANCIAL DETAILS -->
+        <h6 class="text-primary border-bottom pb-2 mt-4 mb-3">
+            Financial Details
+        </h6>
+
+        <div class="row">
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Freeze Status", Model.FreezeStatus))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Disbursed Amount", Model.DisbursedAmount))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Installments", Model.Installments))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Installment Amount", Model.InstallmentAmount))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Installment Amount", Model.Purpose))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Business Category", Model.BusinessCategory))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Business Activity", Model.BusinessActivity))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Maturity Date", Model.MaturitydateLoan))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("PAR Client", Model.PARClient))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Days Overdue", Model.DayOfOverDue))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Area Status", Model.AreaStatus))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("LPF Amount", Model.LPFAmount))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("LPF Amount", Model.PaymentFrequency))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Principal Outstanding", Model.PrincipleOutstanding))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Interest Receivable", Model.InterestReceivable))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Non Credit Customer", Model.NonCreditCustomer))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Voluntary Depositor", Model.VoluntaryDepositor))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Poverty Score", Model.PovertyScore))
+            @Html.Partial("_DisplayField", new Tuple<string, object>("Household Surplus Income", Model.HouseholdSurplusIncome))
+
+
+        </div>
+
+            <!-- OTHER DETAILS -->
+            @*<h6 class="text-primary border-bottom pb-2 mt-4 mb-3">
+                Other Details
+            </h6>*@
+
+            @*<div class="row">
+                
+                
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Account Status", Model.AccountStatus))
+                
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Account Opening Date", Model.DateOfActOpening))
+                @Html.Partial("_DisplayField", new Tuple<string, object>("Created On", Model.CreatedOn))
+            </div>*@
+
+        </div>
+
+        <div class="card-footer text-end">
+           @Html.ActionLink(
+                "Back to List",
+                "Index",
+                null,
+                new { @class = "btn btn-secondary btn-sm ms-2" }
+            )
+        </div>
+
+    </div>
+
+</div>
