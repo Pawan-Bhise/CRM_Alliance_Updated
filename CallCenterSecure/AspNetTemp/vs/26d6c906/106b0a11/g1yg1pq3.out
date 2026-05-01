@@ -1,6 +1,0 @@
-﻿C:\Program Files\IIS Express> "D:\Deployment\Alliance-CRM-main\Alliance-CRM-main\CallCenterSecure\bin\roslyn\csc.exe" /shared /keepalive:"900" /noconfig  /fullpaths @"D:\Deployment\Alliance-CRM-main\Alliance-CRM-main\CallCenterSecure\AspNetTemp\vs\26d6c906\106b0a11\g1yg1pq3.cmdline"
-
-
-Microsoft (R) Visual C# Compiler version 4.1.0-5.22114.11 (260d16a8)
-Copyright (C) Microsoft Corporation. All rights reserved.
-
