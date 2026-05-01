@@ -1,6 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<preserve resultType="2" virtualPath="/Views/Shared/_LayoutLogin.cshtml" hash="ffffffffbda3293c" filehash="ffffbf6dc06e8d74" flags="110000" assembly="App_Web_odh4r3gv" type="ASP._Page_Views_Shared__LayoutLogin_cshtml">
-    <filedeps>
-        <filedep name="/Views/Shared/_LayoutLogin.cshtml" />
-    </filedeps>
-</preserve>
