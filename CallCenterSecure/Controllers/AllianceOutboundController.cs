@@ -205,15 +205,27 @@ namespace CallCenter.Controllers
                 length = 10;
             }
 
+            var orderColumn = Request.Form["order[0][column]"];
+            var orderDirection = Request.Form["order[0][dir]"];
+
             var totalRecords = db.AllianceOutbounds.Count();
             var query = ApplyOutboundFilters(db.AllianceOutbounds.AsNoTracking(), allianceOutbound);
             var filteredRecords = query.Count();
 
-            var outBound = query
-                .OrderByDescending(o => o.AllianceOutboundId)
-                .Skip(start)
-                .Take(length)
-                .ToList();
+            IOrderedQueryable<AllianceOutbound> orderedQuery;
+            if (orderColumn == "0")
+            {
+                // Sr. No maps to row order, which is based on the primary id.
+                orderedQuery = string.Equals(orderDirection, "asc", StringComparison.OrdinalIgnoreCase)
+                    ? query.OrderBy(o => o.AllianceOutboundId)
+                    : query.OrderByDescending(o => o.AllianceOutboundId);
+            }
+            else
+            {
+                orderedQuery = query.OrderByDescending(o => o.AllianceOutboundId);
+            }
+
+            var outBound = orderedQuery.Skip(start).Take(length).ToList();
 
             PopulateOutboundLookupNames(outBound);
 
