@@ -1,0 +1,4 @@
+Client Name,Gender,Customer Code,Mobile Number 1,Mobile Number 2,Region,Branch,Location,Loan Product,Age,Business Category,Activities/Sector,Level of Education,Income Level (HH Surplus),Household Assets,Poverty Score
+Daw Hla Hla,Female,CUST-00125,+95-9-123456789,+95-9-987654321,Mandalay,Chan Mya Tharsi,Sint Gai,SA Loan,35,Agriculture,Crop Trading,Graduate,250000,Motorcycle Refrigerator,45
+U Kyaw Kyaw,Male,CUST-00126,+95-9-234567890,,Yangon,Hlaingthaya,Tharkayta,Personal Loan,42,Retail,Shop Keeping,Secondary,150000,Television,25
+Su Su Lwin,Female,CUST-00127,+95-9-345678901,+95-9-876543210,Naypyidaw,Pyinmana,Pyinmana,Business Loan,28,Services,Beauty Salon,Postgraduate,300000,Car Motorcycle,15

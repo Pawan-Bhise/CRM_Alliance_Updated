@@ -1,0 +1,69 @@
+@model IEnumerable<CallCenterSecure.Models.SurveyCustomerData>
+
+@{
+    ViewBag.Title = "Customer Data Upload";
+}
+
+<h2>Customer Data Upload</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<p class="text-muted">Upload customer data for a survey template using Excel.</p>
+
+@using (Html.BeginForm("CustomerDataUpload", "SurveyTemplate", FormMethod.Post, new { enctype = "multipart/form-data", id = "customerDataUploadForm" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-row mb-3">
+        <div class="form-group col-md-6">
+            @Html.Label("Survey Template", htmlAttributes: new { @class = "control-label" })
+            @Html.DropDownList("surveyTemplateTypeId", (SelectList)ViewBag.SurveyTemplates, "Select a template", new { @class = "form-control" })
+            @Html.ValidationMessage("surveyTemplateTypeId", "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-row mb-3">
+        <div class="form-group col-md-6">
+            @Html.Label("Excel File", htmlAttributes: new { @class = "control-label" })
+            <input type="file" name="file" accept=".xlsx,.xls" class="form-control" />
+            @Html.ValidationMessage("file", "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Upload Customer Data</button>
+    @Html.RouteLink("Back to Templates", "SurveyTemplate", new { action = "Index" }, new { @class = "btn btn-secondary ml-2" })
+
+    <div id="uploadLoader" class="alert alert-info mt-3 d-none" role="alert">
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        Uploading, please wait...
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var uploadForm = document.getElementById('customerDataUploadForm');
+            var uploadLoader = document.getElementById('uploadLoader');
+
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', function () {
+                    if (uploadLoader) {
+                        uploadLoader.classList.remove('d-none');
+                    }
+                });
+            }
+        });
+    </script>
+}
