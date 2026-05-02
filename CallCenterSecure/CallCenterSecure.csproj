@@ -317,6 +317,7 @@
     <Compile Include="Controllers\ProductsController.cs" />
     <Compile Include="Controllers\RegionsController.cs" />
     <Compile Include="Controllers\SurveyController.cs" />
+    <Compile Include="Controllers\Survey\SurveyTemplateController.cs" />
     <Compile Include="Controllers\VillageController.cs" />
     <Compile Include="Controllers\VillageTractController.cs" />
     <Compile Include="Controllers\DistrictController.cs" />
@@ -342,6 +343,8 @@
     <Compile Include="DataAccess\TicketManagement.cs" />
     <Compile Include="DataAccess\User.cs" />
     <Compile Include="Data\ApplicationDbContext.cs" />
+    <Compile Include="Services\ISurveyTemplateService.cs" />
+    <Compile Include="Services\SurveyTemplateService.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -438,6 +441,8 @@
     <Compile Include="Models\District.cs" />
     <Compile Include="Models\State.cs" />
     <Compile Include="Models\CustomSerializeModel.cs" />
+    <Compile Include="Models\SurveyTemplateType.cs" />
+    <Compile Include="Models\SurveyTemplateViewModel.cs" />
     <Compile Include="Models\InboundCall.cs" />
     <Compile Include="Models\KnowledgeCenterModel.cs" />
     <Compile Include="Models\LoginViewModel.cs" />
@@ -639,6 +644,8 @@
     <Content Include="Views\Origins\Edit.cshtml" />
     <Content Include="Views\Origins\Index.cshtml" />
     <Content Include="Views\Survey\Index.cshtml" />
+    <Content Include="Views\SurveyTemplate\Index.cshtml" />
+    <Content Include="Views\SurveyTemplate\Edit.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

@@ -107,6 +107,7 @@
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="surveyDropdown">
                                 <li>@Html.ActionLink("Survey", "Index", "Survey", null, new { @class = "dropdown-item" })</li>
+                                <li>@Html.RouteLink("Survey Templates", "SurveyTemplate", new { action = "Index" }, new { @class = "dropdown-item" })</li>
                             </ul>
                         </li>
 

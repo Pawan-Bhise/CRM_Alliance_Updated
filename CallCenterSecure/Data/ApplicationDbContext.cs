@@ -77,6 +77,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<CustomerLoan> CustomerLoan { get; set; }
     public DbSet<ComplaintDesignation> ComplaintDesignations { get; set; }
     public DbSet<NatureOfComplaints> NatureOfComplaint { get; set; }
-
+    public DbSet<SurveyTemplateType> SurveyTemplateTypes { get; set; }
 
 }
