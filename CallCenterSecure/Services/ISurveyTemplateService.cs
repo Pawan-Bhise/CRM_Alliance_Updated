@@ -8,5 +8,8 @@ namespace CallCenterSecure.Services
         IEnumerable<SurveyTemplateType> GetAll();
         SurveyTemplateType GetById(int id);
         void Update(SurveyTemplateType template);
+        void Create(SurveyTemplateType template);
+        void Delete(int id);
+        bool CanCreate();
     }
 }
