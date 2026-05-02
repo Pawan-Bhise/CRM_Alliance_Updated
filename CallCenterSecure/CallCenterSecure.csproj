@@ -646,6 +646,7 @@
     <Content Include="Views\Survey\Index.cshtml" />
     <Content Include="Views\SurveyTemplate\Index.cshtml" />
     <Content Include="Views\SurveyTemplate\Edit.cshtml" />
+    <Content Include="Views\SurveyTemplate\Create.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -656,6 +657,7 @@
     <None Include="packages.config" />
     <Content Include="Views\AllianceOutbound\Details.cshtml" />
     <Content Include="Views\Shared\_DisplayField.cshtml" />
+    <Content Include="Views\Shared\_ValidationScriptsPartial.cshtml" />
     <Content Include="Views\Create.cshtml" />
     <Content Include="Views\Edit.cshtml" />
     <Content Include="Views\index.cshtml" />

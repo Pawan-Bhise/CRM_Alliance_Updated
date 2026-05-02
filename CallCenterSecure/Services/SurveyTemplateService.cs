@@ -9,21 +9,14 @@ namespace CallCenterSecure.Services
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        private static readonly List<SurveyTemplateType> Templates = new List<SurveyTemplateType>
-        {
-            new SurveyTemplateType { Id = 1, Name = "Exit Client Survey" },
-            new SurveyTemplateType { Id = 2, Name = "Satisfaction Survey" },
-            new SurveyTemplateType { Id = 3, Name = "Competitor Survey" }
-        };
-
         public IEnumerable<SurveyTemplateType> GetAll()
         {
-            return db.SurveyTemplateTypes.OrderBy(x => x.Id); //Templates.OrderBy(t => t.Id).ToList();
+            return db.SurveyTemplateTypes.OrderBy(x => x.Id);
         }
 
         public SurveyTemplateType GetById(int id)
         {
-            return db.SurveyTemplateTypes.FirstOrDefault(x=>x.Id==id);
+            return db.SurveyTemplateTypes.FirstOrDefault(x => x.Id == id);
         }
 
         public void Update(SurveyTemplateType template)
@@ -40,8 +33,40 @@ namespace CallCenterSecure.Services
             }
 
             existing.Name = template.Name;
-
             db.SaveChanges();
+        }
+
+        public void Create(SurveyTemplateType template)
+        {
+            if (template == null)
+            {
+                throw new ArgumentNullException(nameof(template));
+            }
+
+            if (!CanCreate())
+            {
+                throw new InvalidOperationException("Cannot create more than 3 survey templates. Please delete one first.");
+            }
+
+            db.SurveyTemplateTypes.Add(template);
+            db.SaveChanges();
+        }
+
+        public void Delete(int id)
+        {
+            var template = GetById(id);
+            if (template == null)
+            {
+                throw new InvalidOperationException("Survey template not found.");
+            }
+
+            db.SurveyTemplateTypes.Remove(template);
+            db.SaveChanges();
+        }
+
+        public bool CanCreate()
+        {
+            return db.SurveyTemplateTypes.Count() < 3;
         }
     }
 }

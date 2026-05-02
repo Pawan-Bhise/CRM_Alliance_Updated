@@ -1,7 +1,9 @@
+using System;
 using System.Net;
 using System.Web.Mvc;
 using CallCenterSecure.Models;
 using CallCenterSecure.Services;
+
 
 namespace CallCenterSecure.Controllers.Survey
 {
@@ -22,6 +24,7 @@ namespace CallCenterSecure.Controllers.Survey
         public ActionResult Index()
         {
             var templates = _surveyTemplateService.GetAll();
+            ViewBag.CanCreate = _surveyTemplateService.CanCreate();
             return View(templates);
         }
 
@@ -65,6 +68,60 @@ namespace CallCenterSecure.Controllers.Survey
             template.Name = model.Name.Trim();
             _surveyTemplateService.Update(template);
             TempData["SuccessMessage"] = "Template updated successfully.";
+
+            return RedirectToAction("Index");
+        }
+
+        public ActionResult Create()
+        {
+            if (!_surveyTemplateService.CanCreate())
+            {
+                TempData["ErrorMessage"] = "Cannot create more than 3 survey templates. Please delete one first.";
+                return RedirectToAction("Index");
+            }
+
+            return View(new SurveyTemplateViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Create(SurveyTemplateViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            if (!_surveyTemplateService.CanCreate())
+            {
+                TempData["ErrorMessage"] = "Cannot create more than 3 survey templates. Please delete one first.";
+                return View(model);
+            }
+
+            var template = new SurveyTemplateType
+            {
+                Name = model.Name.Trim()
+            };
+
+            _surveyTemplateService.Create(template);
+            TempData["SuccessMessage"] = "Template created successfully.";
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Delete(int id)
+        {
+            try
+            {
+                _surveyTemplateService.Delete(id);
+                TempData["SuccessMessage"] = "Template deleted successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
 
             return RedirectToAction("Index");
         }
