@@ -78,5 +78,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<ComplaintDesignation> ComplaintDesignations { get; set; }
     public DbSet<NatureOfComplaints> NatureOfComplaint { get; set; }
     public DbSet<SurveyTemplateType> SurveyTemplateTypes { get; set; }
+    public DbSet<SurveyCustomerData> SurveyCustomerData { get; set; }
 
 }

@@ -409,6 +409,7 @@
     <Compile Include="Migrations\202512310956468_add_Inbound_TicketType_req.Designer.cs">
       <DependentUpon>202512310956468_add_Inbound_TicketType_req.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202601011000000_AddSurveyCustomerDataTable.cs" />
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AllianceOutbound.cs" />
     <Compile Include="Models\AllianceProduct.cs" />
@@ -443,6 +444,7 @@
     <Compile Include="Models\CustomSerializeModel.cs" />
     <Compile Include="Models\SurveyTemplateType.cs" />
     <Compile Include="Models\SurveyTemplateViewModel.cs" />
+    <Compile Include="Models\SurveyCustomerData.cs" />
     <Compile Include="Models\InboundCall.cs" />
     <Compile Include="Models\KnowledgeCenterModel.cs" />
     <Compile Include="Models\LoginViewModel.cs" />
@@ -647,6 +649,7 @@
     <Content Include="Views\SurveyTemplate\Index.cshtml" />
     <Content Include="Views\SurveyTemplate\Edit.cshtml" />
     <Content Include="Views\SurveyTemplate\Create.cshtml" />
+    <Content Include="Views\SurveyTemplate\CustomerDataUpload.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
