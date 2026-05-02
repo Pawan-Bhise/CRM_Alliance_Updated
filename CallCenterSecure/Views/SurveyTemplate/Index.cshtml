@@ -1,0 +1,38 @@
+@model IEnumerable<CallCenterSecure.Models.SurveyTemplateType>
+
+@{
+    ViewBag.Title = "Survey Templates";
+}
+
+<h2>Survey Templates</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<p class="text-muted">These are the 3 default survey templates. Click Edit to rename.</p>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th style="width: 80px;">#</th>
+            <th>Template Name</th>
+            <th style="width: 140px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.Name</td>
+                <td>
+                    @Html.RouteLink("Edit", "SurveyTemplate", new { action = "Edit", id = item.Id }, new { @class = "btn btn-sm btn-primary" })
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
