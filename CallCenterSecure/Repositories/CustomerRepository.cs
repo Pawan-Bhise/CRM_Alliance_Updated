@@ -116,7 +116,7 @@ namespace CallCenterSecure.Repositories
 
                 string sql = @"
                 select ai.AllianceInboundId,ai.DateTime,ai.TicketID,
-                co.Name AS CallObjective,rb.Region AS Region,ab.BranchName AS Branch,ai.ClientName,ai.PhoneNumber,
+                co.Name AS CallObjective,rb.Region AS Region,rbb.BranchName AS Branch,ai.ClientName,ai.PhoneNumber,
                 ai.Address,
                 o.Name as Origin,
                 p.Name AS [Product], ai.DetailConversation, ai.Response,tt.id AS TicketTypeId,
@@ -151,6 +151,7 @@ namespace CallCenterSecure.Repositories
                 LEFT JOIN NaDispositions nd on nd.Id=ai.Na_Disposition
                 LEFT JOIN AllianceBranches ab on ab.Branchcode=ai.Branch
                 LEFT JOIN RegionBranches rb on rb.Id = ai.Region
+                LEFT JOIN RegionBranches rbb on rbb.id=ai.Branch
                 ORDER BY ai.AllianceInboundId DESC";
 
                 return con.Query<AllianceInboundExcelModel>(sql);
