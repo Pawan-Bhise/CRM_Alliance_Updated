@@ -670,14 +670,26 @@ namespace CallCenter.Controllers
                 // Header
                 sb.AppendLine(string.Join(",", props.Select(p => p.Name)));
 
-                // Rows
+                // Rows - sanitize values (remove CR/LF and literal '/r/n') before writing
                 foreach (var row in data)
                 {
-                    sb.AppendLine(string.Join(",", props.Select(p =>
-                        $"\"{(p.GetValue(row)?.ToString() ?? string.Empty).Replace("\"", "\"\"")}\""
-                    )));
+                    var values = props.Select(p =>
+                    {
+                        var raw = p.GetValue(row)?.ToString() ?? string.Empty;
+                        // normalize various newline representations and literal '/r/n'
+                        var cleaned = raw
+                            .Replace("\r\n", " ")
+                            .Replace("\n", " ")
+                            .Replace("\r", " ")
+                            .Replace("/r/n", " ")
+                            .Trim();
 
-                    row.CallObjective = row.CallObjective?.Replace(Environment.NewLine, "").Trim();
+                        // escape quotes for CSV
+                        cleaned = cleaned.Replace("\"", "\"\"");
+                        return $"\"{cleaned}\"";
+                    });
+
+                    sb.AppendLine(string.Join(",", values));
                 }
 
                 var bytes = Encoding.UTF8.GetBytes(sb.ToString());
