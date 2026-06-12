@@ -41,9 +41,9 @@ namespace CallCenterSecure.Repositories
                 dscc.Designation AS cmp_complainCCDesignation,
                 ai.Cmp_ComplainCC,ai.Cmp_NatureOfComplaint,ai.Cmp_CaseDetail,ai.Cmp_ComplainStatus,ai.FileName,
                 
-                ai.Lead_CustomerName,ai.Lead_Branch,lr.Name AS Lead_StateRegion,
-                ds.DistrictName AS Lead_District,ai.Lead_CityTownship,
-                ai.Lead_VillageTractTown,ai.Lead_VillageWard,ai.Lead_Address,ai.Lead_PrimaryMobileNumber,ai.Lead_AlternateMobileNumber,
+                ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,lr.Name AS Lead_StateRegion,
+                ds.DistrictName AS Lead_District,lc.CityName AS Lead_CityTownship,
+                vt.VillageTractName AS Lead_VillageTractTown,ai.Lead_VillageWard,ai.Lead_Address,ai.Lead_PrimaryMobileNumber,ai.Lead_AlternateMobileNumber,
                 lp.Name AS Lead_ProductInterested,ai.Lead_Latitude,ai.Lead_Longitude,ai.Lead_NRC,ai.Lead_DateOfBirth,ai.Lead_Age,
                 ai.Lead_Gender,ai.Lead_MaritalStatus,ai.Lead_SpouseName,ai.Lead_ClientOfficerName,ai.Lead_LeadStatus,
                 ai.Prev_TicketId,cds.Description as Cmp_Designation, ncs.ComplaintsDescrption as Cmp_NatureOfComplaint,
@@ -70,6 +70,8 @@ namespace CallCenterSecure.Repositories
                 LEFT JOIN RegionBranches brn on brn.Id=TRY_CAST(ai.branch AS INT)
                 LEFT JOIN RegionBranches rbrb on rbrb.id=ai.Cmp_Region
                 LEFT JOIN RegionBranches rbrbb on rbrbb.id=ai.Cmp_Branch
+                LEFT JOIN Cities lc on lc.CityCode=ai.Lead_CityTownship
+                LEFT JOIN VillageTracts vt on vt.VillageTractCode=ai.Lead_VillageTractTown                
                 where ai.AllianceInboundId=@id;";
 
                 return con.Query<AllianceInbound>(sql, new { Id = id });
