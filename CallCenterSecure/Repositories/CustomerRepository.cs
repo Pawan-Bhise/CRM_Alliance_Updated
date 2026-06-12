@@ -37,7 +37,7 @@ namespace CallCenterSecure.Repositories
                 ts.Name as TicketStatus, ai.AgentName,
 
                 ai.Cmp_CustomerCode,ai.Cmp_CustomerName,ai.Cmp_PhoneNumber,
-                ai.Cmp_Region,ai.Cmp_Branch,dsc.Designation AS Cmp_ComplainToDesignation,ai.Cmp_ComplainTo,
+                rbrb.Region AS Cmp_Region,rbrbb.BranchName AS Cmp_Branch,dsc.Designation AS Cmp_ComplainToDesignation,ai.Cmp_ComplainTo,
                 dscc.Designation AS cmp_complainCCDesignation,
                 ai.Cmp_ComplainCC,ai.Cmp_NatureOfComplaint,ai.Cmp_CaseDetail,ai.Cmp_ComplainStatus,ai.FileName,
                 
@@ -68,6 +68,8 @@ namespace CallCenterSecure.Repositories
                 LEFT JOIN CmpDispositions cmpdisp ON cmpdisp.Id=ai.cmp_Disposition
                 LEFT JOIN RegionBranches reg ON reg.Id=TRY_CAST(ai.Region AS INT)
                 LEFT JOIN RegionBranches brn on brn.Id=TRY_CAST(ai.branch AS INT)
+                LEFT JOIN RegionBranches rbrb on rbrb.id=ai.Cmp_Region
+                LEFT JOIN RegionBranches rbrbb on rbrbb.id=ai.Cmp_Branch
                 where ai.AllianceInboundId=@id;";
 
                 return con.Query<AllianceInbound>(sql, new { Id = id });
@@ -177,10 +179,10 @@ namespace CallCenterSecure.Repositories
                 con.Open();
 
                 string sql = @"Select ao.AllianceOutboundId,ao.DateTime,ao.TicketID,ao.CustomerCode,ao.CustomerNameEnglish,
-                        b.[Name] AS Branch,COALESCE(rg.[Name],ao.StateRegion) AS StateRegion,COALESCE(ds.DistrictName,ao.District) AS District,COALESCE(ts.TownshipName,ao.CityTownship) AS CityTownship,
+                        b.[Name] AS Branch,sd.StateDivisionName AS StateRegion,COALESCE(ds.DistrictName,ao.District) AS District,c.CityName AS CityTownship,
                         vt.VillageTractName AS VillageTractTown,
 
-                        ao.VillageWard,ao.PrimaryMobileNumber, p.[Name] AS ProductInterested,
+                       wv.WardEnglishName AS VillageWard,ao.PrimaryMobileNumber, p.[Name] AS ProductInterested,
                         ao.Latitude,ao.Longitude,ao.NRC,ao.DateOfBirth,ao.Age,ao.Gender,ao.MaritalStatus,ao.SpouseName,ao.[Priority],
                         ao.ClientOfficerName,ao.CallStatus,ao.CallType,ao.AgentName,ao.Prev_TicketId,ao.DetailConversation
 
@@ -191,6 +193,9 @@ namespace CallCenterSecure.Repositories
                         LEFT join Townships ts on ts.TownshipCode=ao.CityTownship
                         LEFT join VillageTracts vt on vt.VillageTractCode=ao.VillageTractTown
                         LEFT join Products p on p.Id=ao.ProductInterested
+                        LEFT join StateDivisions sd on sd.StateCode=ao.StateRegion
+                        LEFT JOIN Cities c on c.CityCode=ao.CityTownship
+                        LEFT JOIN WardVillages wv on wv.Ward_PCode=ao.VillageWard
                         ORDER By ao.AllianceOutboundId DESC";
 
 
