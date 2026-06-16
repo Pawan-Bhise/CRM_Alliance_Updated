@@ -709,16 +709,16 @@
             });
 
 
-            $("#Region").on("change", function () {
+            $("#RegionId").on("change", function () {
                 //var region = $(this).val();
-                var region = $("#Region option:selected").text();
+                var region = $("#RegionId option:selected").text();
                 $.ajax({
                     url: '@Url.Action("GetBranches", "AllianceInbound")',
                     type: 'GET',
                     data: { region: region },
                     success: function (data) {
 
-                        var branchDropdown = $("#Branch");
+                        var branchDropdown = $("#BranchId");
                         branchDropdown.empty();
 
                         // Default option
