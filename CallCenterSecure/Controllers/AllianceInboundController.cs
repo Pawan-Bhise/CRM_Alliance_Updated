@@ -307,7 +307,14 @@ namespace CallCenter.Controllers
             //ViewBag.CascadeBranch = new SelectList(new List<string>());
 
             ViewBag.CallObjectives = new SelectList(db.CallObjectives.Select(c => new { Value = c.Id, Text = c.Name }), "Value", "Text");
-            ViewBag.Regions = new SelectList(db.Regions.Select(r => new { Value = r.Id, Text = r.Name }), "Value", "Text");
+                        // Use StateDivision (same table as Outbound) for Lead State/Region dropdown
+                        ViewBag.Regions = new SelectList(
+                                db.StateDivision
+                                    .Select(s => new { Value = s.StateCode, Text = s.StateDivisionName })
+                                    .ToList(),
+                                "Value",
+                                "Text"
+                        );
             ViewBag.NaDispositions = new SelectList(db.NaDisposition.Select(c => new { Value = c.Id, Text = c.Name }), "Value", "Text");
             ViewBag.CmpDispositions = new SelectList(db.CmpDisposition.Select(c => new { Value = c.Id, Text = c.Name }), "Value", "Text");
 
@@ -514,8 +521,8 @@ namespace CallCenter.Controllers
                 num = Convert.ToInt32(item.Lead_Branch);
                 item.LeadBranchName = db.Branches.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
 
-                num = Convert.ToInt32(item.Lead_StateRegion);
-                item.LeadStateRegionName = db.Regions.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
+                // Lead_StateRegion stores StateCode (string) now; lookup from StateDivision
+                item.LeadStateRegionName = db.StateDivision.Where(tt => tt.StateCode == item.Lead_StateRegion).Select(p => p.StateDivisionName).FirstOrDefault();
 
                 num = Convert.ToInt32(item.Lead_ProductInterested);
                 item.LeadProductInterestedName = db.Products.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();

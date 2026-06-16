@@ -41,7 +41,7 @@ namespace CallCenterSecure.Repositories
                 dscc.Designation AS cmp_complainCCDesignation,
                 ai.Cmp_ComplainCC,ai.Cmp_NatureOfComplaint,ai.Cmp_CaseDetail,ai.Cmp_ComplainStatus,ai.FileName,
                 
-                ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,lr.Name AS Lead_StateRegion,
+                ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,sd.StateDivisionName AS Lead_StateRegion,
                 ds.DistrictName AS Lead_District,lc.CityName AS Lead_CityTownship,
                 vt.VillageTractName AS Lead_VillageTractTown,ai.Lead_VillageWard,ai.Lead_Address,ai.Lead_PrimaryMobileNumber,ai.Lead_AlternateMobileNumber,
                 lp.Name AS Lead_ProductInterested,ai.Lead_Latitude,ai.Lead_Longitude,ai.Lead_NRC,ai.Lead_DateOfBirth,ai.Lead_Age,
@@ -59,7 +59,7 @@ namespace CallCenterSecure.Repositories
                 LEFT JOIN Designations dscc on dscc.DesignationId=ai.cmp_complainCCDesignation
 
                 LEFT JOIN Branches lb on ai.Lead_Branch=lb.Id
-                LEFT JOIN Regions lr on ai.Lead_StateRegion=lr.Id
+                LEFT JOIN StateDivisions sd on ai.Lead_StateRegion=sd.StateCode
                 LEFT JOIN Products lp on ai.Lead_ProductInterested=lp.Id
                 LEFT JOIN Districts ds on ai.Lead_District=ds.DistrictCode
 				LEFT JOIN ComplaintDesignations cds on cds.ComplaintDesignationId = ai.Cmp_Designation
@@ -132,7 +132,7 @@ namespace CallCenterSecure.Repositories
                 dscc.Designation AS cmp_complainCCDesignation,ai.cmp_Designation,ai.ComplainResolve,
                 ai.Cmp_ComplainCC,ai.Cmp_NatureOfComplaint,ai.Cmp_CaseDetail,ai.Cmp_ComplainStatus,ai.FileName,
                 
-                ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,lr.Name AS Lead_StateRegion,
+                ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,sd.StateDivisionName AS Lead_StateRegion,
                 ds.DistrictName AS Lead_District,ct.CityName AS Lead_CityTownship,
                 vt.VillageTractName AS VillageTractTown,ai.Lead_VillageWard,ai.Lead_Address,ai.Lead_PrimaryMobileNumber,ai.Lead_AlternateMobileNumber,
                 lp.Name AS Lead_ProductInterested,ai.Lead_Latitude,ai.Lead_Longitude,ai.Lead_NRC,ai.Lead_DateOfBirth,ai.Lead_Age,
@@ -148,7 +148,7 @@ namespace CallCenterSecure.Repositories
                 LEFT JOIN Designations dscc on dscc.DesignationId=ai.cmp_complainCCDesignation
 
                 LEFT JOIN Branches lb on ai.Lead_Branch=lb.Id
-                LEFT JOIN Regions lr on ai.Lead_StateRegion=lr.Id
+                LEFT JOIN StateDivisions sd on ai.Lead_StateRegion=sd.StateCode
                 LEFT JOIN Products lp on ai.Lead_ProductInterested=lp.Id
                 LEFT JOIN Districts ds on ds.DistrictCode=ai.Lead_District
                 LEFT JOIN Cities ct on ct.CityCode =ai.Lead_CityTownship
