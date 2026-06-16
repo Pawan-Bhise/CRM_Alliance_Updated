@@ -132,9 +132,9 @@ namespace CallCenterSecure.Repositories
                 dscc.Designation AS cmp_complainCCDesignation,ai.cmp_Designation,ai.ComplainResolve,
                 ai.Cmp_ComplainCC,ai.Cmp_NatureOfComplaint,ai.Cmp_CaseDetail,ai.Cmp_ComplainStatus,ai.FileName,
                 
-                ai.Lead_CustomerName,ai.Lead_Branch,lr.Name AS Lead_StateRegion,
+                ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,lr.Name AS Lead_StateRegion,
                 ds.DistrictName AS Lead_District,ct.CityName AS Lead_CityTownship,
-                ai.Lead_VillageTractTown,ai.Lead_VillageWard,ai.Lead_Address,ai.Lead_PrimaryMobileNumber,ai.Lead_AlternateMobileNumber,
+                vt.VillageTractName AS VillageTractTown,ai.Lead_VillageWard,ai.Lead_Address,ai.Lead_PrimaryMobileNumber,ai.Lead_AlternateMobileNumber,
                 lp.Name AS Lead_ProductInterested,ai.Lead_Latitude,ai.Lead_Longitude,ai.Lead_NRC,ai.Lead_DateOfBirth,ai.Lead_Age,
                 ai.Lead_Gender,ai.Lead_MaritalStatus,ai.Lead_SpouseName,ai.Lead_ClientOfficerName,ai.Lead_LeadStatus,
                 ai.Prev_TicketId,nd.Name AS Na_Disposition
@@ -156,6 +156,7 @@ namespace CallCenterSecure.Repositories
                 LEFT JOIN AllianceBranches ab on ab.Branchcode=ai.Branch
                 LEFT JOIN RegionBranches rb on rb.Id = ai.Region
                 LEFT JOIN RegionBranches rbb on rbb.id=ai.Branch
+                LEFT join VillageTracts vt on vt.VillageTractCode=ai.Lead_VillageTractTown
                 ORDER BY ai.AllianceInboundId DESC";
 
                 return con.Query<AllianceInboundExcelModel>(sql);
