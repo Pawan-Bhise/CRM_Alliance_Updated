@@ -730,13 +730,53 @@
                         $.each(data, function (i, branch) {
                             branchDropdown.append(
                                 $('<option>')
-                                    .val(branch.Text)
+                                    .val(branch.Value)
                                     .text(branch.Text)
                             );
                         });
                     },
                     error: function () {
                         console.error("Error loading branches.");
+                    }
+                });
+            });
+
+                // Prepopulate Lead Village Ward on load if present (useful when returning validation errors)
+                (function () {
+                    var existingVt = @Html.Raw(Json.Encode(Model?.Lead_VillageTractTown ?? ""));
+                    var existingWard = @Html.Raw(Json.Encode(Model?.Lead_VillageWard ?? ""));
+                    if (existingVt) {
+                        $.getJSON('@Url.Action("GetWard", "AllianceOutbound")', { villageTractCode: existingVt }, function (data) {
+                            var wardSelect = $("#Lead_VillageWard");
+                            wardSelect.empty();
+                            wardSelect.append($('<option/>', { value: '', text: 'Select Village/Ward' }));
+                            $.each(data, function (index, w) {
+                                wardSelect.append($('<option/>', { value: w.Ward_PCode, text: w.WardEnglishName }));
+                            });
+                            if (existingWard) {
+                                wardSelect.val(existingWard);
+                            }
+                        });
+                    }
+                })();
+
+            // Cmp Region -> Cmp Branch (same behavior as Region->Branch)
+            $("#Cmp_Region").on("change", function () {
+                var region = $("#Cmp_Region option:selected").text();
+                $.ajax({
+                    url: '@Url.Action("GetBranches", "AllianceInbound")',
+                    type: 'GET',
+                    data: { region: region },
+                    success: function (data) {
+                        var branchDropdown = $("#Cmp_Branch");
+                        branchDropdown.empty();
+                        branchDropdown.append($('<option>').val('').text('Select Branch'));
+                        $.each(data, function (i, branch) {
+                            branchDropdown.append($('<option>').val(branch.Value).text(branch.Text));
+                        });
+                    },
+                    error: function () {
+                        console.error("Error loading cmp branches.");
                     }
                 });
             });
@@ -850,24 +890,67 @@
     });
 
 
-                 $("#StateRegion").change(function () {
-                     var stateId = $(this).val();
-                     console.log(stateId);
-                $.getJSON('@Url.Action("GetDistricts", "AllianceOutbound")/' + stateId, function (data) {
-                    var districtSelect = $("#District");
-                    districtSelect.empty();
-                    districtSelect.append($('<option/>', {
-                        value: '',
-                        text: 'Select District'
-                    }));
-                    $.each(data, function (index, district) {
-                        districtSelect.append($('<option/>', {
-                            value: district.DistrictId,
-                            text: district.DistrictName
-                        }));
+                $("#StateRegion").change(function () {
+                    var stateId = $(this).val();
+                    console.log(stateId);
+                    $.getJSON('@Url.Action("GetDistricts", "AllianceOutbound")/' + stateId, function (data) {
+                        var districtSelect = $("#District");
+                        districtSelect.empty();
+                        districtSelect.append($('<option/>', { value: '', text: 'Select District' }));
+                        $.each(data, function (index, district) {
+                            districtSelect.append($('<option/>', { value: district.DistrictId, text: district.DistrictName }));
+                        });
                     });
                 });
-            });
+
+                // Lead cascading: StateRegion -> District -> CityTownship -> VillageTractTown -> VillageWard
+                $("#Lead_StateRegion").change(function () {
+                    var stateCode = $(this).val();
+                    $.getJSON('@Url.Action("GetDistricts", "AllianceOutbound")', { stateCode: stateCode }, function (data) {
+                        var districtSelect = $("#Lead_District");
+                        districtSelect.empty();
+                        districtSelect.append($('<option/>', { value: '', text: 'Select District' }));
+                        $.each(data, function (index, district) {
+                            districtSelect.append($('<option/>', { value: district.DistrictCode, text: district.DistrictName }));
+                        });
+                    });
+                });
+
+                $("#Lead_District").change(function () {
+                    var distCode = $(this).val();
+                    $.getJSON('@Url.Action("GetCityTownship", "AllianceOutbound")', { districtCode: distCode }, function (data) {
+                        var citySelect = $("#Lead_CityTownship");
+                        citySelect.empty();
+                        citySelect.append($('<option/>', { value: '', text: 'Select City/Township' }));
+                        $.each(data, function (index, city) {
+                            citySelect.append($('<option/>', { value: city.CityCode, text: city.CityName }));
+                        });
+                    });
+                });
+
+                $("#Lead_CityTownship").change(function () {
+                    var cityCode = $(this).val();
+                    $.getJSON('@Url.Action("GetVillageTrackTown", "AllianceOutbound")', { cityCode: cityCode }, function (data) {
+                        var vtSelect = $("#Lead_VillageTractTown");
+                        vtSelect.empty();
+                        vtSelect.append($('<option/>', { value: '', text: 'Select Village Tract/Town' }));
+                        $.each(data, function (index, vt) {
+                            vtSelect.append($('<option/>', { value: vt.VillageTractCode, text: vt.VillageTractName }));
+                        });
+                    });
+                });
+
+                $("#Lead_VillageTractTown").change(function () {
+                    var vtCode = $(this).val();
+                    $.getJSON('@Url.Action("GetWard", "AllianceOutbound")', { villageTractCode: vtCode }, function (data) {
+                        var wardSelect = $("#Lead_VillageWard");
+                        wardSelect.empty();
+                        wardSelect.append($('<option/>', { value: '', text: 'Select Village/Ward' }));
+                        $.each(data, function (index, w) {
+                            wardSelect.append($('<option/>', { value: w.Ward_PCode, text: w.WardEnglishName }));
+                        });
+                    });
+                });
 
 
 
