@@ -14,7 +14,7 @@ namespace CallCenterSecure.Models
         // === Edited by waqarahmedansari06@gmail.com ===
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:yyyy/MM/dd} hh:mm:ss")]
-        public DateTime? DateTime { get; set; }
+        public DateTime? DateTime { get; set; } = System.DateTime.Now;
 
         //[Required]
         public string TicketID { get; set; }

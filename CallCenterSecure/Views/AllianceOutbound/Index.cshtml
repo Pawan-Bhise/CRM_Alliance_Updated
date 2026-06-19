@@ -119,26 +119,17 @@
                 @Html.ValidationMessageFor(model => model.TicketID, "", new { @class = "text-danger" })
             </div>
 
-            <div class="col-md-2" style="margin-top: 17px;">
-                <input type="button" value="Apply" class="btn btn-primary" id="btnApplyFilters" />
-            </div>
+            <!-- Apply button moved below into the right-aligned action group -->
 
 
         </div>
         <div class="row" style="margin-top:10px;">
-            <div class="col-md-4" style="float: right;">
-                @*<input type="button" id="btnDownladExcel" class="btn btn-primary" value="Download Excel" onclick="exportToExcel('testTable', 'Excel Export')" style="float:right" />*@
-                @*<a href="/Allianceoutbound/ExportAllianceOutboundCsv"
-                       target="_blank"
-                       class="btn btn-success">
-                        Download Excel
-                    </a>*@
-                <button type="submit"
-                        class="btn btn-success"
-                        formaction="@Url.Action("ExportAllianceOutboundCsv", "Allianceoutbound")">
-                    Export
-                </button>
-                <input type="button" name="btnCreateTicket" class="btn btn-primary" value="Create New" style="float:right;margin-right:10px;" onclick="window.location= '@Url.Action("Create", "AllianceOutbound")'" />
+            <div class="col-12">
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-primary" id="btnApplyFilters">Apply</button>
+                    <button type="submit" class="btn btn-success" formaction="@Url.Action("ExportAllianceOutboundCsv", "Allianceoutbound")">Export</button>
+                    <input type="button" name="btnCreateTicket" class="btn btn-primary" value="Create New" onclick="window.location= '@Url.Action("Create", "AllianceOutbound")'" />
+                </div>
             </div>
         </div>
     </div>
@@ -226,90 +217,94 @@
 </div>
 
 
-@*<script src="~/Scripts/jquery-3.3.1.min.js"></script>
-    <script src="~/Scripts/jquery-ui.js"></script>*@
-<script type="text/javascript">
+@section Scripts{
+    @Scripts.Render("~/bundles/jqueryval")
+    @Scripts.Render("~/bundles/jqueryui")
 
-    $(document).ready(function () {
-        var table = $('#outboundTable').DataTable({
-            processing: true,
-            serverSide: true,
-            pageLength: 10,
-            lengthMenu: [10, 20, 50, 100],
-            searching: false,
-            order: [[1, 'desc']],
-            responsive: true,
-            fixedHeader: true,
-            scrollX: true,
-            ajax: {
-                url: '@Url.Action("GetPagedOutbound", "AllianceOutbound")',
-                type: 'POST',
-                data: function (d) {
-                    d.FromDate = $('#FromDate').val();
-                    d.ToDate = $('#ToDate').val();
-                    d.CustomerCode = $('#CustomerCode').val();
-                    d.PrimaryMobileNumberSearch = $('#PrimaryMobileNumberSearch').val();
-                    d.CallType = $('#CallType').val();
-                    d.CallStatus = $('#CallStatus').val();
-                    d.TicketID = $('#TicketID').val();
-                }
-            },
-            columns: [
-                {
-                    data: null,
-                    orderable: true,
-                    render: function (data, type, row, meta) {
-                        return meta.settings._iDisplayStart + meta.row + 1;
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            var table = $('#outboundTable').DataTable({
+                processing: true,
+                serverSide: true,
+                pageLength: 10,
+                lengthMenu: [10, 20, 50, 100],
+                searching: false,
+                order: [[1, 'desc']],
+                responsive: true,
+                fixedHeader: true,
+                scrollX: true,
+                ajax: {
+                    url: '@Url.Action("GetPagedOutbound", "AllianceOutbound")',
+                    type: 'POST',
+                    data: function (d) {
+                        d.FromDate = $('#FromDate').val();
+                        d.ToDate = $('#ToDate').val();
+                        d.CustomerCode = $('#CustomerCode').val();
+                        d.PrimaryMobileNumberSearch = $('#PrimaryMobileNumberSearch').val();
+                        d.CallType = $('#CallType').val();
+                        d.CallStatus = $('#CallStatus').val();
+                        d.TicketID = $('#TicketID').val();
                     }
                 },
-                { data: 'AllianceOutboundId', visible: false },
-                {
-                    data: 'AllianceOutboundId',
-                    orderable: false,
-                    render: function (data) {
-                        var editUrl = '@Url.Action("Edit", "AllianceOutbound", new { id = "__id__" })'.replace('__id__', data);
-                        var detailsUrl = '@Url.Action("Details", "AllianceOutbound", new { id = "__id__" })'.replace('__id__', data);
-                        return '<a href="' + editUrl + '">Edit</a> | <a href="' + detailsUrl + '">Details</a>';
-                    }
-                },
-                { data: 'TicketID' },
-                { data: 'CallStatus' },
-                { data: 'CallType' },
-                { data: 'Priority' },
-                { data: 'DateTime' },
-                { data: 'BranchName' },
-                { data: 'CustomerNameEnglish' },
-                { data: 'PrimaryMobileNumber' },
-                { data: 'ProductInterestedName' },
-                {
-                    data: 'DetailConversation',
-                    render: function (data) {
-                        if (!data) return '';
-                        return data.length > 20 ? data.substring(0, 20) + '...' : data;
-                    }
-                },
-                { data: null, visible: false, defaultContent: '' },
-                { data: null, visible: false, defaultContent: '' },
-                { data: 'Prev_TicketId' }
-            ]
+                columns: [
+                    {
+                        data: null,
+                        orderable: true,
+                        render: function (data, type, row, meta) {
+                            return meta.settings._iDisplayStart + meta.row + 1;
+                        }
+                    },
+                    { data: 'AllianceOutboundId', visible: false },
+                    {
+                        data: 'AllianceOutboundId',
+                        orderable: false,
+                        render: function (data) {
+                            var editUrl = '@Url.Action("Edit", "AllianceOutbound", new { id = "__id__" })'.replace('__id__', data);
+                            var detailsUrl = '@Url.Action("Details", "AllianceOutbound", new { id = "__id__" })'.replace('__id__', data);
+                            return '<a href="' + editUrl + '">Edit</a> | <a href="' + detailsUrl + '">Details</a>';
+                        }
+                    },
+                    { data: 'TicketID' },
+                    { data: 'CallStatus' },
+                    { data: 'CallType' },
+                    { data: 'Priority' },
+                    { data: 'DateTime' },
+                    { data: 'BranchName' },
+                    { data: 'CustomerNameEnglish' },
+                    { data: 'PrimaryMobileNumber' },
+                    { data: 'ProductInterestedName' },
+                    {
+                        data: 'DetailConversation',
+                        render: function (data) {
+                            if (!data) return '';
+                            return data.length > 20 ? data.substring(0, 20) + '...' : data;
+                        }
+                    },
+                    { data: null, visible: false, defaultContent: '' },
+                    { data: null, visible: false, defaultContent: '' },
+                    { data: 'Prev_TicketId' }
+                ]
+            });
+
+            $('#btnApplyFilters').on('click', function () {
+                table.ajax.reload();
+            });
         });
 
-        $('#btnApplyFilters').on('click', function () {
-            table.ajax.reload();
+        $(function () {
+            $(".datepicker").datepicker({
+                dateFormat: "yy-mm-dd",
+                changeMonth: true,
+                changeYear: true,
+                yearRange: "-120:+0",
+                maxDate: 0,
+                autoclose: true
+            });
         });
-    });
 
-    $(function () {
-        $(".datepicker").datepicker({
-            dateFormat: "yy-mm-dd",
-            changeMonth: true,
-            changeYear: true,
-            autoclose: true
-        });
-    });
-
-    function exportToExcel(table, name) {
-        var uri = 'data:application/vnd.ms-excel;base64,'
+        function exportToExcel(table, name) {
+            var uri = 'data:application/vnd.ms-excel;base64,'
             , template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>'
             , base64 = function (s) {
                 return window.btoa(unescape(encodeURIComponent(s)))
@@ -320,19 +315,50 @@
                 })
             }
         if (!table.nodeType) table = document.getElementById(table)
-        var ctx = { worksheet: name || 'Worksheet', table: table.innerHTML }
-        var a = document.createElement('a');
-        a.href = uri + base64(format(template, ctx))
-        a.download = 'AllianceOutBound.xls';
-        a.download = 'AllianceOutBound.xls';
-        //triggering the function
-        a.click();
-    }
-    setTimeout(function () {
-        $('.auto-close').fadeOut('slow');
-    }, 3000); // 3 seconds
 
+        // Generate CSV instead, forcing Customer Code to be treated as text in Excel by using formula-style string: ="123..."
+        var tableClone = table.cloneNode(true);
+        var headers = tableClone.querySelectorAll('thead th');
+        var textCols = [];
+        headers.forEach(function (h, idx) {
+            var txt = (h.textContent || h.innerText || '').trim().toLowerCase();
+            if (txt.indexOf('customercode') !== -1 || txt.indexOf('customer code') !== -1) {
+                textCols.push(idx);
+            }
+        });
 
+        var rows = Array.from(tableClone.querySelectorAll('tbody tr'));
+        // include header row
+        var headerRow = Array.from(headers).map(function (h) { return '"' + (h.textContent || h.innerText || '').trim().replace(/"/g, '""') + '"'; }).join(',');
+        var csvLines = [headerRow];
 
-</script>
+        rows.forEach(function (r) {
+            var cells = Array.from(r.children);
+            var cols = cells.map(function (cell, ci) {
+                var txt = (cell.textContent || cell.innerText || '').trim();
+                // if this is customer code column, wrap as ="..." so Excel preserves it as text
+                if (textCols.indexOf(ci) !== -1) {
+                    return '"=' + '"' + txt.replace(/"/g, '""') + '"' + '"';
+                }
+                return '"' + txt.replace(/"/g, '""') + '"';
+            });
+            csvLines.push(cols.join(','));
+        });
+
+        var csvContent = '\uFEFF' + csvLines.join('\r\n'); // add BOM to help Excel with encoding
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        var url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = 'AllianceOutBound.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        }
+        setTimeout(function () {
+            $('.auto-close').fadeOut('slow');
+        }, 3000); // 3 seconds
+
+    </script>
+}
 
