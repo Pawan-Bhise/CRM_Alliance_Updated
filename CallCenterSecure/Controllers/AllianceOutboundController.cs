@@ -477,8 +477,16 @@ namespace CallCenter.Controllers
             foreach (var row in data)
             {
                 sb.AppendLine(string.Join(",", props.Select(p =>
-                    $"\"{(p.GetValue(row)?.ToString() ?? string.Empty).Replace("\"", "\"\"")}\""
-                )));
+                {
+                    var raw = (p.GetValue(row)?.ToString() ?? string.Empty).Replace("\"", "\"\"");
+                    // Force CustomerCode to be treated as text in Excel by using formula-style string ="123..."
+                    if (string.Equals(p.Name, "CustomerCode", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // CSV field becomes: "=""123..."""  -> when Excel opens, it evaluates to the literal string 123...
+                        return $"\"=\"\"{raw}\"\"\"";
+                    }
+                    return $"\"{raw}\"";
+                })));
             }
 
             var bytes = Encoding.UTF8.GetBytes(sb.ToString());

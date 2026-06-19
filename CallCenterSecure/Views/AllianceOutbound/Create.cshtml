@@ -453,13 +453,7 @@
             </div>
         </div>
 
-        @Html.DropDownListFor(model => model.CallType, new SelectList(new List<SelectListItem>
-                 {
-                             new SelectListItem { Value = "Follow Up Call", Text = "Follow Up Call" },
-                             new SelectListItem { Value = "Survey Call", Text = "Survey Call" },
-                             new SelectListItem { Value = "Re-dial Missed Call", Text = "Re-dial Missed Call" }
-                         }, "Value", "Text"), "Select CallType", new { @class = "form-control", style = "width:50% !important;" })
-        @Html.ValidationMessageFor(model => model.CallType, "", new { @class = "text-danger" })
+        
 
 
     </div>
