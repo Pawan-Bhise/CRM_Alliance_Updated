@@ -53,23 +53,23 @@ namespace CallCenterSecure.Repositories
                 LEFT JOIN CallObjectives co on co.Id=ai.CallObjective
                 LEFT JOIN Products p on p.Id=ai.[Product]
                 LEFT JOIN Origins o on o.Id=ai.Origin
-                LEFT JOIN TicketTypes tt on tt.Id=ai.TicketType
-                LEFT JOIN TicketStatus ts on ts.Id=ai.TicketStatus
+                LEFT JOIN TicketTypes tt on tt.Id=TRY_CAST(ai.TicketType AS INT)
+                LEFT JOIN TicketStatus ts on ts.Id=TRY_CAST(ai.TicketStatus AS INT)
                 LEFT JOIN Designations dsc on dsc.DesignationId=TRY_CAST(ai.Cmp_ComplainToDesignation AS INT)
-                LEFT JOIN Designations dscc on dscc.DesignationId=ai.cmp_complainCCDesignation
+                LEFT JOIN Designations dscc on dscc.DesignationId=TRY_CAST(ai.cmp_complainCCDesignation AS INT)
 
                 LEFT JOIN Branches lb on ai.Lead_Branch=lb.Id
                 LEFT JOIN StateDivisions sd on ai.Lead_StateRegion=sd.StateCode
                 LEFT JOIN Products lp on ai.Lead_ProductInterested=lp.Id
                 LEFT JOIN Districts ds on ai.Lead_District=ds.DistrictCode
-				LEFT JOIN ComplaintDesignations cds on cds.ComplaintDesignationId = ai.Cmp_Designation
-				LEFT JOIN NatureOfComplaints ncs on ncs.ComplaintId = ai.Cmp_NatureOfComplaint 
-                LEFT JOIN NaDispositions ndisp ON ndisp.Id=ai.Na_Disposition
-                LEFT JOIN CmpDispositions cmpdisp ON cmpdisp.Id=ai.cmp_Disposition
+				LEFT JOIN ComplaintDesignations cds on cds.ComplaintDesignationId = TRY_CAST(ai.Cmp_Designation AS INT)
+				LEFT JOIN NatureOfComplaints ncs on ncs.ComplaintId = TRY_CAST(ai.Cmp_NatureOfComplaint AS INT)
+                LEFT JOIN NaDispositions ndisp ON ndisp.Id=TRY_CAST(ai.Na_Disposition AS INT)
+                LEFT JOIN CmpDispositions cmpdisp ON cmpdisp.Id=TRY_CAST(ai.cmp_Disposition AS INT)
                 LEFT JOIN RegionBranches reg ON reg.Id=TRY_CAST(ai.Region AS INT)
                 LEFT JOIN RegionBranches brn on brn.Id=TRY_CAST(ai.branch AS INT)
-                LEFT JOIN RegionBranches rbrb on rbrb.id=ai.Cmp_Region
-                LEFT JOIN RegionBranches rbrbb on rbrbb.id=ai.Cmp_Branch
+                LEFT JOIN RegionBranches rbrb on rbrb.id=TRY_CAST(ai.Cmp_Region AS INT)
+                LEFT JOIN RegionBranches rbrbb on rbrbb.id=TRY_CAST(ai.Cmp_Branch AS INT)
                 LEFT JOIN Cities lc on lc.CityCode=ai.Lead_CityTownship
                 LEFT JOIN VillageTracts vt on vt.VillageTractCode=ai.Lead_VillageTractTown
                 LEFT JOIN WardVillages wv on wv.Ward_PCode=ai.Lead_VillageWard                
@@ -104,9 +104,9 @@ namespace CallCenterSecure.Repositories
                 from AllianceInbounds ai
                 LEFT JOIN CallObjectives co on co.Id=ai.CallObjective
                 LEFT JOIN Products p on p.Id=ai.[Product]                
-                LEFT JOIN TicketTypes tt on tt.Id=ai.TicketType
-                LEFT JOIN TicketStatus ts on ts.Id=ai.TicketStatus
-                LEFT JOIN RegionBranches ab on ab.Id=ai.Branch
+                LEFT JOIN TicketTypes tt on tt.Id=TRY_CAST(ai.TicketType AS INT)
+                LEFT JOIN TicketStatus ts on ts.Id=TRY_CAST(ai.TicketStatus AS INT)
+                LEFT JOIN RegionBranches ab on ab.Id=TRY_CAST(ai.Branch AS INT)
                 ORDER BY ai.AllianceInboundId DESC;";
 
                 return con.Query<InboundGridData>(sql);
@@ -130,35 +130,38 @@ namespace CallCenterSecure.Repositories
 
                 ai.Cmp_CustomerCode,ai.Cmp_CustomerName,ai.Cmp_PhoneNumber,
                 rbrb.Region AS Cmp_Region, rbrbb.BranchName AS Cmp_Branch, dsc.Designation AS Cmp_ComplainToDesignation,ai.Cmp_ComplainTo,
-                dscc.Designation AS cmp_complainCCDesignation,ai.cmp_Designation,ai.ComplainResolve,
-                ai.Cmp_ComplainCC,ai.Cmp_NatureOfComplaint,ai.Cmp_CaseDetail,ai.Cmp_ComplainStatus,ai.FileName,
+                dscc.Designation AS cmp_complainCCDesignation,cds.Description AS Cmp_Designation,ai.ComplainResolve,
+                ai.Cmp_ComplainCC,ncs.ComplaintsDescrption AS Cmp_NatureOfComplaint,ai.Cmp_CaseDetail,ai.Cmp_ComplainStatus,ai.FileName,
                 
                 ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,sd.StateDivisionName AS Lead_StateRegion,
                 ds.DistrictName AS Lead_District,ct.CityName AS Lead_CityTownship,
                 vt.VillageTractName AS Lead_VillageTractTown, wv.WardEnglishName AS Lead_VillageWard,ai.Lead_Address,ai.Lead_PrimaryMobileNumber,ai.Lead_AlternateMobileNumber,
                 lp.Name AS Lead_ProductInterested,ai.Lead_Latitude,ai.Lead_Longitude,ai.Lead_NRC,ai.Lead_DateOfBirth,ai.Lead_Age,
-                ai.Lead_Gender,ai.Lead_MaritalStatus,ai.Lead_SpouseName,ai.Lead_ClientOfficerName,ai.Lead_LeadStatus,
-                ai.Prev_TicketId,nd.Name AS Na_Disposition
+                ai.Lead_Gender,ai.Lead_MaritalStatus,ai.Lead_SpouseName,ai.Lead_ClientOfficerName,ai.Lead_LeadStatus,ai.Lead_Priority,
+                ai.Prev_TicketId,nd.Name AS Na_Disposition,cmpdisp.Name AS Cmp_Disposition
                 from AllianceInbounds ai
                 LEFT JOIN CallObjectives co on co.Id=ai.CallObjective
                 LEFT JOIN Products p on p.Id=ai.[Product]
                 LEFT JOIN Origins o on o.Id=ai.Origin
-                LEFT JOIN TicketTypes tt on tt.Id=ai.TicketType
-                LEFT JOIN TicketStatus ts on ts.Id=ai.TicketStatus
+                LEFT JOIN TicketTypes tt on tt.Id=TRY_CAST(ai.TicketType AS INT)
+                LEFT JOIN TicketStatus ts on ts.Id=TRY_CAST(ai.TicketStatus AS INT)
                 LEFT JOIN Designations dsc on dsc.DesignationId=TRY_CAST(ai.Cmp_ComplainToDesignation AS INT)
-                LEFT JOIN Designations dscc on dscc.DesignationId=ai.cmp_complainCCDesignation
+                LEFT JOIN Designations dscc on dscc.DesignationId=TRY_CAST(ai.cmp_complainCCDesignation AS INT)
+                LEFT JOIN ComplaintDesignations cds on cds.ComplaintDesignationId = TRY_CAST(ai.Cmp_Designation AS INT)
+                LEFT JOIN NatureOfComplaints ncs on ncs.ComplaintId = TRY_CAST(ai.Cmp_NatureOfComplaint AS INT)
 
                 LEFT JOIN Branches lb on ai.Lead_Branch=lb.Id
                 LEFT JOIN StateDivisions sd on ai.Lead_StateRegion=sd.StateCode
                 LEFT JOIN Products lp on ai.Lead_ProductInterested=lp.Id
                 LEFT JOIN Districts ds on ds.DistrictCode=ai.Lead_District
                 LEFT JOIN Cities ct on ct.CityCode =ai.Lead_CityTownship
-                LEFT JOIN NaDispositions nd on nd.Id=ai.Na_Disposition
+                LEFT JOIN NaDispositions nd on nd.Id=TRY_CAST(ai.Na_Disposition AS INT)
+                LEFT JOIN CmpDispositions cmpdisp ON cmpdisp.Id=TRY_CAST(ai.Cmp_Disposition AS INT)
                 LEFT JOIN AllianceBranches ab on ab.Branchcode=ai.Branch
-                LEFT JOIN RegionBranches rb on rb.Id = ai.Region
-                LEFT JOIN RegionBranches rbb on rbb.id=ai.Branch
-                LEFT JOIN RegionBranches rbrb on rbrb.id=ai.Cmp_Region
-                LEFT JOIN RegionBranches rbrbb on rbrbb.id=ai.Cmp_Branch
+                LEFT JOIN RegionBranches rb on rb.Id = TRY_CAST(ai.Region AS INT)
+                LEFT JOIN RegionBranches rbb on rbb.id=TRY_CAST(ai.Branch AS INT)
+                LEFT JOIN RegionBranches rbrb on rbrb.id=TRY_CAST(ai.Cmp_Region AS INT)
+                LEFT JOIN RegionBranches rbrbb on rbrbb.id=TRY_CAST(ai.Cmp_Branch AS INT)
                 LEFT join VillageTracts vt on vt.VillageTractCode=ai.Lead_VillageTractTown
                 LEFT JOIN WardVillages wv on wv.Ward_PCode = ai.Lead_VillageWard
                 ORDER BY ai.AllianceInboundId DESC";

@@ -71,10 +71,12 @@ namespace CallCenterSecure.Models.Inbound
         public string Lead_SpouseName { get; set; }
         public string Lead_ClientOfficerName { get; set; }
         public string Lead_LeadStatus { get; set; }
+        public string Lead_Priority { get; set; }
 
         public string Prev_TicketId { get; set; }
 
         public string Na_Disposition { get; set; }
+        public string Cmp_Disposition { get; set; }        
 
     }
 }

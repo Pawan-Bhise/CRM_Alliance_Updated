@@ -506,26 +506,32 @@ namespace CallCenter.Controllers
 
             foreach (var item in inBound)
             {
-                int num = Convert.ToInt32(item.TicketType);
-                item.TicketTypeName = db.TicketTypes.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
+                if (int.TryParse(item.TicketType, out int ticketTypeId))
+                    item.TicketTypeName = db.TicketTypes.Where(tt => tt.Id == ticketTypeId).Select(p => p.Name).FirstOrDefault();
+                
                 item.BranchName = db.AllianceBranches.Where(tt => tt.BranchCode == item.Branch).Select(p => p.BranchName).FirstOrDefault();
-                num = Convert.ToInt32(item.TicketStatus);
-                item.TicketStatusName = db.TicketStatuses.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
-                num = Convert.ToInt32(item.CallObjective);
-                item.CallObjectiveName = db.CallObjectives.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
-                num = Convert.ToInt32(item.Region);
-                item.RegionName = db.Regions.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
-                num = Convert.ToInt32(item.Origin);
-                item.OriginName = db.Origins.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
+                
+                if (int.TryParse(item.TicketStatus, out int ticketStatusId))
+                    item.TicketStatusName = db.TicketStatuses.Where(tt => tt.Id == ticketStatusId).Select(p => p.Name).FirstOrDefault();
+                
+                if (int.TryParse(item.CallObjective, out int callObjectiveId))
+                    item.CallObjectiveName = db.CallObjectives.Where(tt => tt.Id == callObjectiveId).Select(p => p.Name).FirstOrDefault();
+                
+                if (int.TryParse(item.Region, out int regionId))
+                    item.RegionName = db.Regions.Where(tt => tt.Id == regionId).Select(p => p.Name).FirstOrDefault();
+                
+                if (int.TryParse(item.Origin, out int originId))
+                    item.OriginName = db.Origins.Where(tt => tt.Id == originId).Select(p => p.Name).FirstOrDefault();
+                
                 //Lead Branch State etc
-                num = Convert.ToInt32(item.Lead_Branch);
-                item.LeadBranchName = db.Branches.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
+                if (int.TryParse(item.Lead_Branch, out int leadBranchId))
+                    item.LeadBranchName = db.Branches.Where(tt => tt.Id == leadBranchId).Select(p => p.Name).FirstOrDefault();
 
                 // Lead_StateRegion stores StateCode (string) now; lookup from StateDivision
                 item.LeadStateRegionName = db.StateDivision.Where(tt => tt.StateCode == item.Lead_StateRegion).Select(p => p.StateDivisionName).FirstOrDefault();
 
-                num = Convert.ToInt32(item.Lead_ProductInterested);
-                item.LeadProductInterestedName = db.Products.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
+                if (int.TryParse(item.Lead_ProductInterested, out int leadProductId))
+                    item.LeadProductInterestedName = db.Products.Where(tt => tt.Id == leadProductId).Select(p => p.Name).FirstOrDefault();
 
                 item.LeadDistrictName = db.Districts.Where(tt => tt.DistrictCode == item.Lead_District).Select(p => p.DistrictName).FirstOrDefault();
                 item.LeadCityTownshipName = db.Cities.Where(tt => tt.CityCode == item.Lead_CityTownship).Select(p => p.CityName).FirstOrDefault();
@@ -533,11 +539,11 @@ namespace CallCenter.Controllers
                 item.LeadVillageWardName = db.VillageTracts.Where(tt => tt.VillageTractCode == item.Lead_VillageWard).Select(p => p.VillageTractName).FirstOrDefault();
 
                 // Complain attributes name
-                num = Convert.ToInt32(item.Cmp_Region);
-                item.CmpRegionName = db.Branches.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
+                if (int.TryParse(item.Cmp_Region, out int cmpRegionId))
+                    item.CmpRegionName = db.Branches.Where(tt => tt.Id == cmpRegionId).Select(p => p.Name).FirstOrDefault();
 
-                num = Convert.ToInt32(item.Cmp_Branch);
-                item.CmpBranchName = db.Branches.Where(tt => tt.Id == num).Select(p => p.Name).FirstOrDefault();
+                if (int.TryParse(item.Cmp_Branch, out int cmpBranchId))
+                    item.CmpBranchName = db.Branches.Where(tt => tt.Id == cmpBranchId).Select(p => p.Name).FirstOrDefault();
 
                 item.CmpDistrictName = db.Districts.Where(tt => tt.DistrictCode == item.Cmp_District).Select(p => p.DistrictName).FirstOrDefault();
                 item.CmpCityTownshipName = db.Cities.Where(tt => tt.CityCode == item.Cmp_CityTownship).Select(p => p.CityName).FirstOrDefault();
