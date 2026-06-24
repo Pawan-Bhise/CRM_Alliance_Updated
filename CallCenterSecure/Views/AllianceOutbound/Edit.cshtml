@@ -300,10 +300,19 @@
                     @Html.ValidationMessageFor(model => model.CallType, "", new { @class = "text-danger" })
                 </div>
             </div>
+
+            <div class="form-group row mb-2">
+                @Html.LabelFor(model => model.DetailConversation, htmlAttributes: new { @class = "control-label col-md-4" })
+                <div class="col-md-8">
+                    @Html.TextAreaFor(model => model.DetailConversation, 4, 50, new { @class = "form-control", maxlength = "300" })
+                    @Html.ValidationMessageFor(model => model.DetailConversation, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
             <div class="form-group row mb-2">
                 @Html.LabelFor(model => model.Prev_TicketId, htmlAttributes: new { @class = "col-md-4 col-form-label" })
                 <div class="col-md-8">
-                    @Html.EditorFor(model => model.Prev_TicketId, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.TextBoxFor(model => model.Prev_TicketId, new { @class = "form-control" })
                     @Html.ValidationMessageFor(model => model.Prev_TicketId, "", new { @class = "text-danger" })
                 </div>
             </div>
@@ -368,14 +377,11 @@
         <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
                 <input type="submit" value="Save" class="btn save-btn" />
+                @Html.ActionLink("Back to List", "Index", null, new { @class = "btn btn-secondary" })
             </div>
         </div>
     </div>
 }
-
-<div>
-    @Html.ActionLink("Back to List", "Index")
-</div>
 @section Scripts {
     @Scripts.Render("~/bundles/jqueryval")
     @Scripts.Render("~/bundles/jqueryui")

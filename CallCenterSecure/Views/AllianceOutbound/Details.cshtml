@@ -36,6 +36,10 @@
             <!-- Column 1 -->
             <div class="col-md-6">
                 <div class="detail-row">
+                    <strong class="detail-label">@Html.DisplayNameFor(m => m.DateTime):</strong>
+                    <div class="detail-value">@(Model.DateTime.HasValue ? String.Format("{0:dd/MM/yyyy HH:mm:ss}", Model.DateTime) : "")</div>
+                </div>
+                <div class="detail-row">
                     <strong class="detail-label">@Html.DisplayNameFor(m => m.CustomerCode):</strong>
                     <div class="detail-value">@Html.DisplayFor(m => m.CustomerCode)</div>
                 </div>
@@ -143,6 +147,14 @@
                     <strong class="detail-label">@Html.DisplayNameFor(m => m.CallType):</strong>
                     <div class="detail-value">@Html.DisplayFor(m => m.CallType)</div>
                 </div>
+                <div class="detail-row">
+                    <strong class="detail-label">@Html.DisplayNameFor(m => m.DetailConversation):</strong>
+                    <div class="detail-value">@Html.DisplayFor(m => m.DetailConversation)</div>
+                </div>
+                <div class="detail-row">
+                    <strong class="detail-label">@Html.DisplayNameFor(m => m.Prev_TicketId):</strong>
+                    <div class="detail-value">@Html.DisplayFor(m => m.Prev_TicketId)</div>
+                </div>
                 
 
             </div>
@@ -162,10 +174,12 @@
     
 </div>
 
-<p>
-    @Html.ActionLink("Edit", "Edit", new { id = Model.AllianceOutboundId }) |
-    @Html.ActionLink("Back to List", "Index")
-</p>
+<div class="form-group">
+    <div class="col-md-offset-2 col-md-10">
+        @Html.ActionLink("Edit", "Edit", new { id = Model.AllianceOutboundId }, new { @class = "btn btn-primary" })
+        @Html.ActionLink("Back to List", "Index", null, new { @class = "btn btn-secondary" })
+    </div>
+</div>
 
 @section Scripts {
     <script type="text/javascript">
