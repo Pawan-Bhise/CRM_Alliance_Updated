@@ -120,7 +120,12 @@
             <div class="col-md-6">
                 <div class="detail-row">
                     <strong class="detail-label">@Html.DisplayNameFor(m => m.DateTime):</strong>
-                    <div class="detail-value">@Html.DisplayFor(m => m.DateTime)</div>
+                    <div class="detail-value">@String.Format("{0:dd/MM/yyyy HH:mm:ss}", Model.DateTime)</div>
+                </div>
+
+                <div class="detail-row">
+                    <strong class="detail-label">@Html.DisplayNameFor(m => m.TicketID):</strong>
+                    <div class="detail-value">@Html.DisplayFor(m => m.TicketID)</div>
                 </div>
 
                 <div class="detail-row">
@@ -406,10 +411,12 @@
         </dl>-->
 </div>
 
-<p>
-    @Html.ActionLink("Edit", "Edit", new { id = Model.AllianceInboundId }) |
-    @Html.ActionLink("Back to List", "Index")
-</p>
+<div class="form-group">
+    <div class="col-md-offset-2 col-md-10">
+        @Html.ActionLink("Edit", "Edit", new { id = Model.AllianceInboundId }, new { @class = "btn btn-primary" })
+        @Html.ActionLink("Back to List", "Index", null, new { @class = "btn btn-secondary" })
+    </div>
+</div>
 
 @section Scripts {
     <script type="text/javascript">
@@ -421,22 +428,27 @@
         });
 
         function showHideFields(ticketType) {
-            if (ticketType === 'Lead Ticket') {
+            // Normalize the ticketType for case-insensitive comparison
+            var normalizedType = (ticketType || '').toLowerCase().trim();
+            
+            if (normalizedType.includes('lead')) {
                 $('#leadFields').show();
                 $('#cmpFields').hide();
                 $('#NaFields').hide();
-            } else if (ticketType === 'Complain Ticket') {
+            } else if (normalizedType.includes('complain') || normalizedType.includes('complaint')) {
                 $('#leadFields').hide();
                 $('#NaFields').hide();
                 $('#cmpFields').show();
-            } else if (ticketType === 'NA') {
+            } else if (normalizedType.includes('na') || normalizedType === 'na') {
                 $('#leadFields').hide();
                 $('#cmpFields').hide();
                 $('#NaFields').show();
             } else {
-                $('#leadFields').hide();
-                $('#cmpFields').hide();
-                $('#NaFields').hide();
+                // Show all fields by default if type doesn't match any condition
+                // This ensures data isn't hidden unexpectedly
+                $('#leadFields').show();
+                $('#cmpFields').show();
+                $('#NaFields').show();
             }
         }
     </script>
