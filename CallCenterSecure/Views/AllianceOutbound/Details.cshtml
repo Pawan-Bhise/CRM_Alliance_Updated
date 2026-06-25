@@ -40,6 +40,10 @@
                     <div class="detail-value">@(Model.DateTime.HasValue ? String.Format("{0:dd/MM/yyyy HH:mm:ss}", Model.DateTime) : "")</div>
                 </div>
                 <div class="detail-row">
+                    <strong class="detail-label">@Html.DisplayNameFor(m => m.TicketID):</strong>
+                    <div class="detail-value">@Html.DisplayFor(m => m.TicketID)</div>
+                </div>
+                <div class="detail-row">
                     <strong class="detail-label">@Html.DisplayNameFor(m => m.CustomerCode):</strong>
                     <div class="detail-value">@Html.DisplayFor(m => m.CustomerCode)</div>
                 </div>

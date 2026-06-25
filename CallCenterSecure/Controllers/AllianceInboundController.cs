@@ -571,7 +571,7 @@ namespace CallCenter.Controllers
 
             var allianceInbound = customerRepository.GetData(id);
 
-            ViewBag.TicketType = allianceInbound != null ? allianceInbound.FirstOrDefault().TicketID : "NA";
+            ViewBag.TicketType = allianceInbound != null ? allianceInbound.FirstOrDefault().TicketType : "NA";
 
             if (allianceInbound == null)
             {
