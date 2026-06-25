@@ -15,7 +15,7 @@ namespace CallCenterSecure.Models.Outbound
 
         public string CustomerCode { get; set; }
         public string CustomerNameEnglish { get; set; }
-
+        public string Address { get; set; }
         public string Branch { get; set; }
         public string StateRegion { get; set; }
         public string District { get; set; }

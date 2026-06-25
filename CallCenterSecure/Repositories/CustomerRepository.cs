@@ -38,7 +38,7 @@ namespace CallCenterSecure.Repositories
 
                 ai.Cmp_CustomerCode,ai.Cmp_CustomerName,ai.Cmp_PhoneNumber,
                 rbrb.Region AS Cmp_Region,rbrbb.BranchName AS Cmp_Branch,dsc.Designation AS Cmp_ComplainToDesignation,ai.Cmp_ComplainTo,
-                dscc.Designation AS cmp_complainCCDesignation,
+                dscc.Designation AS cmp_complainCCDesignation, ai.ComplainResolve,
                 ai.Cmp_ComplainCC,ai.Cmp_NatureOfComplaint,ai.Cmp_CaseDetail,ai.Cmp_ComplainStatus,ai.FileName,
                 
                 ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,sd.StateDivisionName AS Lead_StateRegion,
@@ -188,8 +188,8 @@ namespace CallCenterSecure.Repositories
             {
                 con.Open();
 
-                string sql = @"Select ao.AllianceOutboundId,ao.DateTime,ao.TicketID,ao.CustomerCode,ao.CustomerNameEnglish,
-                        b.[Name] AS Branch,sd.StateDivisionName AS StateRegion,COALESCE(ds.DistrictName,ao.District) AS District,c.CityName AS CityTownship,
+                string sql = @"Select ao.AllianceOutboundId,ao.DateTime,ao.TicketID,ao.CustomerCode,ao.CustomerNameEnglish,ao.Address,
+                    b.[Name] AS Branch,sd.StateDivisionName AS StateRegion,COALESCE(ds.DistrictName,ao.District) AS District,c.CityName AS CityTownship,
                         vt.VillageTractName AS VillageTractTown,
 
                        wv.WardEnglishName AS VillageWard,ao.PrimaryMobileNumber, p.[Name] AS ProductInterested,

@@ -574,7 +574,7 @@
                         @Html.LabelFor(model => model.Cmp_ComplainToDesignation)
                     </label>
                     <div class="col-md-8">
-                        @Html.DropDownListFor(model => model.Cmp_ComplainToDesignation, (SelectList)ViewBag.Cmp_Master_Designations, "Select ComplainTo", new { @class = "form-control" })
+                        @Html.DropDownListFor(model => model.Cmp_ComplainToDesignation, (SelectList)ViewBag.ComplainTo, "Select ComplainTo", new { @class = "form-control" })
                         @Html.ValidationMessageFor(model => model.Cmp_ComplainToDesignation, "", new { @class = "text-danger" })
                     </div>
                 </div>
@@ -594,7 +594,7 @@
                         @Html.LabelFor(model => model.Cmp_ComplainCCDesignation)
                     </label>
                     <div class="col-md-8">
-                        @Html.DropDownListFor(model => model.Cmp_ComplainCCDesignation, (SelectList)ViewBag.Cmp_Master_Designations, "Select ComplainCC", new { @class = "form-control" })
+                        @Html.DropDownListFor(model => model.Cmp_ComplainCCDesignation, (SelectList)ViewBag.ComplainTo, "Select ComplainCC", new { @class = "form-control" })
                         @Html.ValidationMessageFor(model => model.Cmp_ComplainCCDesignation, "", new { @class = "text-danger" })
                     </div>
                 </div>
