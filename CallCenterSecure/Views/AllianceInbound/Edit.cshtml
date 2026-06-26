@@ -671,11 +671,10 @@
                 <div class="form-group row mb-2">
                     @Html.LabelFor(model => model.Cmp_ComplainTo, new { @class = "control-label col-md-4" })
                     <div class="col-md-8">
-                        @Html.TextBoxFor(model => model.Cmp_ComplainCC, new { @class = "form-control" })
-                        @Html.ValidationMessageFor(model => model.Cmp_ComplainCC, "", new { @class = "text-danger" })
+                        @Html.TextBoxFor(model => model.Cmp_ComplainTo, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(model => model.Cmp_ComplainTo, "", new { @class = "text-danger" })
                     </div>
                 </div>
-
 
                 <div class="form-group row mb-2">
                     @Html.LabelFor(model => model.Cmp_ComplainCCDesignation, new { @class = "control-label col-md-4" })
@@ -782,91 +781,8 @@
 @section Scripts {
     @Scripts.Render("~/bundles/jqueryval")
     @Scripts.Render("~/bundles/jqueryui")
-<script type="text/javascript">
-
-        $(document).ready(function () {
-
-        $("#RegionId").on("change", function () {
-    //var region = $(this).val();
-    var region = $("#RegionId option:selected").text();
-    $.ajax({
-        url: '@Url.Action("GetBranches", "AllianceInbound")',
-        type: 'GET',
-        data: { region: region },
-        success: function (data) {
-
-            var branchDropdown = $("#BranchId");
-            branchDropdown.empty();
-
-            // Default option
-            branchDropdown.append(
-                $('<option>').val('').text('Select Branch')
-            );
-
-            // Populate returned branches
-            $.each(data, function (i, branch) {
-                branchDropdown.append(
-                    $('<option>')
-                        .val(branch.Value)
-                        .text(branch.Text)
-                );
-            });
-        },
-        error: function () {
-            console.error("Error loading branches.");
-        }
-    });
-});
-            //$('#DateTime').datepicker({
-            //    format: 'yyyy/mm/dd',
-            //    setDate: new Date(),
-            //    autoclose: true
-            //});
-
-            //$('#Lead_DateOfBirth').datepicker({
-            //    format: 'yyyy/mm/dd',
-            //    autoclose: true,
-            //    endDate: new Date(),
-            //    startDate: '-120y',
-            //    startView: 2,      // YEARS view (decades)
-            //    maxViewMode: 2,    // allow decade view
-            //    minViewMode: 0,    // day selection
-            //    todayHighlight: true
-            //});
-
-            //Calculate Age
-            $('#Lead_DateOfBirth').on('changeDate change', function () {
-
-                var dob = $('#Lead_DateOfBirth').datepicker('getDate');
-                calculateAge(dob);
-            });
-
-
-            $('#FollowUpCallBackSchedule').datepicker({
-                format: 'yyyy/mm/dd',
-                setDate: new Date(),
-                autoclose: true
-            });
-            var ticketType = $('#TicketType option:selected').text();
-            showHideFields(ticketType);
-
-            $('#TicketType').change(function () {
-                var ticketType = $('#TicketType option:selected').text();
-                showHideFields(ticketType);
-            });
-
-            //function showHideFields(ticketType) {
-            //    if (ticketType === 'Lead Ticket') {
-            //        $('#leadFields').show();
-            //        $('#cmpFields').hide();
-            //    } else if (ticketType === 'Complain Ticket') {
-            //        $('#leadFields').hide();
-            //        $('#cmpFields').show();
-            //    } else {
-            //        $('#leadFields').hide();
-            //        $('#cmpFields').hide();
-            //    }
-            //}
+    <script type="text/javascript">
+        $(function () {
             function showHideFields(ticketType) {
                 if (ticketType === 'Lead Ticket') {
                     $('#leadFields').show();
@@ -887,87 +803,6 @@
                 }
             }
 
-            $("#StateRegion").change(function () {
-                var stateId = $(this).val();
-                console.log(stateId);
-                $.getJSON('@Url.Action("GetDistricts", "AllianceOutbound")/' + stateId, function (data) {
-                    var districtSelect = $("#District");
-                    districtSelect.empty();
-                    districtSelect.append($('<option/>', { value: '', text: 'Select District' }));
-                    $.each(data, function (index, district) {
-                        districtSelect.append($('<option/>', { value: district.DistrictId, text: district.DistrictName }));
-                    });
-                });
-            });
-
-            // Lead cascading: StateRegion -> District -> CityTownship -> VillageTractTown -> VillageWard
-            $("#Lead_StateRegion").change(function () {
-                var stateCode = $(this).val();
-                $.getJSON('@Url.Action("GetDistricts", "AllianceOutbound")', { stateCode: stateCode }, function (data) {
-                    var districtSelect = $("#Lead_District");
-                    districtSelect.empty();
-                    districtSelect.append($('<option/>', { value: '', text: 'Select District' }));
-                    $.each(data, function (index, district) {
-                        districtSelect.append($('<option/>', { value: district.DistrictCode, text: district.DistrictName }));
-                    });
-                });
-            });
-
-            $("#Lead_District").change(function () {
-                var distCode = $(this).val();
-                $.getJSON('@Url.Action("GetCityTownship", "AllianceOutbound")', { districtCode: distCode }, function (data) {
-                    var citySelect = $("#Lead_CityTownship");
-                    citySelect.empty();
-                    citySelect.append($('<option/>', { value: '', text: 'Select City/Township' }));
-                    $.each(data, function (index, city) {
-                        citySelect.append($('<option/>', { value: city.CityCode, text: city.CityName }));
-                    });
-                });
-            });
-
-            $("#Lead_CityTownship").change(function () {
-                var cityCode = $(this).val();
-                $.getJSON('@Url.Action("GetVillageTrackTown", "AllianceOutbound")', { cityCode: cityCode }, function (data) {
-                    var vtSelect = $("#Lead_VillageTractTown");
-                    vtSelect.empty();
-                    vtSelect.append($('<option/>', { value: '', text: 'Select Village Tract/Town' }));
-                    $.each(data, function (index, vt) {
-                        vtSelect.append($('<option/>', { value: vt.VillageTractCode, text: vt.VillageTractName }));
-                    });
-                });
-            });
-
-            $("#Lead_VillageTractTown").change(function () {
-                var vtCode = $(this).val();
-                $.getJSON('@Url.Action("GetWard", "AllianceOutbound")', { villageTractCode: vtCode }, function (data) {
-                    var wardSelect = $("#Lead_VillageWard");
-                    wardSelect.empty();
-                    wardSelect.append($('<option/>', { value: '', text: 'Select Village/Ward' }));
-                    $.each(data, function (index, w) {
-                        wardSelect.append($('<option/>', { value: w.Ward_PCode, text: w.WardEnglishName }));
-                    });
-                });
-            });
-
-            // Prepopulate Lead Village Ward on edit if values exist
-            (function () {
-                var existingVt = @Html.Raw(Json.Encode(Model?.Lead_VillageTractTown ?? ""));
-                var existingWard = @Html.Raw(Json.Encode(Model?.Lead_VillageWard ?? ""));
-                if (existingVt) {
-                    $.getJSON('@Url.Action("GetWard", "AllianceOutbound")', { villageTractCode: existingVt }, function (data) {
-                        var wardSelect = $("#Lead_VillageWard");
-                        wardSelect.empty();
-                        wardSelect.append($('<option/>', { value: '', text: 'Select Village/Ward' }));
-                        $.each(data, function (index, w) {
-                            wardSelect.append($('<option/>', { value: w.Ward_PCode, text: w.WardEnglishName }));
-                        });
-                        if (existingWard) {
-                            wardSelect.val(existingWard);
-                        }
-                    });
-                }
-            })();
-
             function calculateAge(dob) {
                 if (!dob) {
                     $('#Lead_Age').val('');
@@ -985,20 +820,32 @@
 
                 $('#Lead_Age').val(age);
                 $('input[name="Lead_Age"]').val(age);
-
-                $('input[name="Lead_Age"]').val(age); // hidden field
             }
-        });
 
-            // Cmp Region -> Cmp Branch (same behavior as Region->Branch)
-            $("#Cmp_Region").on("change", function () {
-                var region = $("#Cmp_Region option:selected").text();
+            function updateNRC() {
+                var selectedText = $('#StateDivisionDropdown option:selected').text();
+                var divisionCode = selectedText.split('-')[0].trim();
+                var townshipCode = $('#TownshipDropdown').val();
+                var citizenCode = $('#CitizenDropdown').val();
+                var refNumber = $('#NRCRefNumber').val();
+
+                if (!divisionCode || !townshipCode || !citizenCode || !refNumber) {
+                    $('#NRC').val('');
+                    return;
+                }
+
+                var nrc = divisionCode + '/' + townshipCode + '(' + citizenCode + ')' + refNumber;
+                $('#NRC').val(nrc);
+            }
+
+            $('#RegionId').on('change', function () {
+                var region = $('#RegionId option:selected').text();
                 $.ajax({
                     url: '@Url.Action("GetBranches", "AllianceInbound")',
                     type: 'GET',
                     data: { region: region },
                     success: function (data) {
-                        var branchDropdown = $("#Cmp_Branch");
+                        var branchDropdown = $('#BranchId');
                         branchDropdown.empty();
                         branchDropdown.append($('<option>').val('').text('Select Branch'));
                         $.each(data, function (i, branch) {
@@ -1006,78 +853,165 @@
                         });
                     },
                     error: function () {
-                        console.error("Error loading cmp branches.");
+                        console.error('Error loading branches.');
                     }
                 });
             });
 
-        $(function () {
-            $(".datepicker").datepicker({
-                dateFormat: "yy-mm-dd",
+            $('#FollowUpCallBackSchedule').datepicker({
+                dateFormat: 'yy-mm-dd',
+                setDate: new Date(),
+                autoclose: true
+            });
+
+            $('#Lead_DateOfBirth').on('changeDate change', function () {
+                var dob = $('#Lead_DateOfBirth').datepicker('getDate');
+                calculateAge(dob);
+            });
+
+            var ticketType = $('#TicketType option:selected').text();
+            showHideFields(ticketType);
+
+            $('#TicketType').change(function () {
+                var ticketType = $('#TicketType option:selected').text();
+                showHideFields(ticketType);
+            });
+
+            $('#StateRegion').change(function () {
+                var stateId = $(this).val();
+                $.getJSON('@Url.Action("GetDistricts", "AllianceOutbound")/' + stateId, function (data) {
+                    var districtSelect = $('#District');
+                    districtSelect.empty();
+                    districtSelect.append($('<option/>', { value: '', text: 'Select District' }));
+                    $.each(data, function (index, district) {
+                        districtSelect.append($('<option/>', { value: district.DistrictId, text: district.DistrictName }));
+                    });
+                });
+            });
+
+            $('#Lead_StateRegion').change(function () {
+                var stateCode = $(this).val();
+                $.getJSON('@Url.Action("GetDistricts", "AllianceOutbound")', { stateCode: stateCode }, function (data) {
+                    var districtSelect = $('#Lead_District');
+                    districtSelect.empty();
+                    districtSelect.append($('<option/>', { value: '', text: 'Select District' }));
+                    $.each(data, function (index, district) {
+                        districtSelect.append($('<option/>', { value: district.DistrictCode, text: district.DistrictName }));
+                    });
+                });
+            });
+
+            $('#Lead_District').change(function () {
+                var distCode = $(this).val();
+                $.getJSON('@Url.Action("GetCityTownship", "AllianceOutbound")', { districtCode: distCode }, function (data) {
+                    var citySelect = $('#Lead_CityTownship');
+                    citySelect.empty();
+                    citySelect.append($('<option/>', { value: '', text: 'Select City/Township' }));
+                    $.each(data, function (index, city) {
+                        citySelect.append($('<option/>', { value: city.CityCode, text: city.CityName }));
+                    });
+                });
+            });
+
+            $('#Lead_CityTownship').change(function () {
+                var cityCode = $(this).val();
+                $.getJSON('@Url.Action("GetVillageTrackTown", "AllianceOutbound")', { cityCode: cityCode }, function (data) {
+                    var vtSelect = $('#Lead_VillageTractTown');
+                    vtSelect.empty();
+                    vtSelect.append($('<option/>', { value: '', text: 'Select Village Tract/Town' }));
+                    $.each(data, function (index, vt) {
+                        vtSelect.append($('<option/>', { value: vt.VillageTractCode, text: vt.VillageTractName }));
+                    });
+                });
+            });
+
+            $('#Lead_VillageTractTown').change(function () {
+                var vtCode = $(this).val();
+                $.getJSON('@Url.Action("GetWard", "AllianceOutbound")', { villageTractCode: vtCode }, function (data) {
+                    var wardSelect = $('#Lead_VillageWard');
+                    wardSelect.empty();
+                    wardSelect.append($('<option/>', { value: '', text: 'Select Village/Ward' }));
+                    $.each(data, function (index, w) {
+                        wardSelect.append($('<option/>', { value: w.Ward_PCode, text: w.WardEnglishName }));
+                    });
+                });
+            });
+
+            (function () {
+                var existingVt = @Html.Raw(Json.Encode(Model?.Lead_VillageTractTown ?? ""));
+                var existingWard = @Html.Raw(Json.Encode(Model?.Lead_VillageWard ?? ""));
+                if (existingVt) {
+                    $.getJSON('@Url.Action("GetWard", "AllianceOutbound")', { villageTractCode: existingVt }, function (data) {
+                        var wardSelect = $('#Lead_VillageWard');
+                        wardSelect.empty();
+                        wardSelect.append($('<option/>', { value: '', text: 'Select Village/Ward' }));
+                        $.each(data, function (index, w) {
+                            wardSelect.append($('<option/>', { value: w.Ward_PCode, text: w.WardEnglishName }));
+                        });
+                        if (existingWard) {
+                            wardSelect.val(existingWard);
+                        }
+                    });
+                }
+            })();
+
+            $('#Cmp_Region').on('change', function () {
+                var region = $('#Cmp_Region option:selected').text();
+                $.ajax({
+                    url: '@Url.Action("GetBranches", "AllianceInbound")',
+                    type: 'GET',
+                    data: { region: region },
+                    success: function (data) {
+                        var branchDropdown = $('#Cmp_Branch');
+                        branchDropdown.empty();
+                        branchDropdown.append($('<option>').val('').text('Select Branch'));
+                        $.each(data, function (i, branch) {
+                            branchDropdown.append($('<option>').val(branch.Value).text(branch.Text));
+                        });
+                    },
+                    error: function () {
+                        console.error('Error loading cmp branches.');
+                    }
+                });
+            });
+
+            $('.datepicker').datepicker({
+                dateFormat: 'yy-mm-dd',
                 changeMonth: true,
                 changeYear: true,
-                yearRange: "-120:+0",   // from 120 years ago to current year
-                maxDate: 0,             // prevent future dates
-                autoclose: true         // harmless (ignored by jQuery UI)
+                yearRange: '-120:+0',
+                maxDate: 0,
+                autoclose: true
             });
-        });
 
-            $("#CitizenDropdown").change(updateNRC);
-            $("#StateDivisionDropdown").change(updateNRC);
-            $("#TownshipDropdown").change(updateNRC);
-            $("#NRCRefNumber").on("blur", updateNRC);
+            $('#CitizenDropdown').change(updateNRC);
+            $('#StateDivisionDropdown').change(updateNRC);
+            $('#TownshipDropdown').change(updateNRC);
+            $('#NRCRefNumber').on('blur', updateNRC);
 
-            $("#StateDivisionDropdown").change(function() {
-             var stateDivisionCode = $(this).val();
-
-             var townshipDropdown = $("#TownshipDropdown");
-
-             // Clear Township dropdown first
-             townshipDropdown.empty();
-             townshipDropdown.append('<option value="">Select Township</option>');
-
-
-    if(stateDivisionCode) {
-        $.ajax({
-            url: '@Url.Action("GetTownshipsByStateDivision")',
-            type: 'GET',
-            data: { stateDivisionCode: stateDivisionCode },
-            success: function(data) {
-                var townshipDropdown = $("#TownshipDropdown");
+            $('#StateDivisionDropdown').change(function () {
+                var stateDivisionCode = $(this).val();
+                var townshipDropdown = $('#TownshipDropdown');
                 townshipDropdown.empty();
                 townshipDropdown.append('<option value="">Select Township</option>');
-                $.each(data, function(index, item) {
-                    townshipDropdown.append('<option value="' + item.Value + '">' + item.Text + '</option>');
-                });
-            }
+
+                if (stateDivisionCode) {
+                    $.ajax({
+                        url: '@Url.Action("GetTownshipsByStateDivision")',
+                        type: 'GET',
+                        data: { stateDivisionCode: stateDivisionCode },
+                        success: function (data) {
+                            townshipDropdown.empty();
+                            townshipDropdown.append('<option value="">Select Township</option>');
+                            $.each(data, function (index, item) {
+                                townshipDropdown.append('<option value="' + item.Value + '">' + item.Text + '</option>');
+                            });
+                        }
+                    });
+                } else {
+                    townshipDropdown.empty().append('<option value="">Select Township</option>');
+                }
+            });
         });
-    } else {
-        $("#TownshipDropdown").empty().append('<option value="">Select Township</option>');
-    }
-});
-
-        function updateNRC() {
-
-            var selectedText = $("#StateDivisionDropdown option:selected").text();
-            var divisionCode = selectedText.split('-')[0].trim();
-
-            var townshipCode = $("#TownshipDropdown").val();        // MaKaNa
-            var citizenCode = $("#CitizenDropdown").val();          // N
-            var refNumber = $("#NRCRefNumber").val();               // 123456
-
-            if (!divisionCode || !townshipCode || !citizenCode || !refNumber) {
-                $("#NRC").val("");
-                return;
-            }
-
-            var nrc = divisionCode + "/" +
-                townshipCode + "(" +
-                citizenCode + ")" +
-                refNumber;
-
-            $("#NRC").val(nrc);
-
-        }
-</script>
+    </script>
 }
-
