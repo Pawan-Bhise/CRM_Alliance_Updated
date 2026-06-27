@@ -79,5 +79,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<NatureOfComplaints> NatureOfComplaint { get; set; }
     public DbSet<SurveyTemplateType> SurveyTemplateTypes { get; set; }
     public DbSet<SurveyCustomerData> SurveyCustomerData { get; set; }
+    public DbSet<SurveyForm> SurveyForms { get; set; }
+    public DbSet<SurveyQuestion> SurveyQuestions { get; set; }
+    public DbSet<SurveyQuestionOption> SurveyQuestionOptions { get; set; }
+    public DbSet<SurveyGridRow> SurveyGridRows { get; set; }
+    public DbSet<SurveyGridColumn> SurveyGridColumns { get; set; }
+    public DbSet<SurveyFormResponse> SurveyFormResponses { get; set; }
+    public DbSet<SurveyFormAnswer> SurveyFormAnswers { get; set; }
+    public DbSet<SurveyFormGridAnswer> SurveyFormGridAnswers { get; set; }
 
 }

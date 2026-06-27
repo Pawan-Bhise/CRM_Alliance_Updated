@@ -1,0 +1,210 @@
+@model CallCenterSecure.Models.ViewModels.SurveyFormResponseSubmitViewModel
+@using CallCenterSecure.Models.ViewModels
+
+@{
+    ViewBag.Title = "Fill Survey Response";
+}
+
+<h2>Fill Survey Response</h2>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@TempData["ErrorMessage"]</div>
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div><strong>Template:</strong> @Model.SurveyTemplateName</div>
+        <div><strong>Form:</strong> @Model.SurveyFormTitle</div>
+        <div><strong>Category:</strong> @Model.SurveyFormCategory</div>
+        @if (!string.IsNullOrWhiteSpace(Model.SurveyFormDescription))
+        {
+            <div><strong>Description:</strong> @Model.SurveyFormDescription</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.SelectedCustomerName))
+        {
+            <div><strong>Customer:</strong> @Model.SelectedCustomerName (@Model.SelectedCustomerCode)</div>
+        }
+    </div>
+</div>
+
+@using (Html.BeginForm("Fill", "SurveyResponse", FormMethod.Post, new { enctype = "multipart/form-data", id = "surveyResponseForm" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    @Html.HiddenFor(x => x.SurveyFormId)
+    @Html.HiddenFor(x => x.SurveyTemplateId)
+    @Html.HiddenFor(x => x.SurveyCustomerDataId)
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    @Html.LabelFor(x => x.RespondentName, new { @class = "form-label" })
+                    @Html.TextBoxFor(x => x.RespondentName, new { @class = "form-control" })
+                </div>
+                <div class="col-md-6">
+                    @Html.LabelFor(x => x.RespondentMobile, new { @class = "form-label" })
+                    @Html.TextBoxFor(x => x.RespondentMobile, new { @class = "form-control" })
+                </div>
+            </div>
+        </div>
+    </div>
+
+    for (var i = 0; i < Model.Questions.Count; i++)
+    {
+        var question = Model.Questions[i];
+        <div class="card mb-3">
+            <div class="card-body">
+                @Html.HiddenFor(x => x.Questions[i].SurveyQuestionId)
+                @Html.HiddenFor(x => x.Questions[i].QuestionType)
+                @Html.HiddenFor(x => x.Questions[i].DisplayOrder)
+                @Html.HiddenFor(x => x.Questions[i].QuestionText)
+                @Html.HiddenFor(x => x.Questions[i].IsRequired)
+                @Html.HiddenFor(x => x.Questions[i].MinValue)
+                @Html.HiddenFor(x => x.Questions[i].MaxValue)
+                @Html.HiddenFor(x => x.Questions[i].MinLabel)
+                @Html.HiddenFor(x => x.Questions[i].MaxLabel)
+
+                <label class="form-label fw-bold">@(i + 1). @question.QuestionText @(question.IsRequired ? "*" : "")</label>
+
+                @if (question.QuestionType == SurveyQuestionTypeCatalog.ShortAnswer)
+                {
+                    @Html.TextBoxFor(x => x.Questions[i].AnswerText, new { @class = "form-control" })
+                }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.Paragraph)
+                {
+                    @Html.TextAreaFor(x => x.Questions[i].AnswerText, new { @class = "form-control", rows = 3 })
+                }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.MultipleChoice)
+                {
+                    foreach (var option in question.Options)
+                    {
+                        <div class="form-check">
+                            @Html.RadioButton("Questions[" + i + "].SelectedOption", option.OptionText, question.SelectedOption == option.OptionText, new { @class = "form-check-input" })
+                            <label class="form-check-label">@option.OptionText</label>
+                        </div>
+                    }
+                }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.Checkboxes)
+                {
+                    foreach (var option in question.Options)
+                    {
+                        <div class="form-check">
+                            @if ((question.SelectedOptions ?? new List<string>()).Contains(option.OptionText))
+                            {
+                                <input class="form-check-input" type="checkbox" name="Questions[@i].SelectedOptions" value="@option.OptionText" checked="checked" />
+                            }
+                            else
+                            {
+                                <input class="form-check-input" type="checkbox" name="Questions[@i].SelectedOptions" value="@option.OptionText" />
+                            }
+                            <label class="form-check-label">@option.OptionText</label>
+                        </div>
+                    }
+                }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.Dropdown)
+                {
+                    @Html.DropDownList(
+                        "Questions[" + i + "].SelectedOption",
+                        new SelectList(question.Options, "OptionText", "OptionText", question.SelectedOption),
+                        "Select",
+                        new { @class = "form-control" })
+                }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.FileUpload)
+                {
+                    <input type="file" name="Questions[@i].File" class="form-control response-upload" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" />
+                    <div class="form-text">Allowed: pdf, doc, docx, xls, xlsx, jpg, jpeg, png (max 5MB)</div>
+                }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale)
+                {
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-3">@question.MinValue @question.MinLabel</div>
+                        <div class="col-md-6">
+                            @Html.TextBoxFor(x => x.Questions[i].AnswerText, new { @class = "form-control", type = "number", min = question.MinValue, max = question.MaxValue })
+                        </div>
+                        <div class="col-md-3 text-end">@question.MaxValue @question.MaxLabel</div>
+                    </div>
+                }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.MultipleChoiceGrid)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Row</th>
+                                    @for (var c = 0; c < question.GridColumns.Count; c++)
+                                    {
+                                        <th>@question.GridColumns[c]</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (var r = 0; r < question.GridAnswers.Count; r++)
+                                {
+                                    @Html.HiddenFor(x => x.Questions[i].GridAnswers[r].RowText)
+                                    <tr>
+                                        <td>@question.GridAnswers[r].RowText</td>
+                                        @for (var c = 0; c < question.GridColumns.Count; c++)
+                                        {
+                                            var col = question.GridColumns[c];
+                                            <td class="text-center">
+                                                @Html.RadioButton("Questions[" + i + "].GridAnswers[" + r + "].SelectedColumnText", col, question.GridAnswers[r].SelectedColumnText == col)
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.CheckboxGrid)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Row</th>
+                                    @for (var c = 0; c < question.GridColumns.Count; c++)
+                                    {
+                                        <th>@question.GridColumns[c]</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (var r = 0; r < question.GridAnswers.Count; r++)
+                                {
+                                    @Html.HiddenFor(x => x.Questions[i].GridAnswers[r].RowText)
+                                    <tr>
+                                        <td>@question.GridAnswers[r].RowText</td>
+                                        @for (var c = 0; c < question.GridColumns.Count; c++)
+                                        {
+                                            var col = question.GridColumns[c];
+                                            <td class="text-center">
+                                                @if ((question.GridAnswers[r].SelectedColumnTexts ?? new List<string>()).Contains(col))
+                                                {
+                                                    <input type="checkbox" name="Questions[@i].GridAnswers[@r].SelectedColumnTexts" value="@col" checked="checked" />
+                                                }
+                                                else
+                                                {
+                                                    <input type="checkbox" name="Questions[@i].GridAnswers[@r].SelectedColumnTexts" value="@col" />
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Submit Response</button>
+    @Html.RouteLink("Back", "SurveyResponse", new { action = "Index", templateId = Model.SurveyTemplateId, formId = Model.SurveyFormId, customerId = Model.SurveyCustomerDataId }, new { @class = "btn btn-secondary ms-2" })
+}
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/survey-response.js")"></script>
+}

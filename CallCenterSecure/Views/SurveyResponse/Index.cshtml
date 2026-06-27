@@ -1,0 +1,65 @@
+@model CallCenterSecure.Models.ViewModels.SurveyFormResponseListViewModel
+
+@{
+    ViewBag.Title = "Survey Response";
+}
+
+<h2>Survey Response</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@TempData["ErrorMessage"]</div>
+}
+
+<p class="text-muted">Select template, form, and optional customer to start filling response.</p>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Survey Template</label>
+                <select id="templateId" class="form-control">
+                    <option value="">Select template</option>
+                    @foreach (var item in Model.Templates)
+                    {
+                        <option value="@item.Id" @(Model.SelectedTemplateId == item.Id ? "selected" : "")>@item.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Survey Form</label>
+                <select id="formId" class="form-control">
+                    <option value="">Select form</option>
+                    @foreach (var item in Model.Forms)
+                    {
+                        <option value="@item.Id" @(Model.SelectedFormId == item.Id ? "selected" : "")>@item.Title</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Customer (optional)</label>
+                <select id="customerId" class="form-control">
+                    <option value="">Select customer</option>
+                    @foreach (var item in Model.Customers)
+                    {
+                        <option value="@item.Id" @(Model.SelectedCustomerId == item.Id ? "selected" : "")>@item.ClientName (@item.CustomerCode)</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button type="button" id="btnStartResponse" class="btn btn-primary">Start Response</button>
+            @Html.RouteLink("Back to Survey Forms", "SurveyForm", new { action = "Index", templateId = Model.SelectedTemplateId }, new { @class = "btn btn-secondary ms-2" })
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/survey-response.js")"></script>
+}

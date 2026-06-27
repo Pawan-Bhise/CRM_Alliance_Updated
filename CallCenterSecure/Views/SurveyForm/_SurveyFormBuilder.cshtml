@@ -1,0 +1,273 @@
+@model CallCenterSecure.Models.ViewModels.SurveyFormBuilderViewModel
+@using CallCenterSecure.Models.ViewModels
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                @Html.LabelFor(m => m.Title, new { @class = "form-label" })
+                @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = "Enter form title" })
+                @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger" })
+            </div>
+            <div class="col-md-6">
+                @Html.LabelFor(m => m.Category, new { @class = "form-label" })
+                @Html.TextBoxFor(m => m.Category, new { @class = "form-control", placeholder = "Enter category" })
+                @Html.ValidationMessageFor(m => m.Category, "", new { @class = "text-danger" })
+            </div>
+            <div class="col-12">
+                @Html.LabelFor(m => m.Description, new { @class = "form-label" })
+                @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = 3, placeholder = "Optional description" })
+                @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h4 class="mb-0">Questions</h4>
+    <button type="button" id="btnAddQuestion" class="btn btn-success btn-sm">Add Question</button>
+</div>
+
+<div id="questionContainer">
+    @if (Model.Questions != null)
+    {
+        for (var i = 0; i < Model.Questions.Count; i++)
+        {
+            var q = Model.Questions[i];
+            <div class="card mb-3 question-item">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong class="question-title">Question @(i + 1)</strong>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-move-up">Up</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-move-down">Down</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-question">Delete</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <input type="hidden" class="question-id" value="@q.Id" />
+                    <input type="hidden" class="question-order" value="@q.DisplayOrder" />
+
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label class="form-label">Question Text</label>
+                            <textarea class="form-control question-text" rows="2">@q.QuestionText</textarea>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Question Type</label>
+                            <select class="form-control question-type">
+                                <option value="@SurveyQuestionTypeCatalog.ShortAnswer" @(q.QuestionType == SurveyQuestionTypeCatalog.ShortAnswer ? "selected" : "")>@SurveyQuestionTypeCatalog.ShortAnswer</option>
+                                <option value="@SurveyQuestionTypeCatalog.Paragraph" @(q.QuestionType == SurveyQuestionTypeCatalog.Paragraph ? "selected" : "")>@SurveyQuestionTypeCatalog.Paragraph</option>
+                                <option value="@SurveyQuestionTypeCatalog.MultipleChoice" @(q.QuestionType == SurveyQuestionTypeCatalog.MultipleChoice ? "selected" : "")>@SurveyQuestionTypeCatalog.MultipleChoice</option>
+                                <option value="@SurveyQuestionTypeCatalog.Checkboxes" @(q.QuestionType == SurveyQuestionTypeCatalog.Checkboxes ? "selected" : "")>@SurveyQuestionTypeCatalog.Checkboxes</option>
+                                <option value="@SurveyQuestionTypeCatalog.Dropdown" @(q.QuestionType == SurveyQuestionTypeCatalog.Dropdown ? "selected" : "")>@SurveyQuestionTypeCatalog.Dropdown</option>
+                                <option value="@SurveyQuestionTypeCatalog.FileUpload" @(q.QuestionType == SurveyQuestionTypeCatalog.FileUpload ? "selected" : "")>@SurveyQuestionTypeCatalog.FileUpload</option>
+                                <option value="@SurveyQuestionTypeCatalog.LinearScale" @(q.QuestionType == SurveyQuestionTypeCatalog.LinearScale ? "selected" : "")>@SurveyQuestionTypeCatalog.LinearScale</option>
+                                <option value="@SurveyQuestionTypeCatalog.MultipleChoiceGrid" @(q.QuestionType == SurveyQuestionTypeCatalog.MultipleChoiceGrid ? "selected" : "")>@SurveyQuestionTypeCatalog.MultipleChoiceGrid</option>
+                                <option value="@SurveyQuestionTypeCatalog.CheckboxGrid" @(q.QuestionType == SurveyQuestionTypeCatalog.CheckboxGrid ? "selected" : "")>@SurveyQuestionTypeCatalog.CheckboxGrid</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input question-required" @(q.IsRequired ? "checked" : "") />
+                                <label class="form-check-label">Required</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="option-wrapper mt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Options</strong>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-add-option">Add Option</button>
+                        </div>
+                        <div class="option-list">
+                            @for (var j = 0; j < q.Options.Count; j++)
+                            {
+                                <div class="input-group mb-2 option-item">
+                                    <input type="hidden" class="option-id" value="@q.Options[j].Id" />
+                                    <input type="hidden" class="option-order" value="@q.Options[j].DisplayOrder" />
+                                    <input type="text" class="form-control option-text" value="@q.Options[j].OptionText" placeholder="Option text" />
+                                    <button type="button" class="btn btn-outline-danger btn-remove-option">Remove</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="linear-wrapper mt-3 row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label">Min Value</label>
+                            <input type="number" class="form-control scale-min-value" value="@(q.MinValue.HasValue ? q.MinValue.Value.ToString() : "")" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Max Value</label>
+                            <input type="number" class="form-control scale-max-value" value="@(q.MaxValue.HasValue ? q.MaxValue.Value.ToString() : "")" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Min Label</label>
+                            <input type="text" class="form-control scale-min-label" value="@q.MinLabel" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Max Label</label>
+                            <input type="text" class="form-control scale-max-label" value="@q.MaxLabel" />
+                        </div>
+                    </div>
+
+                    <div class="grid-wrapper mt-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <strong>Grid Rows</strong>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-grid-row">Add Row</button>
+                                </div>
+                                <div class="grid-row-list">
+                                    @for (var k = 0; k < q.GridRows.Count; k++)
+                                    {
+                                        <div class="input-group mb-2 grid-row-item">
+                                            <input type="hidden" class="grid-row-id" value="@q.GridRows[k].Id" />
+                                            <input type="hidden" class="grid-row-order" value="@q.GridRows[k].DisplayOrder" />
+                                            <input type="text" class="form-control grid-row-text" value="@q.GridRows[k].Text" placeholder="Row text" />
+                                            <button type="button" class="btn btn-outline-danger btn-remove-grid-row">Remove</button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <strong>Grid Columns</strong>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-grid-column">Add Column</button>
+                                </div>
+                                <div class="grid-column-list">
+                                    @for (var k = 0; k < q.GridColumns.Count; k++)
+                                    {
+                                        <div class="input-group mb-2 grid-column-item">
+                                            <input type="hidden" class="grid-column-id" value="@q.GridColumns[k].Id" />
+                                            <input type="hidden" class="grid-column-order" value="@q.GridColumns[k].DisplayOrder" />
+                                            <input type="text" class="form-control grid-column-text" value="@q.GridColumns[k].Text" placeholder="Column text" />
+                                            <button type="button" class="btn btn-outline-danger btn-remove-grid-column">Remove</button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<template id="questionTemplate">
+    <div class="card mb-3 question-item">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong class="question-title">Question</strong>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-move-up">Up</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-move-down">Down</button>
+                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-question">Delete</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <input type="hidden" class="question-id" value="0" />
+            <input type="hidden" class="question-order" value="0" />
+
+            <div class="row g-3">
+                <div class="col-md-7">
+                    <label class="form-label">Question Text</label>
+                    <textarea class="form-control question-text" rows="2"></textarea>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Question Type</label>
+                    <select class="form-control question-type">
+                        <option value="@SurveyQuestionTypeCatalog.ShortAnswer">@SurveyQuestionTypeCatalog.ShortAnswer</option>
+                        <option value="@SurveyQuestionTypeCatalog.Paragraph">@SurveyQuestionTypeCatalog.Paragraph</option>
+                        <option value="@SurveyQuestionTypeCatalog.MultipleChoice">@SurveyQuestionTypeCatalog.MultipleChoice</option>
+                        <option value="@SurveyQuestionTypeCatalog.Checkboxes">@SurveyQuestionTypeCatalog.Checkboxes</option>
+                        <option value="@SurveyQuestionTypeCatalog.Dropdown">@SurveyQuestionTypeCatalog.Dropdown</option>
+                        <option value="@SurveyQuestionTypeCatalog.FileUpload">@SurveyQuestionTypeCatalog.FileUpload</option>
+                        <option value="@SurveyQuestionTypeCatalog.LinearScale">@SurveyQuestionTypeCatalog.LinearScale</option>
+                        <option value="@SurveyQuestionTypeCatalog.MultipleChoiceGrid">@SurveyQuestionTypeCatalog.MultipleChoiceGrid</option>
+                        <option value="@SurveyQuestionTypeCatalog.CheckboxGrid">@SurveyQuestionTypeCatalog.CheckboxGrid</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input question-required" />
+                        <label class="form-check-label">Required</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="option-wrapper mt-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <strong>Options</strong>
+                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-option">Add Option</button>
+                </div>
+                <div class="option-list"></div>
+            </div>
+
+            <div class="linear-wrapper mt-3 row g-2">
+                <div class="col-md-3">
+                    <label class="form-label">Min Value</label>
+                    <input type="number" class="form-control scale-min-value" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Max Value</label>
+                    <input type="number" class="form-control scale-max-value" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Min Label</label>
+                    <input type="text" class="form-control scale-min-label" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Max Label</label>
+                    <input type="text" class="form-control scale-max-label" />
+                </div>
+            </div>
+
+            <div class="grid-wrapper mt-3">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Grid Rows</strong>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-add-grid-row">Add Row</button>
+                        </div>
+                        <div class="grid-row-list"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Grid Columns</strong>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-add-grid-column">Add Column</button>
+                        </div>
+                        <div class="grid-column-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="optionTemplate">
+    <div class="input-group mb-2 option-item">
+        <input type="hidden" class="option-id" value="0" />
+        <input type="hidden" class="option-order" value="0" />
+        <input type="text" class="form-control option-text" placeholder="Option text" />
+        <button type="button" class="btn btn-outline-danger btn-remove-option">Remove</button>
+    </div>
+</template>
+
+<template id="gridRowTemplate">
+    <div class="input-group mb-2 grid-row-item">
+        <input type="hidden" class="grid-row-id" value="0" />
+        <input type="hidden" class="grid-row-order" value="0" />
+        <input type="text" class="form-control grid-row-text" placeholder="Row text" />
+        <button type="button" class="btn btn-outline-danger btn-remove-grid-row">Remove</button>
+    </div>
+</template>
+
+<template id="gridColumnTemplate">
+    <div class="input-group mb-2 grid-column-item">
+        <input type="hidden" class="grid-column-id" value="0" />
+        <input type="hidden" class="grid-column-order" value="0" />
+        <input type="text" class="form-control grid-column-text" placeholder="Column text" />
+        <button type="button" class="btn btn-outline-danger btn-remove-grid-column">Remove</button>
+    </div>
+</template>
