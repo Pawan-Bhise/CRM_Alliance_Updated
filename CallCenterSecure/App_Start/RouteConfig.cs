@@ -20,6 +20,18 @@ namespace CallCenterSecure
             );
 
             routes.MapRoute(
+                name: "SurveyForm",
+                url: "Survey/SurveyForm/{action}/{id}",
+                defaults: new { controller = "SurveyForm", action = "Index", id = UrlParameter.Optional }
+            );
+
+            routes.MapRoute(
+                name: "SurveyResponse",
+                url: "Survey/SurveyResponse/{action}/{id}",
+                defaults: new { controller = "SurveyResponse", action = "Index", id = UrlParameter.Optional }
+            );
+
+            routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
                 defaults: new { controller = "Account", action = "Login", id = UrlParameter.Optional }

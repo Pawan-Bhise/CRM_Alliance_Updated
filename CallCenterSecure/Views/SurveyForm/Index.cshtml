@@ -1,0 +1,85 @@
+@model CallCenterSecure.Models.ViewModels.SurveyFormIndexViewModel
+
+@{
+    ViewBag.Title = "Survey Forms";
+}
+
+<h2>Survey Forms</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@using (Html.BeginForm("Index", "SurveyForm", FormMethod.Get, new { @class = "row g-2 mb-3" }))
+{
+    <div class="col-md-5">
+        @Html.Label("Survey Template", htmlAttributes: new { @class = "form-label" })
+        @Html.DropDownList("templateId", new SelectList(Model.SurveyTemplates, "Value", "Text", Model.SelectedSurveyTemplateId), "Select a template", new { @class = "form-control", onchange = "this.form.submit();" })
+    </div>
+    <div class="col-md-7 d-flex align-items-end">
+        @if (Model.SelectedSurveyTemplateId.HasValue)
+        {
+            @Html.RouteLink("Create New Form", "SurveyForm", new { action = "Create", templateId = Model.SelectedSurveyTemplateId.Value }, new { @class = "btn btn-primary me-2" })
+        }
+        @Html.RouteLink("Back to Templates", "SurveyTemplate", new { action = "Index" }, new { @class = "btn btn-secondary" })
+    </div>
+}
+
+@if (!Model.SelectedSurveyTemplateId.HasValue)
+{
+    <div class="alert alert-warning">No survey templates found. Please create a survey template first.</div>
+}
+else
+{
+    <table id="surveyFormTable" class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th style="width: 80px;">#</th>
+                <th>Form Title</th>
+                <th>Category</th>
+                <th>Questions</th>
+                <th>Last Updated</th>
+                <th style="width: 130px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Forms)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Title</td>
+                    <td>@item.Category</td>
+                    <td>@item.QuestionCount</td>
+                    <td>@((item.ModifiedDate ?? item.CreatedDate).ToString("yyyy-MM-dd HH:mm"))</td>
+                    <td>
+                        @Html.RouteLink("Edit", "SurveyForm", new { action = "Edit", id = item.Id }, new { @class = "btn btn-sm btn-primary" })
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            if ($('#surveyFormTable tbody tr').length > 0) {
+                $('#surveyFormTable').DataTable({
+                    pageLength: 10,
+                    order: [],
+                    responsive: true
+                });
+            }
+        });
+    </script>
+}
