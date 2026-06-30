@@ -8,15 +8,18 @@ namespace CallCenterSecure.Models.ViewModels
     {
         public SurveyFormResponseListViewModel()
         {
+            Categories = new List<SurveyCategoryLookupViewModel>();
             Templates = new List<SurveyTemplateLookupViewModel>();
             Forms = new List<SurveyFormLookupViewModel>();
             Customers = new List<SurveyCustomerLookupViewModel>();
         }
 
+        public int? SelectedCategoryId { get; set; }
         public int? SelectedTemplateId { get; set; }
         public int? SelectedFormId { get; set; }
         public int? SelectedCustomerId { get; set; }
 
+        public List<SurveyCategoryLookupViewModel> Categories { get; set; }
         public List<SurveyTemplateLookupViewModel> Templates { get; set; }
         public List<SurveyFormLookupViewModel> Forms { get; set; }
         public List<SurveyCustomerLookupViewModel> Customers { get; set; }
@@ -31,6 +34,8 @@ namespace CallCenterSecure.Models.ViewModels
 
         public int SurveyFormId { get; set; }
         public int SurveyTemplateId { get; set; }
+        public int? SurveyCategoryId { get; set; }
+        public string SurveyCategoryName { get; set; }
         public int? SurveyCustomerDataId { get; set; }
 
         public string SurveyTemplateName { get; set; }
@@ -93,6 +98,12 @@ namespace CallCenterSecure.Models.ViewModels
     }
 
     public class SurveyTemplateLookupViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class SurveyCategoryLookupViewModel
     {
         public int Id { get; set; }
         public string Name { get; set; }

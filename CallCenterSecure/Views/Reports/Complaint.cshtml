@@ -1,0 +1,76 @@
+@model CallCenterSecure.Models.ViewModels.ComplaintReportViewModel
+
+@{
+    ViewBag.Title = "Complaint Report";
+}
+
+<h2>Complaint Report</h2>
+
+@using (Html.BeginForm("Complaint", "Reports", FormMethod.Get, new { @class = "card mb-3" }))
+{
+    <div class="card-body row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">From</label>
+            <input type="date" name="fromDate" value="@(Model.Filter.FromDate.HasValue ? Model.Filter.FromDate.Value.ToString("yyyy-MM-dd") : "")" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">To</label>
+            <input type="date" name="toDate" value="@(Model.Filter.ToDate.HasValue ? Model.Filter.ToDate.Value.ToString("yyyy-MM-dd") : "")" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            @Html.ActionLink("Reset", "Complaint", "Reports", null, new { @class = "btn btn-outline-secondary ms-2" })
+        </div>
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Total Tickets</div><h3>@Model.TotalTickets</h3></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Average Response Time</div><h3>@(Model.AverageResponseTimeMinutes.HasValue ? Model.AverageResponseTimeMinutes.Value.ToString("0.00") + " min" : "N/A")</h3></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Resolution Rate</div><h3>@Model.ResolutionRate.ToString("0.00")%</h3></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">CSAT</div><h3>N/A</h3></div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6"><div class="card"><div class="card-body"><div class="text-muted">Resolved</div><h3>@Model.ResolvedCount</h3></div></div></div>
+    <div class="col-md-6"><div class="card"><div class="card-body"><div class="text-muted">Unresolved</div><h3>@Model.UnresolvedCount</h3></div></div></div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5>Complaint Category Breakdown</h5>
+        <table class="table table-sm">
+            <thead><tr><th>Category</th><th>Count</th><th>%</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.CategoryBreakdown)
+            {
+                <tr><td>@item.Label</td><td>@item.Count</td><td>@item.Percentage.ToString("0.00")%</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5>Top 5 Branches by Complaints</h5>
+        @if (Model.TopBranches.Any())
+        {
+            <table class="table table-sm">
+                <thead><tr><th>Branch</th><th>Count</th><th>%</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.TopBranches)
+                {
+                    <tr><td>@item.Label</td><td>@item.Count</td><td>@item.Percentage.ToString("0.00")%</td></tr>
+                }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert alert-info mb-0">No branch data found for the selected period.</div>
+        }
+    </div>
+</div>
+
+<div class="alert alert-secondary">@Model.Notes</div>

@@ -1,0 +1,86 @@
+@model CallCenterSecure.Models.ViewModels.EnquiryReportViewModel
+
+@{
+    ViewBag.Title = "Enquiry Report";
+}
+
+<h2>Enquiry Report</h2>
+
+@using (Html.BeginForm("Enquiry", "Reports", FormMethod.Get, new { @class = "card mb-3" }))
+{
+    <div class="card-body row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">From</label>
+            <input type="date" name="fromDate" value="@(Model.Filter.FromDate.HasValue ? Model.Filter.FromDate.Value.ToString("yyyy-MM-dd") : "")" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">To</label>
+            <input type="date" name="toDate" value="@(Model.Filter.ToDate.HasValue ? Model.Filter.ToDate.Value.ToString("yyyy-MM-dd") : "")" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            @Html.ActionLink("Reset", "Enquiry", "Reports", null, new { @class = "btn btn-outline-secondary ms-2" })
+        </div>
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Total Enquiries</div><h3>@Model.TotalEnquiries</h3></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Total Lead Creation</div><h3>@Model.TotalLeadCreation</h3></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Average Response Time</div><h3>@(Model.AverageResponseTimeMinutes.HasValue ? Model.AverageResponseTimeMinutes.Value.ToString("0.00") + " min" : "N/A")</h3></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Lead Status Buckets</div><h3>@Model.LeadStatusBreakdown.Count</h3></div></div></div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5>Lead Status Breakdown</h5>
+        <table class="table table-sm">
+            <thead><tr><th>Status</th><th>Count</th><th>%</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.LeadStatusBreakdown)
+            {
+                <tr><td>@item.Label</td><td>@item.Count</td><td>@item.Percentage.ToString("0.00")%</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5>Enquiry Category Breakdown</h5>
+        <table class="table table-sm">
+            <thead><tr><th>Category</th><th>Count</th><th>%</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.CategoryBreakdown)
+            {
+                <tr><td>@item.Label</td><td>@item.Count</td><td>@item.Percentage.ToString("0.00")%</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5>Top 5 Locations by Enquiry</h5>
+        @if (Model.TopLocations.Any())
+        {
+            <table class="table table-sm">
+                <thead><tr><th>Location</th><th>Count</th><th>%</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.TopLocations)
+                {
+                    <tr><td>@item.Label</td><td>@item.Count</td><td>@item.Percentage.ToString("0.00")%</td></tr>
+                }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert alert-info mb-0">No location data found for the selected period.</div>
+        }
+    </div>
+</div>
+
+<div class="alert alert-secondary">@Model.Notes</div>

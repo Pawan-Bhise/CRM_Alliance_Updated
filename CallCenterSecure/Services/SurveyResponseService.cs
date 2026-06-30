@@ -30,9 +30,10 @@ namespace CallCenterSecure.Services
             _surveyResponseRepository = surveyResponseRepository;
         }
 
-        public SurveyFormResponseListViewModel GetStartModel(int? templateId, int? formId, int? customerId)
+        public SurveyFormResponseListViewModel GetStartModel(int? templateId, int? formId, int? customerId, int? categoryId)
         {
             var model = new SurveyFormResponseListViewModel();
+            model.Categories = GetCategories();
             var templates = _surveyResponseRepository.GetTemplates().ToList();
 
             model.Templates = templates.Select(x => new SurveyTemplateLookupViewModel
@@ -65,11 +66,12 @@ namespace CallCenterSecure.Services
 
             model.SelectedFormId = formId;
             model.SelectedCustomerId = customerId;
+            model.SelectedCategoryId = categoryId;
 
             return model;
         }
 
-        public SurveyFormResponseSubmitViewModel BuildSubmitModel(int formId, int? customerId)
+        public SurveyFormResponseSubmitViewModel BuildSubmitModel(int formId, int? customerId, int? categoryId)
         {
             var form = _surveyResponseRepository.GetFormWithQuestions(formId);
             if (form == null)
@@ -81,6 +83,8 @@ namespace CallCenterSecure.Services
             {
                 SurveyFormId = form.Id,
                 SurveyTemplateId = form.SurveyTemplateId,
+                SurveyCategoryId = categoryId,
+                SurveyCategoryName = GetCategories().FirstOrDefault(x => x.Id == categoryId.GetValueOrDefault()) != null ? GetCategories().FirstOrDefault(x => x.Id == categoryId.GetValueOrDefault()).Name : string.Empty,
                 SurveyCustomerDataId = customerId,
                 SurveyTemplateName = form.SurveyTemplate != null ? form.SurveyTemplate.Name : string.Empty,
                 SurveyFormTitle = form.Title,
@@ -109,7 +113,7 @@ namespace CallCenterSecure.Services
 
         public SurveyFormResponseSubmitViewModel RehydrateSubmitModel(SurveyFormResponseSubmitViewModel model)
         {
-            var latest = BuildSubmitModel(model.SurveyFormId, model.SurveyCustomerDataId);
+            var latest = BuildSubmitModel(model.SurveyFormId, model.SurveyCustomerDataId, model.SurveyCategoryId);
             if (latest == null)
             {
                 return null;
@@ -117,6 +121,7 @@ namespace CallCenterSecure.Services
 
             latest.RespondentName = model.RespondentName;
             latest.RespondentMobile = model.RespondentMobile;
+            latest.SurveyCategoryName = model.SurveyCategoryName;
 
             var answerLookup = (model.Questions ?? new List<SurveyQuestionResponseViewModel>())
                 .ToDictionary(x => x.SurveyQuestionId, x => x);
@@ -171,6 +176,7 @@ namespace CallCenterSecure.Services
             var response = new SurveyFormResponse
             {
                 SurveyFormId = hydrated.SurveyFormId,
+                SurveyCategoryId = hydrated.SurveyCategoryId,
                 SurveyCustomerDataId = hydrated.SurveyCustomerDataId,
                 RespondentName = TrimOrNull(hydrated.RespondentName),
                 RespondentMobile = TrimOrNull(hydrated.RespondentMobile),
@@ -217,6 +223,15 @@ namespace CallCenterSecure.Services
 
             _surveyResponseRepository.AddResponse(response);
             _surveyResponseRepository.SaveChanges();
+        }
+
+        private static List<SurveyCategoryLookupViewModel> GetCategories()
+        {
+            return new List<SurveyCategoryLookupViewModel>
+            {
+                new SurveyCategoryLookupViewModel { Id = 1, Name = "Complaint" },
+                new SurveyCategoryLookupViewModel { Id = 2, Name = "Enquiry" }
+            };
         }
 
         private static SurveyQuestionResponseViewModel MapQuestion(SurveyQuestion question)

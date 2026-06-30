@@ -18,6 +18,8 @@ namespace CallCenterSecure.Models
         [Required]
         public int SurveyFormId { get; set; }
 
+        public int? SurveyCategoryId { get; set; }
+
         public int? SurveyCustomerDataId { get; set; }
 
         [MaxLength(100)]
