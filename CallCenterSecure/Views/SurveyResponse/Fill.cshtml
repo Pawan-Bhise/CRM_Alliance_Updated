@@ -34,10 +34,16 @@
     @Html.ValidationSummary(true, "", new { @class = "text-danger" })
     @Html.HiddenFor(x => x.SurveyFormId)
     @Html.HiddenFor(x => x.SurveyTemplateId)
+    @Html.HiddenFor(x => x.SurveyCategoryId)
     @Html.HiddenFor(x => x.SurveyCustomerDataId)
 
     <div class="card mb-3">
         <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4"><strong>Category:</strong> @Model.SurveyCategoryName</div>
+                <div class="col-md-4"><strong>Template:</strong> @Model.SurveyTemplateName</div>
+                <div class="col-md-4"><strong>Form:</strong> @Model.SurveyFormTitle</div>
+            </div>
             <div class="row g-3">
                 <div class="col-md-6">
                     @Html.LabelFor(x => x.RespondentName, new { @class = "form-label" })

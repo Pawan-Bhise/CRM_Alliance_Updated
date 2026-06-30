@@ -1,6 +1,7 @@
 CREATE TABLE [dbo].[SurveyFormResponse](
     [Id] [int] IDENTITY(1,1) NOT NULL,
     [SurveyFormId] [int] NOT NULL,
+    [SurveyCategoryId] [int] NULL,
     [SurveyCustomerDataId] [int] NULL,
     [RespondentName] [nvarchar](100) NULL,
     [RespondentMobile] [nvarchar](50) NULL,

@@ -418,6 +418,7 @@
     <Compile Include="Migrations\202601011000000_AddSurveyCustomerDataTable.cs" />
     <Compile Include="Migrations\202606261200000_AddSurveyFormBuilderTables.cs" />
     <Compile Include="Migrations\202606261400000_AddSurveyResponseTables.cs" />
+    <Compile Include="Migrations\202606281200000_AddSurveyCategoryToSurveyFormResponse.cs" />
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AllianceOutbound.cs" />
     <Compile Include="Models\AllianceProduct.cs" />
@@ -463,6 +464,7 @@
     <Compile Include="Models\SurveyCustomerData.cs" />
     <Compile Include="Models\ViewModels\SurveyFormBuilderViewModels.cs" />
     <Compile Include="Models\ViewModels\SurveyFormResponseViewModels.cs" />
+    <Compile Include="Models\ViewModels\ReportingViewModels.cs" />
     <Compile Include="Models\InboundCall.cs" />
     <Compile Include="Models\KnowledgeCenterModel.cs" />
     <Compile Include="Models\LoginViewModel.cs" />
@@ -477,6 +479,8 @@
     <Compile Include="Repositories\ISurveyResponseRepository.cs" />
     <Compile Include="Repositories\SurveyResponseRepository.cs" />
     <Compile Include="Repositories\CustomerRepository.cs" />
+    <Compile Include="Services\ReportingService.cs" />
+    <Compile Include="Controllers\ReportsController.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\all.min.css" />
@@ -682,6 +686,9 @@
     <Content Include="Views\SurveyForm\_SurveyFormBuilder.cshtml" />
     <Content Include="Views\SurveyResponse\Index.cshtml" />
     <Content Include="Views\SurveyResponse\Fill.cshtml" />
+    <Content Include="Views\Reports\Index.cshtml" />
+    <Content Include="Views\Reports\Complaint.cshtml" />
+    <Content Include="Views\Reports\Enquiry.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

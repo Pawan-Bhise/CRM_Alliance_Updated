@@ -114,6 +114,16 @@
                             </ul>
                         </li>
 
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Reports
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+                                <li>@Html.RouteLink("Complaint Report", "Reports", new { action = "Complaint" }, new { @class = "dropdown-item" })</li>
+                                <li>@Html.RouteLink("Enquiry Report", "Reports", new { action = "Enquiry" }, new { @class = "dropdown-item" })</li>
+                            </ul>
+                        </li>
+
                         @*<li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="srDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     SR Management

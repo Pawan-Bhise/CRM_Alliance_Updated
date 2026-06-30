@@ -37,11 +37,12 @@
 
     function initStartPage() {
         var template = byId('templateId');
+        var category = byId('categoryId');
         var form = byId('formId');
         var customer = byId('customerId');
         var btnStart = byId('btnStartResponse');
 
-        if (!template || !form || !btnStart) {
+        if (!template || !category || !form || !btnStart) {
             return;
         }
 
@@ -68,12 +69,17 @@
         });
 
         btnStart.addEventListener('click', function () {
+            if (!category.value) {
+                alert('Please select a category.');
+                return;
+            }
+
             if (!form.value) {
                 alert('Please select a survey form.');
                 return;
             }
 
-            var url = '/Survey/SurveyResponse/Fill?formId=' + encodeURIComponent(form.value);
+            var url = '/Survey/SurveyResponse/Fill?formId=' + encodeURIComponent(form.value) + '&categoryId=' + encodeURIComponent(category.value);
             if (customer && customer.value) {
                 url += '&customerId=' + encodeURIComponent(customer.value);
             }

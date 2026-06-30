@@ -16,12 +16,22 @@
     <div class="alert alert-danger" role="alert">@TempData["ErrorMessage"]</div>
 }
 
-<p class="text-muted">Select template, form, and optional customer to start filling response.</p>
+<p class="text-muted">Select category, template, form, and optional customer to start filling response.</p>
 
 <div class="card mb-3">
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <label class="form-label">Category</label>
+                <select id="categoryId" class="form-control">
+                    <option value="">Select category</option>
+                    @foreach (var item in Model.Categories)
+                    {
+                        <option value="@item.Id" @(Model.SelectedCategoryId == item.Id ? "selected" : "")>@item.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
                 <label class="form-label">Survey Template</label>
                 <select id="templateId" class="form-control">
                     <option value="">Select template</option>
@@ -31,7 +41,7 @@
                     }
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label">Survey Form</label>
                 <select id="formId" class="form-control">
                     <option value="">Select form</option>
@@ -41,7 +51,7 @@
                     }
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label">Customer (optional)</label>
                 <select id="customerId" class="form-control">
                     <option value="">Select customer</option>

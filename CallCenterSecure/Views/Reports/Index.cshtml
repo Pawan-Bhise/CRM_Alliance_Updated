@@ -1,0 +1,26 @@
+@{
+    ViewBag.Title = "Reports";
+}
+
+<h2>Reports</h2>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Complaint Report</h5>
+                <p class="card-text">Summary metrics and breakdowns for complaint records.</p>
+                @Html.ActionLink("Open Complaint Report", "Complaint", "Reports", null, new { @class = "btn btn-primary" })
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Enquiry Report</h5>
+                <p class="card-text">Summary metrics and breakdowns for enquiry/lead records.</p>
+                @Html.ActionLink("Open Enquiry Report", "Enquiry", "Reports", null, new { @class = "btn btn-primary" })
+            </div>
+        </div>
+    </div>
+</div>

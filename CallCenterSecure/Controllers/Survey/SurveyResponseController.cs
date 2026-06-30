@@ -19,15 +19,15 @@ namespace CallCenterSecure.Controllers.Survey
             _surveyResponseService = surveyResponseService;
         }
 
-        public ActionResult Index(int? templateId, int? formId, int? customerId)
+        public ActionResult Index(int? templateId, int? formId, int? customerId, int? categoryId)
         {
-            var model = _surveyResponseService.GetStartModel(templateId, formId, customerId);
+            var model = _surveyResponseService.GetStartModel(templateId, formId, customerId, categoryId);
             return View(model);
         }
 
-        public ActionResult Fill(int formId, int? customerId)
+        public ActionResult Fill(int formId, int? customerId, int? categoryId)
         {
-            var model = _surveyResponseService.BuildSubmitModel(formId, customerId);
+            var model = _surveyResponseService.BuildSubmitModel(formId, customerId, categoryId);
             if (model == null)
             {
                 return HttpNotFound();
@@ -55,7 +55,7 @@ namespace CallCenterSecure.Controllers.Survey
             {
                 _surveyResponseService.Submit(rehydrated, User != null && User.Identity != null ? User.Identity.Name : null, Server);
                 TempData["SuccessMessage"] = "Survey response submitted successfully.";
-                return RedirectToAction("Index", new { templateId = rehydrated.SurveyTemplateId, formId = rehydrated.SurveyFormId, customerId = rehydrated.SurveyCustomerDataId });
+                return RedirectToAction("Index", new { templateId = rehydrated.SurveyTemplateId, formId = rehydrated.SurveyFormId, customerId = rehydrated.SurveyCustomerDataId, categoryId = rehydrated.SurveyCategoryId });
             }
             catch (Exception ex)
             {
@@ -67,7 +67,7 @@ namespace CallCenterSecure.Controllers.Survey
         [HttpGet]
         public JsonResult GetForms(int templateId)
         {
-            var model = _surveyResponseService.GetStartModel(templateId, null, null);
+            var model = _surveyResponseService.GetStartModel(templateId, null, null, null);
             var data = model.Forms.Select(x => new { x.Id, x.Title }).ToList();
             return Json(data, JsonRequestBehavior.AllowGet);
         }
@@ -75,7 +75,7 @@ namespace CallCenterSecure.Controllers.Survey
         [HttpGet]
         public JsonResult GetCustomers(int templateId)
         {
-            var model = _surveyResponseService.GetStartModel(templateId, null, null);
+            var model = _surveyResponseService.GetStartModel(templateId, null, null, null);
             var data = model.Customers.Select(x => new { x.Id, Name = x.ClientName + " (" + x.CustomerCode + ")" }).ToList();
             return Json(data, JsonRequestBehavior.AllowGet);
         }
