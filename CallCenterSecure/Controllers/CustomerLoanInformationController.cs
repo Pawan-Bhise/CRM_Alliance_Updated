@@ -1,20 +1,23 @@
-﻿using System;
+﻿using CallCenter.Models;
+using CallCenterSecure.Models;
+using CallCenterSecure.Models.CustomerLoan;
+using CallCenterSecure.Repositories;
+using ClosedXML.Excel;
+using CsvHelper;
+using CsvHelper.Configuration;
+using DocumentFormat.OpenXml.Wordprocessing;
+using OfficeOpenXml;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Entity;
+using System.Data.SqlClient;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
-using CallCenter.Models;
-using CallCenterSecure.Models;
-using CsvHelper.Configuration;
-using OfficeOpenXml;
-using ClosedXML.Excel;
-using CallCenterSecure.Repositories;
-using CallCenterSecure.Models.CustomerLoan;
-using System.Globalization;
-using DocumentFormat.OpenXml.Wordprocessing;
 
 
 namespace CallCenter.Controllers
@@ -65,97 +68,212 @@ namespace CallCenter.Controllers
         }
 
         // POST: CustomerLoanInformation/Upload
+        //[HttpPost]
+        //public ActionResult Upload(HttpPostedFileBase file)
+        //{
+        //    if (file == null || file.ContentLength == 0)
+        //    {
+        //        ModelState.AddModelError("", "Please select an Excel file");
+        //        return View();
+        //    }
+
+        //    var customers = new List<CustomerLoan>();
+
+        //    using (var workbook = new XLWorkbook(file.InputStream))
+        //    {
+        //        var ws = workbook.Worksheet(1);
+        //        var rows = ws.RangeUsed().RowsUsed().Skip(1); // skip header
+
+        //        foreach (var row in rows)
+        //        {
+        //            var customer = new CustomerLoan
+        //            {
+        //                GroupCode = ExcelHelper.GetInt(ws, row.RowNumber(), 1),
+        //                COCashAccount = ExcelHelper.GetString(ws, row.RowNumber(), 2),
+        //                COStaffId = ExcelHelper.GetString(ws, row.RowNumber(), 3),
+        //                COName = ExcelHelper.GetString(ws, row.RowNumber(), 4),
+        //                ProductCode = ExcelHelper.GetString(ws, row.RowNumber(), 5),
+        //                ProductName = ExcelHelper.GetString(ws, row.RowNumber(), 6),
+        //                ProductCategory = ExcelHelper.GetString(ws, row.RowNumber(), 7),
+        //                CustomerCode = ExcelHelper.GetString(ws, row.RowNumber(), 8),
+        //                AccountNumber = ExcelHelper.GetString(ws, row.RowNumber(), 9),
+        //                BranchCode = ExcelHelper.GetInt(ws, row.RowNumber(), 10) ?? 0,
+        //                BranchName = ExcelHelper.GetString(ws, row.RowNumber(), 11),
+        //                ParentBranchName = ExcelHelper.GetString(ws, row.RowNumber(), 12),
+        //                RegionalBranchName = ExcelHelper.GetString(ws, row.RowNumber(), 13),
+        //                DateOfActOpening = ExcelHelper.GetDate(ws, row.RowNumber(), 14),
+        //                Salutation = ExcelHelper.GetInt(ws, row.RowNumber(), 15) ?? 0,
+        //                CustomerName = ExcelHelper.GetString(ws, row.RowNumber(), 16),
+        //                Gender = ExcelHelper.GetString(ws, row.RowNumber(), 17),
+        //                FatherName = ExcelHelper.GetString(ws, row.RowNumber(), 18),
+        //                AreaType = ExcelHelper.GetString(ws, row.RowNumber(), 19),
+        //                Area = ExcelHelper.GetString(ws, row.RowNumber(), 20),
+        //                VillageWard = ExcelHelper.GetString(ws, row.RowNumber(), 21),
+        //                VillageTractTown = ExcelHelper.GetString(ws, row.RowNumber(), 22),
+        //                CityTownship = ExcelHelper.GetString(ws, row.RowNumber(), 23),
+        //                District = ExcelHelper.GetString(ws, row.RowNumber(), 24),
+        //                RegionState = ExcelHelper.GetString(ws, row.RowNumber(), 25),
+        //                NRC = ExcelHelper.GetString(ws, row.RowNumber(), 26),
+        //                MobileNo1 = ExcelHelper.GetString(ws, row.RowNumber(), 27),
+        //                MobileNo2 = ExcelHelper.GetString(ws, row.RowNumber(), 28),
+        //                CustomerStatus = ExcelHelper.GetString(ws, row.RowNumber(), 29),
+        //                FreezeStatus = ExcelHelper.GetString(ws, row.RowNumber(), 30),
+        //                DisbursedAmount = ExcelHelper.GetString(ws, row.RowNumber(), 31),
+        //                LPFAmount = ExcelHelper.GetString(ws, row.RowNumber(), 32),
+        //                Installments = ExcelHelper.GetInt(ws, row.RowNumber(), 33),
+        //                InstallmentAmount = ExcelHelper.GetString(ws, row.RowNumber(), 34),
+        //                PaymentFrequency = ExcelHelper.GetString(ws, row.RowNumber(), 35),
+        //                PrincipleOutstanding = ExcelHelper.GetString(ws, row.RowNumber(), 36),
+        //                InterestReceivable = ExcelHelper.GetString(ws, row.RowNumber(), 37),
+        //                NonCreditCustomer = ExcelHelper.GetString(ws, row.RowNumber(), 38),
+        //                VoluntaryDepositor = ExcelHelper.GetString(ws, row.RowNumber(), 39),
+        //                PovertyScore = ExcelHelper.GetString(ws, row.RowNumber(), 40),
+        //                HouseholdSurplusIncome = ExcelHelper.GetString(ws, row.RowNumber(), 41),
+        //                Purpose = ExcelHelper.GetString(ws, row.RowNumber(), 42),
+        //                BusinessCategory = ExcelHelper.GetString(ws, row.RowNumber(), 43),
+        //                BusinessActivity = ExcelHelper.GetString(ws, row.RowNumber(), 44),
+        //                AccountStatus = ExcelHelper.GetString(ws, row.RowNumber(), 45),
+        //                MaturitydateLoan = ExcelHelper.GetDate(ws, row.RowNumber(), 46),
+        //                PARClient = ExcelHelper.GetString(ws, row.RowNumber(), 47),
+        //                DayOfOverDue = ExcelHelper.GetInt(ws, row.RowNumber(), 48),
+        //                AreaStatus = ExcelHelper.GetString(ws, row.RowNumber(), 49)
+        //                // CreatedOn will use default value
+        //            };
+
+        //            customers.Add(customer);
+        //        }
+
+        //        if (customers.Count > 0) {
+        //            //remove prev data
+        //            db.CustomerLoan.RemoveRange(db.CustomerLoan);
+        //            db.SaveChanges();
+        //        }
+
+        //        // Bulk insert                
+        //        db.CustomerLoan.AddRange(customers);
+        //        db.SaveChanges();
+
+        //        TempData["SuccessMessage"] = "Record uoloaded successfully!";
+        //    }
+
+        //    return RedirectToAction("Index");
+        //}
+
         [HttpPost]
         public ActionResult Upload(HttpPostedFileBase file)
         {
             if (file == null || file.ContentLength == 0)
             {
-                ModelState.AddModelError("", "Please select an Excel file");
+                ModelState.AddModelError("", "Please select a CSV file");
+                return View();
+            }
+            if (!file.FileName.EndsWith(".csv"))
+            {
+                ModelState.AddModelError("", "Please upload a CSV file.");
                 return View();
             }
 
-            var customers = new List<CustomerLoan>();
-
-            using (var workbook = new XLWorkbook(file.InputStream))
+            try
             {
-                var ws = workbook.Worksheet(1);
-                var rows = ws.RangeUsed().RowsUsed().Skip(1); // skip header
+                // Remove old data
+                db.Database.ExecuteSqlCommand("TRUNCATE TABLE CustomerLoans");
 
-                foreach (var row in rows)
+                var dataTable = CreateCustomerLoanTable();
+
+                const int batchSize = 5000;
+                int count = 0;
+
+                using (var reader = new StreamReader(file.InputStream))
+                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
-                    var customer = new CustomerLoan
+                    csv.Read();
+                    csv.ReadHeader();
+
+                    while (csv.Read())
                     {
-                        GroupCode = ExcelHelper.GetInt(ws, row.RowNumber(), 1),
-                        COCashAccount = ExcelHelper.GetString(ws, row.RowNumber(), 2),
-                        COStaffId = ExcelHelper.GetString(ws, row.RowNumber(), 3),
-                        COName = ExcelHelper.GetString(ws, row.RowNumber(), 4),
-                        ProductCode = ExcelHelper.GetString(ws, row.RowNumber(), 5),
-                        ProductName = ExcelHelper.GetString(ws, row.RowNumber(), 6),
-                        ProductCategory = ExcelHelper.GetString(ws, row.RowNumber(), 7),
-                        CustomerCode = ExcelHelper.GetString(ws, row.RowNumber(), 8),
-                        AccountNumber = ExcelHelper.GetString(ws, row.RowNumber(), 9),
-                        BranchCode = ExcelHelper.GetInt(ws, row.RowNumber(), 10) ?? 0,
-                        BranchName = ExcelHelper.GetString(ws, row.RowNumber(), 11),
-                        ParentBranchName = ExcelHelper.GetString(ws, row.RowNumber(), 12),
-                        RegionalBranchName = ExcelHelper.GetString(ws, row.RowNumber(), 13),
-                        DateOfActOpening = ExcelHelper.GetDate(ws, row.RowNumber(), 14),
-                        Salutation = ExcelHelper.GetInt(ws, row.RowNumber(), 15) ?? 0,
-                        CustomerName = ExcelHelper.GetString(ws, row.RowNumber(), 16),
-                        Gender = ExcelHelper.GetString(ws, row.RowNumber(), 17),
-                        FatherName = ExcelHelper.GetString(ws, row.RowNumber(), 18),
-                        AreaType = ExcelHelper.GetString(ws, row.RowNumber(), 19),
-                        Area = ExcelHelper.GetString(ws, row.RowNumber(), 20),
-                        VillageWard = ExcelHelper.GetString(ws, row.RowNumber(), 21),
-                        VillageTractTown = ExcelHelper.GetString(ws, row.RowNumber(), 22),
-                        CityTownship = ExcelHelper.GetString(ws, row.RowNumber(), 23),
-                        District = ExcelHelper.GetString(ws, row.RowNumber(), 24),
-                        RegionState = ExcelHelper.GetString(ws, row.RowNumber(), 25),
-                        NRC = ExcelHelper.GetString(ws, row.RowNumber(), 26),
-                        MobileNo1 = ExcelHelper.GetString(ws, row.RowNumber(), 27),
-                        MobileNo2 = ExcelHelper.GetString(ws, row.RowNumber(), 28),
-                        CustomerStatus = ExcelHelper.GetString(ws, row.RowNumber(), 29),
-                        FreezeStatus = ExcelHelper.GetString(ws, row.RowNumber(), 30),
-                        DisbursedAmount = ExcelHelper.GetString(ws, row.RowNumber(), 31),
-                        LPFAmount = ExcelHelper.GetString(ws, row.RowNumber(), 32),
-                        Installments = ExcelHelper.GetInt(ws, row.RowNumber(), 33),
-                        InstallmentAmount = ExcelHelper.GetString(ws, row.RowNumber(), 34),
-                        PaymentFrequency = ExcelHelper.GetString(ws, row.RowNumber(), 35),
-                        PrincipleOutstanding = ExcelHelper.GetString(ws, row.RowNumber(), 36),
-                        InterestReceivable = ExcelHelper.GetString(ws, row.RowNumber(), 37),
-                        NonCreditCustomer = ExcelHelper.GetString(ws, row.RowNumber(), 38),
-                        VoluntaryDepositor = ExcelHelper.GetString(ws, row.RowNumber(), 39),
-                        PovertyScore = ExcelHelper.GetString(ws, row.RowNumber(), 40),
-                        HouseholdSurplusIncome = ExcelHelper.GetString(ws, row.RowNumber(), 41),
-                        Purpose = ExcelHelper.GetString(ws, row.RowNumber(), 42),
-                        BusinessCategory = ExcelHelper.GetString(ws, row.RowNumber(), 43),
-                        BusinessActivity = ExcelHelper.GetString(ws, row.RowNumber(), 44),
-                        AccountStatus = ExcelHelper.GetString(ws, row.RowNumber(), 45),
-                        MaturitydateLoan = ExcelHelper.GetDate(ws, row.RowNumber(), 46),
-                        PARClient = ExcelHelper.GetString(ws, row.RowNumber(), 47),
-                        DayOfOverDue = ExcelHelper.GetInt(ws, row.RowNumber(), 48),
-                        AreaStatus = ExcelHelper.GetString(ws, row.RowNumber(), 49)
-                        // CreatedOn will use default value
-                    };
+                        dataTable.Rows.Add(
+                            GetInt(csv, "GroupCode"),
+                            csv.GetField<string>("COCashAccount"),
+                            csv.GetField<string>("COStaffId"),
+                            csv.GetField<string>("COName"),
+                            csv.GetField<string>("ProductCode"),
+                            csv.GetField<string>("ProductName"),
+                            csv.GetField<string>("ProductCategory"),
+                            csv.GetField<string>("CustomerCode"),
+                            csv.GetField<string>("AccountNumber"),
+                            GetInt(csv, "BranchCode"),  
+                            csv.GetField<string>("BranchName"),
+                            csv.GetField<string>("ParentBranchName"),
+                            csv.GetField<string>("RegionalBranchName"),
 
-                    customers.Add(customer);
+                            ParseDate(csv.GetField("DateOfActOpening")),
+
+                            GetInt(csv, "Salutation"),
+                            csv.GetField<string>("CustomerName"),
+                            csv.GetField<string>("Gender"),
+                            csv.GetField<string>("FatherName"),
+                            csv.GetField<string>("AreaType"),
+                            csv.GetField<string>("Area"),
+                            csv.GetField<string>("VillageWard"),
+                            csv.GetField<string>("VillageTractTown"),
+                            csv.GetField<string>("CityTownship"),
+                            csv.GetField<string>("District"),
+                            csv.GetField<string>("RegionState"),
+                            csv.GetField<string>("NRC"),
+                            csv.GetField<string>("MobileNo1"),
+                            csv.GetField<string>("MobileNo2"),
+                            csv.GetField<string>("CustomerStatus"),
+                            csv.GetField<string>("FreezeStatus"),
+                            csv.GetField<string>("DisbursedAmount"),
+                            csv.GetField<string>("LPFAmount"),
+                            GetInt(csv, "Installments"),
+                            csv.GetField<string>("InstallmentAmount"),
+                            csv.GetField<string>("PaymentFrequency"),
+                            csv.GetField<string>("PrincipleOutstanding"),
+                            csv.GetField<string>("InterestReceivable"),
+                            csv.GetField<string>("NonCreditCustomer"),
+                            csv.GetField<string>("VoluntaryDepositor"),
+                            csv.GetField<string>("PovertyScore"),
+                            csv.GetField<string>("HouseholdSurplusIncome"),
+                            csv.GetField<string>("Purpose"),
+                            csv.GetField<string>("BusinessCategory"),
+                            csv.GetField<string>("BusinessActivity"),
+                            csv.GetField<string>("AccountStatus"),
+
+                            ParseDate(csv.GetField("MaturitydateLoan")),
+
+                            csv.GetField<string>("PARClient"),
+                            GetInt(csv, "DayOfOverDue"),
+                            csv.GetField<string>("AreaStatus")
+                        );
+
+                        count++;
+
+                        if (count % batchSize == 0)
+                        {
+                            BulkInsert(dataTable);
+                            dataTable.Clear();
+                        }
+                    }
+
+                    // Insert remaining rows
+                    if (dataTable.Rows.Count > 0)
+                    {
+                        BulkInsert(dataTable);
+                    }
                 }
 
-                if (customers.Count > 0) {
-                    //remove prev data
-                    db.CustomerLoan.RemoveRange(db.CustomerLoan);
-                    db.SaveChanges();
-                }
-
-                // Bulk insert                
-                db.CustomerLoan.AddRange(customers);
-                db.SaveChanges();
-
-                TempData["SuccessMessage"] = "Record uoloaded successfully!";
+                TempData["SuccessMessage"] = "Records uploaded successfully!";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
             }
 
             return RedirectToAction("Index");
         }
-        
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create(CustomerLoanInformation customerLoanInformation, HttpPostedFileBase PI_CustomerPhoto)
@@ -398,6 +516,98 @@ namespace CallCenter.Controllers
             return ws.Cells[row, col].Text?
                 .Replace("\u00A0", "") // remove non-breaking space
                 .Trim();
+        }
+
+        private DataTable CreateCustomerLoanTable()
+        {
+            var dt = new DataTable();
+
+            dt.Columns.Add("GroupCode", typeof(int));
+            dt.Columns.Add("COCashAccount", typeof(string));
+            dt.Columns.Add("COStaffId", typeof(string));
+            dt.Columns.Add("COName", typeof(string));
+            dt.Columns.Add("ProductCode", typeof(string));
+            dt.Columns.Add("ProductName", typeof(string));
+            dt.Columns.Add("ProductCategory", typeof(string));
+            dt.Columns.Add("CustomerCode", typeof(string));
+            dt.Columns.Add("AccountNumber", typeof(string));
+            dt.Columns.Add("BranchCode", typeof(int));
+            dt.Columns.Add("BranchName", typeof(string));
+            dt.Columns.Add("ParentBranchName", typeof(string));
+            dt.Columns.Add("RegionalBranchName", typeof(string));
+            dt.Columns.Add("DateOfActOpening", typeof(DateTime));
+            dt.Columns.Add("Salutation", typeof(int));
+            dt.Columns.Add("CustomerName", typeof(string));
+            dt.Columns.Add("Gender", typeof(string));
+            dt.Columns.Add("FatherName", typeof(string));
+            dt.Columns.Add("AreaType", typeof(string));
+            dt.Columns.Add("Area", typeof(string));
+            dt.Columns.Add("VillageWard", typeof(string));
+            dt.Columns.Add("VillageTractTown", typeof(string));
+            dt.Columns.Add("CityTownship", typeof(string));
+            dt.Columns.Add("District", typeof(string));
+            dt.Columns.Add("RegionState", typeof(string));
+            dt.Columns.Add("NRC", typeof(string));
+            dt.Columns.Add("MobileNo1", typeof(string));
+            dt.Columns.Add("MobileNo2", typeof(string));
+            dt.Columns.Add("CustomerStatus", typeof(string));
+            dt.Columns.Add("FreezeStatus", typeof(string));
+            dt.Columns.Add("DisbursedAmount", typeof(string));
+            dt.Columns.Add("LPFAmount", typeof(string));
+            dt.Columns.Add("Installments", typeof(int));
+            dt.Columns.Add("InstallmentAmount", typeof(string));
+            dt.Columns.Add("PaymentFrequency", typeof(string));
+            dt.Columns.Add("PrincipleOutstanding", typeof(string));
+            dt.Columns.Add("InterestReceivable", typeof(string));
+            dt.Columns.Add("NonCreditCustomer", typeof(string));
+            dt.Columns.Add("VoluntaryDepositor", typeof(string));
+            dt.Columns.Add("PovertyScore", typeof(string));
+            dt.Columns.Add("HouseholdSurplusIncome", typeof(string));
+            dt.Columns.Add("Purpose", typeof(string));
+            dt.Columns.Add("BusinessCategory", typeof(string));
+            dt.Columns.Add("BusinessActivity", typeof(string));
+            dt.Columns.Add("AccountStatus", typeof(string));
+            dt.Columns.Add("MaturitydateLoan", typeof(DateTime));
+            dt.Columns.Add("PARClient", typeof(string));
+            dt.Columns.Add("DayOfOverDue", typeof(int));
+            dt.Columns.Add("AreaStatus", typeof(string));
+
+            return dt;
+        }
+
+        private void BulkInsert(DataTable dt)
+        {
+            var connectionString = db.Database.Connection.ConnectionString;
+
+            using (var bulkCopy = new SqlBulkCopy(connectionString))
+            {
+                bulkCopy.DestinationTableName = "dbo.CustomerLoans";
+                bulkCopy.BatchSize = 5000;
+                bulkCopy.BulkCopyTimeout = 0;
+
+                bulkCopy.WriteToServer(dt);
+            }
+        }
+        private object ParseDate(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return DBNull.Value;
+
+            DateTime date;
+            if (DateTime.TryParse(value, out date))
+                return date;
+
+            return DBNull.Value;
+        }
+
+        private int GetInt(CsvReader csv, string columnName)
+        {
+            var value = csv.GetField(columnName);
+
+            if (string.IsNullOrWhiteSpace(value))
+                return 0;
+
+            return Convert.ToInt32(value.Trim());
         }
 
     }

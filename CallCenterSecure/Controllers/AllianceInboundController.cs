@@ -674,7 +674,8 @@ namespace CallCenter.Controllers
                 var excludedColumns = new HashSet<string>
                 {
                     "TicketTypeId",
-                    "TicketStatusId"
+                    "TicketStatusId",
+                    "Cmp_Designation"
                 };
 
                 var sb = new StringBuilder();
