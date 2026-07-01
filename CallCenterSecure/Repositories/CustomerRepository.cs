@@ -130,7 +130,7 @@ namespace CallCenterSecure.Repositories
 
                 ai.Cmp_CustomerCode,ai.Cmp_CustomerName,ai.Cmp_PhoneNumber,
                 rbrb.Region AS Cmp_Region, rbrbb.BranchName AS Cmp_Branch, dsc.Designation AS Cmp_ComplainToDesignation,ai.Cmp_ComplainTo,
-                dscc.Designation AS cmp_complainCCDesignation,cds.Description AS Cmp_Designation,ai.ComplainResolve,
+                dscc.Designation AS cmp_complainCCDesignation,ai.ComplainResolve,
                 ai.Cmp_ComplainCC,ncs.ComplaintsDescrption AS Cmp_NatureOfComplaint,ai.Cmp_CaseDetail,ai.Cmp_ComplainStatus,ai.FileName,
                 
                 ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,sd.StateDivisionName AS Lead_StateRegion,
