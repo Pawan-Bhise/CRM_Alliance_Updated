@@ -542,7 +542,6 @@
     <Content Include="Scripts\survey-response.js" />
     <Content Include="Scripts\Sql\SurveyFormBuilder.sql" />
     <Content Include="Scripts\Sql\SurveyResponse.sql" />
-    <Content Include="Uploads\blankTextFile.txt" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
