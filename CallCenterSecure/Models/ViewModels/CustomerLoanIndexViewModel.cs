@@ -1,0 +1,16 @@
+using System;
+using System.Collections.Generic;
+using CustomerLoanModel = CallCenterSecure.Models.CustomerLoan.CustomerLoan;
+
+namespace CallCenterSecure.Models.ViewModels
+{
+    public class CustomerLoanIndexViewModel
+    {
+        public IEnumerable<CustomerLoanModel> Items { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalCount { get; set; }
+
+        public int TotalPages => PageSize > 0 ? (int)Math.Ceiling(TotalCount / (double)PageSize) : 0;
+    }
+}

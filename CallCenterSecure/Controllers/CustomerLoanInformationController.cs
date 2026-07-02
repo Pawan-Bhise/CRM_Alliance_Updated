@@ -1,6 +1,7 @@
 ﻿using CallCenter.Models;
 using CallCenterSecure.Models;
 using CallCenterSecure.Models.CustomerLoan;
+using CallCenterSecure.Models.ViewModels;
 using CallCenterSecure.Repositories;
 using ClosedXML.Excel;
 using CsvHelper;
@@ -31,9 +32,24 @@ namespace CallCenter.Controllers
         private CustomerRepository customerRepository = new CustomerRepository();
 
         // GET: CustomerLoanInformation
-        public ActionResult Index()
-        {            
-            return View(db.CustomerLoan.ToList());
+        public ActionResult Index(int page = 1, int pageSize = 20)
+        {
+            if (page < 1) page = 1;
+            if (pageSize <= 0) pageSize = 20;
+
+            var query = db.CustomerLoan.AsNoTracking().OrderBy(c => c.Id);
+            var totalCount = query.Count();
+            var items = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            var model = new CustomerLoanIndexViewModel
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
+
+            return View(model);
         }
 
         // GET: CustomerLoanInformation/Details/5

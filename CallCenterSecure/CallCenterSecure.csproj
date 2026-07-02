@@ -470,6 +470,7 @@
     <Compile Include="Models\ViewModels\SurveyFormBuilderViewModels.cs" />
     <Compile Include="Models\ViewModels\SurveyFormResponseViewModels.cs" />
     <Compile Include="Models\ViewModels\ReportingViewModels.cs" />
+    <Compile Include="Models\ViewModels\CustomerLoanIndexViewModel.cs" />
     <Compile Include="Models\InboundCall.cs" />
     <Compile Include="Models\KnowledgeCenterModel.cs" />
     <Compile Include="Models\LoginViewModel.cs" />

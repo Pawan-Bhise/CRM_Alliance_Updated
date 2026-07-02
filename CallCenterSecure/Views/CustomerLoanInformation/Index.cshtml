@@ -1,4 +1,4 @@
-﻿@model IEnumerable<CallCenterSecure.Models.CustomerLoan.CustomerLoan>
+@model CallCenterSecure.Models.ViewModels.CustomerLoanIndexViewModel
 
 @{
     ViewBag.Title = "Customer Loan Information List";
@@ -119,21 +119,21 @@
     <table id="CustomerLoan" class="table table-bordered table-striped table-hover dataTable nowrap">
         <thead class="table-primary text-white">
             <tr class="text-center">
-                <th>@Html.DisplayNameFor(model => model.COName)</th>
-                <th>@Html.DisplayNameFor(model => model.ProductName)</th>
-                <th>@Html.DisplayNameFor(model => model.CustomerCode)</th>
-                <th>@Html.DisplayNameFor(model => model.BranchName)</th>
-                <th>@Html.DisplayNameFor(model => model.DateOfActOpening)</th>
-                <th>@Html.DisplayNameFor(model => model.CustomerName)</th>
-                <th>@Html.DisplayNameFor(model => model.NRC)</th>
-                <th>@Html.DisplayNameFor(model => model.MobileNo1)</th>
-                <th>@Html.DisplayNameFor(model => model.DisbursedAmount)</th>
-                <th>@Html.DisplayNameFor(model => model.Installments)</th>
-                <th>@Html.DisplayNameFor(model => model.InstallmentAmount)</th>
-                <th>@Html.DisplayNameFor(model => model.PaymentFrequency)</th>
-                <th>@Html.DisplayNameFor(model => model.PrincipleOutstanding)</th>
-                <th>@Html.DisplayNameFor(model => model.InterestReceivable)</th>
-                <th>@Html.DisplayNameFor(model => model.AccountStatus)</th>
+                <th>CO Name</th>
+                <th>Product Name</th>
+                <th>Customer Code</th>
+                <th>Branch Name</th>
+                <th>Date of Opening</th>
+                <th>Customer Name</th>
+                <th>NRC</th>
+                <th>Mobile No</th>
+                <th>Disbursed Amount</th>
+                <th>Installments</th>
+                <th>Installment Amount</th>
+                <th>Payment Frequency</th>
+                <th>Principal Outstanding</th>
+                <th>Interest Receivable</th>
+                <th>Account Status</th>
                 <th>Action</th>
                 <th style="display:none"></th>
             </tr>
@@ -142,7 +142,7 @@
             @{
                 var i = 1;
 
-                foreach (var item in Model)
+                foreach (var item in Model.Items)
                 {
                     <tr>
                         <td>@Html.DisplayFor(modelItem => item.COName)</td>
@@ -251,14 +251,41 @@ i++;
             }
         </tbody>
     </table>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="small text-muted">
+            Showing @((Model.TotalCount == 0) ? 0 : ((Model.Page - 1) * Model.PageSize + 1)) - @((Model.TotalCount == 0) ? 0 : ((Model.Page - 1) * Model.PageSize + Model.Items.Count())) of @Model.TotalCount records
+        </div>
+        <nav aria-label="Customer loan pagination">
+            <ul class="pagination mb-0">
+                <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                    @Html.ActionLink("First", "Index", new { page = 1, pageSize = Model.PageSize }, new { @class = "page-link" })
+                </li>
+                <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                    @Html.ActionLink("Previous", "Index", new { page = Model.Page - 1, pageSize = Model.PageSize }, new { @class = "page-link" })
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Page @Model.Page of @Model.TotalPages</span>
+                </li>
+                <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                    @Html.ActionLink("Next", "Index", new { page = Model.Page + 1, pageSize = Model.PageSize }, new { @class = "page-link" })
+                </li>
+                <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                    @Html.ActionLink("Last", "Index", new { page = Model.TotalPages, pageSize = Model.PageSize }, new { @class = "page-link" })
+                </li>
+            </ul>
+        </nav>
+    </div>
 </div>
 
 <script type="text/javascript">
     $(document).ready(function () {
         if ($('#CustomerLoan tbody tr').length > 0) {
             $('#CustomerLoan').DataTable({
-                pageLength: 10,
-                order: [],
+                paging: false,
+                searching: false,
+                info: false,
+                ordering: false,
                 responsive: true,
                 fixedHeader: true,
                 columnDefs: [
