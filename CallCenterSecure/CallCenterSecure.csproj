@@ -555,9 +555,7 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Contact.cshtml" />
-    <Content Include="Views\Home\Index.cshtml" />
-    <Content Include="Uploads\Test_PDF_File1.pdf" />
-    <Content Include="Uploads\Test_PDF_File2.pdf" />
+    <Content Include="Views\Home\Index.cshtml" />    
     <Content Include="Views\Account\Login.cshtml" />
     <Content Include="Views\Admin\CategoryMaster.cshtml" />
     <Content Include="Views\Admin\CategoryMasterAdd.cshtml" />
