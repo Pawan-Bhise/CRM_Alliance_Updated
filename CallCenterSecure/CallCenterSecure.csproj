@@ -419,6 +419,10 @@
     <Compile Include="Migrations\202606261200000_AddSurveyFormBuilderTables.cs" />
     <Compile Include="Migrations\202606261400000_AddSurveyResponseTables.cs" />
     <Compile Include="Migrations\202606281200000_AddSurveyCategoryToSurveyFormResponse.cs" />
+    <Compile Include="Migrations\202607011200000_AddUploadJobTable.cs" />
+    <Compile Include="Migrations\202607011200000_AddUploadJobTable.Designer.cs">
+      <DependentUpon>202607011200000_AddUploadJobTable.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AllianceOutbound.cs" />
     <Compile Include="Models\AllianceProduct.cs" />
@@ -429,6 +433,7 @@
     <Compile Include="Models\ComplaintDesignation.cs" />
     <Compile Include="Models\CustomerInfoModel.cs" />
     <Compile Include="Models\CustomerLoanInformation.cs" />
+    <Compile Include="Models\UploadJob.cs" />
     <Compile Include="Models\CustomerLoan\CustomerLoan.cs" />
     <Compile Include="Models\CustomerLoan\CustomerLoanView.cs" />
     <Compile Include="Models\Inbound\AllianceInboundExcelModel.cs" />
@@ -759,6 +764,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202512310956468_add_Inbound_TicketType_req.resx">
       <DependentUpon>202512310956468_add_Inbound_TicketType_req.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202607011200000_AddUploadJobTable.resx">
+      <DependentUpon>202607011200000_AddUploadJobTable.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

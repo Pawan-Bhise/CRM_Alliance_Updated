@@ -1,8 +1,21 @@
-﻿@{
+﻿@model IEnumerable<CallCenterSecure.Models.UploadJob>
+
+@{
     ViewBag.Title = "Upload Customer Loan Information";
 }
 
 <h2>Upload Customer Loan Information</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+else if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
 
 @using (Html.BeginForm("Upload", "CustomerLoanInformation", FormMethod.Post, new { enctype = "multipart/form-data" }))
 {
@@ -20,4 +33,40 @@
             </div>
         </div>
     </div>
+}
+
+<h3>Recent Upload Jobs</h3>
+@if (Model != null && Model.Any())
+{
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Status</th>
+                <th>Created On</th>
+                <th>Started On</th>
+                <th>Completed On</th>
+                <th>Rows</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var job in Model)
+            {
+                <tr>
+                    <td>@job.FileName</td>
+                    <td>@job.Status</td>
+                    <td>@job.CreatedOn.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <td>@(job.StartedOn.HasValue ? job.StartedOn.Value.ToString("yyyy-MM-dd HH:mm:ss") : "-")</td>
+                    <td>@(job.CompletedOn.HasValue ? job.CompletedOn.Value.ToString("yyyy-MM-dd HH:mm:ss") : "-")</td>
+                    <td>@(job.ProcessedRows.HasValue ? job.ProcessedRows.ToString() : "-")</td>
+                    <td>@job.Message</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No upload jobs yet.</p>
 }

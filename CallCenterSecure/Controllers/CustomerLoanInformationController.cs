@@ -16,7 +16,10 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Web;
+using System.Web.Hosting;
 using System.Web.Mvc;
 
 
@@ -159,120 +162,196 @@ namespace CallCenter.Controllers
         //    return RedirectToAction("Index");
         //}
 
+        // GET: CustomerLoanInformation/Upload
+        public ActionResult Upload()
+        {
+            var jobs = db.UploadJobs.OrderByDescending(j => j.CreatedOn).Take(20).ToList();
+            return View(jobs);
+        }
+
+        // POST: CustomerLoanInformation/Upload
         [HttpPost]
         public ActionResult Upload(HttpPostedFileBase file)
         {
             if (file == null || file.ContentLength == 0)
             {
                 ModelState.AddModelError("", "Please select a CSV file");
-                return View();
+                return Upload();
             }
-            if (!file.FileName.EndsWith(".csv"))
+            if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
             {
                 ModelState.AddModelError("", "Please upload a CSV file.");
-                return View();
+                return Upload();
             }
 
+            var uploadsPath = Server.MapPath("~/Uploads");
+            Directory.CreateDirectory(uploadsPath);
+
+            var uniqueFileName = Path.GetFileNameWithoutExtension(file.FileName)
+                                 + "_" + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff")
+                                 + Path.GetExtension(file.FileName);
+            var filePath = Path.Combine(uploadsPath, uniqueFileName);
+            file.SaveAs(filePath);
+
+            var uploadJob = new UploadJob
+            {
+                FileName = uniqueFileName,
+                FilePath = filePath,
+                Status = "Pending",
+                CreatedOn = DateTime.UtcNow
+            };
+
+            db.UploadJobs.Add(uploadJob);
+            db.SaveChanges();
+
+            HostingEnvironment.QueueBackgroundWorkItem(async ct => await ProcessUploadJobAsync(uploadJob.UploadJobId, ct));
+
+            TempData["SuccessMessage"] = "Upload started successfully. Current status: Processing. Please check after a few minutes.";
+            return RedirectToAction("Upload");
+        }
+
+        private async Task ProcessUploadJobAsync(int uploadJobId, CancellationToken cancellationToken)
+        {
             try
             {
-                // Remove old data
-                db.Database.ExecuteSqlCommand("TRUNCATE TABLE CustomerLoans");
-
-                var dataTable = CreateCustomerLoanTable();
-
-                const int batchSize = 5000;
-                int count = 0;
-
-                using (var reader = new StreamReader(file.InputStream))
-                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                using (var context = new ApplicationDbContext())
                 {
-                    csv.Read();
-                    csv.ReadHeader();
+                    var job = context.UploadJobs.Find(uploadJobId);
+                    if (job == null)
+                        return;
 
-                    while (csv.Read())
+                    job.Status = "Processing";
+                    job.StartedOn = DateTime.UtcNow;
+                    context.SaveChanges();
+                }
+
+                await Task.Run(() => ProcessCsvFile(uploadJobId, cancellationToken), cancellationToken);
+            }
+            catch
+            {
+                // If starting fails, leave the job as Pending.
+            }
+        }
+
+        private void ProcessCsvFile(int uploadJobId, CancellationToken cancellationToken)
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                var job = context.UploadJobs.Find(uploadJobId);
+                if (job == null)
+                    return;
+
+                try
+                {
+                    if (cancellationToken.IsCancellationRequested)
                     {
-                        dataTable.Rows.Add(
-                            GetInt(csv, "GroupCode"),
-                            csv.GetField<string>("COCashAccount"),
-                            csv.GetField<string>("COStaffId"),
-                            csv.GetField<string>("COName"),
-                            csv.GetField<string>("ProductCode"),
-                            csv.GetField<string>("ProductName"),
-                            csv.GetField<string>("ProductCategory"),
-                            csv.GetField<string>("CustomerCode"),
-                            csv.GetField<string>("AccountNumber"),
-                            GetInt(csv, "BranchCode"),  
-                            csv.GetField<string>("BranchName"),
-                            csv.GetField<string>("ParentBranchName"),
-                            csv.GetField<string>("RegionalBranchName"),
+                        job.Status = "Canceled";
+                        job.Message = "Upload was canceled.";
+                        job.CompletedOn = DateTime.UtcNow;
+                        context.SaveChanges();
+                        return;
+                    }
 
-                            ParseDate(csv.GetField("DateOfActOpening")),
+                    context.Database.ExecuteSqlCommand("TRUNCATE TABLE CustomerLoans");
 
-                            GetInt(csv, "Salutation"),
-                            csv.GetField<string>("CustomerName"),
-                            csv.GetField<string>("Gender"),
-                            csv.GetField<string>("FatherName"),
-                            csv.GetField<string>("AreaType"),
-                            csv.GetField<string>("Area"),
-                            csv.GetField<string>("VillageWard"),
-                            csv.GetField<string>("VillageTractTown"),
-                            csv.GetField<string>("CityTownship"),
-                            csv.GetField<string>("District"),
-                            csv.GetField<string>("RegionState"),
-                            csv.GetField<string>("NRC"),
-                            csv.GetField<string>("MobileNo1"),
-                            csv.GetField<string>("MobileNo2"),
-                            csv.GetField<string>("CustomerStatus"),
-                            csv.GetField<string>("FreezeStatus"),
-                            csv.GetField<string>("DisbursedAmount"),
-                            csv.GetField<string>("LPFAmount"),
-                            GetInt(csv, "Installments"),
-                            csv.GetField<string>("InstallmentAmount"),
-                            csv.GetField<string>("PaymentFrequency"),
-                            csv.GetField<string>("PrincipleOutstanding"),
-                            csv.GetField<string>("InterestReceivable"),
-                            csv.GetField<string>("NonCreditCustomer"),
-                            csv.GetField<string>("VoluntaryDepositor"),
-                            csv.GetField<string>("PovertyScore"),
-                            csv.GetField<string>("HouseholdSurplusIncome"),
-                            csv.GetField<string>("Purpose"),
-                            csv.GetField<string>("BusinessCategory"),
-                            csv.GetField<string>("BusinessActivity"),
-                            csv.GetField<string>("AccountStatus"),
+                    var dataTable = CreateCustomerLoanTable();
+                    const int batchSize = 5000;
+                    int count = 0;
 
-                            ParseDate(csv.GetField("MaturitydateLoan")),
+                    using (var reader = new StreamReader(job.FilePath))
+                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                    {
+                        csv.Read();
+                        csv.ReadHeader();
 
-                            csv.GetField<string>("PARClient"),
-                            GetInt(csv, "DayOfOverDue"),
-                            csv.GetField<string>("AreaStatus")
-                        );
+                        while (csv.Read())
+                        {
+                            if (cancellationToken.IsCancellationRequested)
+                                break;
 
-                        count++;
+                            dataTable.Rows.Add(
+                                GetNullableInt(csv, "GroupCode"),
+                                GetString(csv, "COCashAccount"),
+                                GetString(csv, "COStaffId"),
+                                GetString(csv, "COName"),
+                                GetString(csv, "ProductCode"),
+                                GetString(csv, "ProductName"),
+                                GetString(csv, "ProductCategory"),
+                                GetString(csv, "CustomerCode"),
+                                GetString(csv, "AccountNumber"),
+                                GetInt(csv, "BranchCode", true),
+                                GetString(csv, "BranchName"),
+                                GetString(csv, "ParentBranchName"),
+                                GetString(csv, "RegionalBranchName"),
+                                ParseDateField(csv, "DateOfActOpening"),
+                                GetInt(csv, "Salutation", true),
+                                GetString(csv, "CustomerName"),
+                                GetString(csv, "Gender"),
+                                GetString(csv, "FatherName"),
+                                GetString(csv, "AreaType"),
+                                GetString(csv, "Area"),
+                                GetString(csv, "VillageWard"),
+                                GetString(csv, "VillageTractTown"),
+                                GetString(csv, "CityTownship"),
+                                GetString(csv, "District"),
+                                GetString(csv, "RegionState"),
+                                GetString(csv, "NRC"),
+                                GetString(csv, "MobileNo1"),
+                                GetString(csv, "MobileNo2"),
+                                GetString(csv, "CustomerStatus"),
+                                GetString(csv, "FreezeStatus"),
+                                GetString(csv, "DisbursedAmount"),
+                                GetString(csv, "LPFAmount"),
+                                GetNullableInt(csv, "Installments"),
+                                GetString(csv, "InstallmentAmount"),
+                                GetString(csv, "PaymentFrequency"),
+                                GetString(csv, "PrincipleOutstanding"),
+                                GetString(csv, "InterestReceivable"),
+                                GetString(csv, "NonCreditCustomer"),
+                                GetString(csv, "VoluntaryDepositor"),
+                                GetString(csv, "PovertyScore"),
+                                GetString(csv, "HouseholdSurplusIncome"),
+                                GetString(csv, "Purpose"),
+                                GetString(csv, "BusinessCategory"),
+                                GetString(csv, "BusinessActivity"),
+                                GetString(csv, "AccountStatus"),
+                                ParseDateField(csv, "MaturitydateLoan"),
+                                GetString(csv, "PARClient"),
+                                GetNullableInt(csv, "DayOfOverDue"),
+                                GetString(csv, "AreaStatus"),
+                                DateTime.UtcNow
+                            );
 
-                        if (count % batchSize == 0)
+                            count++;
+
+                            if (count % batchSize == 0)
+                            {
+                                BulkInsert(dataTable);
+                                dataTable.Clear();
+                            }
+                        }
+
+                        if (dataTable.Rows.Count > 0)
                         {
                             BulkInsert(dataTable);
-                            dataTable.Clear();
                         }
                     }
 
-                    // Insert remaining rows
-                    if (dataTable.Rows.Count > 0)
-                    {
-                        BulkInsert(dataTable);
-                    }
+                    job.Status = cancellationToken.IsCancellationRequested ? "Canceled" : "Completed";
+                    job.CompletedOn = DateTime.UtcNow;
+                    job.ProcessedRows = count;
+                    job.Message = cancellationToken.IsCancellationRequested ? "The upload was canceled before completion." : $"Processed {count} rows.";
+                }
+                catch (Exception ex)
+                {
+                    job.Status = "Failed";
+                    job.Message = ex.Message;
+                    job.CompletedOn = DateTime.UtcNow;
                 }
 
-                TempData["SuccessMessage"] = "Records uploaded successfully!";
+                context.SaveChanges();
             }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
-            }
-
-            return RedirectToAction("Index");
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -522,7 +601,7 @@ namespace CallCenter.Controllers
         {
             var dt = new DataTable();
 
-            dt.Columns.Add("GroupCode", typeof(int));
+            dt.Columns.Add("GroupCode", typeof(int)).AllowDBNull = true;
             dt.Columns.Add("COCashAccount", typeof(string));
             dt.Columns.Add("COStaffId", typeof(string));
             dt.Columns.Add("COName", typeof(string));
@@ -535,7 +614,7 @@ namespace CallCenter.Controllers
             dt.Columns.Add("BranchName", typeof(string));
             dt.Columns.Add("ParentBranchName", typeof(string));
             dt.Columns.Add("RegionalBranchName", typeof(string));
-            dt.Columns.Add("DateOfActOpening", typeof(DateTime));
+            dt.Columns.Add("DateOfActOpening", typeof(DateTime)).AllowDBNull = true;
             dt.Columns.Add("Salutation", typeof(int));
             dt.Columns.Add("CustomerName", typeof(string));
             dt.Columns.Add("Gender", typeof(string));
@@ -554,7 +633,7 @@ namespace CallCenter.Controllers
             dt.Columns.Add("FreezeStatus", typeof(string));
             dt.Columns.Add("DisbursedAmount", typeof(string));
             dt.Columns.Add("LPFAmount", typeof(string));
-            dt.Columns.Add("Installments", typeof(int));
+            dt.Columns.Add("Installments", typeof(int)).AllowDBNull = true;
             dt.Columns.Add("InstallmentAmount", typeof(string));
             dt.Columns.Add("PaymentFrequency", typeof(string));
             dt.Columns.Add("PrincipleOutstanding", typeof(string));
@@ -567,10 +646,11 @@ namespace CallCenter.Controllers
             dt.Columns.Add("BusinessCategory", typeof(string));
             dt.Columns.Add("BusinessActivity", typeof(string));
             dt.Columns.Add("AccountStatus", typeof(string));
-            dt.Columns.Add("MaturitydateLoan", typeof(DateTime));
+            dt.Columns.Add("MaturitydateLoan", typeof(DateTime)).AllowDBNull = true;
             dt.Columns.Add("PARClient", typeof(string));
-            dt.Columns.Add("DayOfOverDue", typeof(int));
+            dt.Columns.Add("DayOfOverDue", typeof(int)).AllowDBNull = true;
             dt.Columns.Add("AreaStatus", typeof(string));
+            dt.Columns.Add("CreatedOn", typeof(DateTime));
 
             return dt;
         }
@@ -584,6 +664,57 @@ namespace CallCenter.Controllers
                 bulkCopy.DestinationTableName = "dbo.CustomerLoans";
                 bulkCopy.BatchSize = 5000;
                 bulkCopy.BulkCopyTimeout = 0;
+
+                bulkCopy.ColumnMappings.Add("GroupCode", "GroupCode");
+                bulkCopy.ColumnMappings.Add("COCashAccount", "COCashAccount");
+                bulkCopy.ColumnMappings.Add("COStaffId", "COStaffId");
+                bulkCopy.ColumnMappings.Add("COName", "COName");
+                bulkCopy.ColumnMappings.Add("ProductCode", "ProductCode");
+                bulkCopy.ColumnMappings.Add("ProductName", "ProductName");
+                bulkCopy.ColumnMappings.Add("ProductCategory", "ProductCategory");
+                bulkCopy.ColumnMappings.Add("CustomerCode", "CustomerCode");
+                bulkCopy.ColumnMappings.Add("AccountNumber", "AccountNumber");
+                bulkCopy.ColumnMappings.Add("BranchCode", "BranchCode");
+                bulkCopy.ColumnMappings.Add("BranchName", "BranchName");
+                bulkCopy.ColumnMappings.Add("ParentBranchName", "ParentBranchName");
+                bulkCopy.ColumnMappings.Add("RegionalBranchName", "RegionalBranchName");
+                bulkCopy.ColumnMappings.Add("DateOfActOpening", "DateOfActOpening");
+                bulkCopy.ColumnMappings.Add("Salutation", "Salutation");
+                bulkCopy.ColumnMappings.Add("CustomerName", "CustomerName");
+                bulkCopy.ColumnMappings.Add("Gender", "Gender");
+                bulkCopy.ColumnMappings.Add("FatherName", "FatherName");
+                bulkCopy.ColumnMappings.Add("AreaType", "AreaType");
+                bulkCopy.ColumnMappings.Add("Area", "Area");
+                bulkCopy.ColumnMappings.Add("VillageWard", "VillageWard");
+                bulkCopy.ColumnMappings.Add("VillageTractTown", "VillageTractTown");
+                bulkCopy.ColumnMappings.Add("CityTownship", "CityTownship");
+                bulkCopy.ColumnMappings.Add("District", "District");
+                bulkCopy.ColumnMappings.Add("RegionState", "RegionState");
+                bulkCopy.ColumnMappings.Add("NRC", "NRC");
+                bulkCopy.ColumnMappings.Add("MobileNo1", "MobileNo1");
+                bulkCopy.ColumnMappings.Add("MobileNo2", "MobileNo2");
+                bulkCopy.ColumnMappings.Add("CustomerStatus", "CustomerStatus");
+                bulkCopy.ColumnMappings.Add("FreezeStatus", "FreezeStatus");
+                bulkCopy.ColumnMappings.Add("DisbursedAmount", "DisbursedAmount");
+                bulkCopy.ColumnMappings.Add("LPFAmount", "LPFAmount");
+                bulkCopy.ColumnMappings.Add("Installments", "Installments");
+                bulkCopy.ColumnMappings.Add("InstallmentAmount", "InstallmentAmount");
+                bulkCopy.ColumnMappings.Add("PaymentFrequency", "PaymentFrequency");
+                bulkCopy.ColumnMappings.Add("PrincipleOutstanding", "PrincipleOutstanding");
+                bulkCopy.ColumnMappings.Add("InterestReceivable", "InterestReceivable");
+                bulkCopy.ColumnMappings.Add("NonCreditCustomer", "NonCreditCustomer");
+                bulkCopy.ColumnMappings.Add("VoluntaryDepositor", "VoluntaryDepositor");
+                bulkCopy.ColumnMappings.Add("PovertyScore", "PovertyScore");
+                bulkCopy.ColumnMappings.Add("HouseholdSurplusIncome", "HouseholdSurplusIncome");
+                bulkCopy.ColumnMappings.Add("Purpose", "Purpose");
+                bulkCopy.ColumnMappings.Add("BusinessCategory", "BusinessCategory");
+                bulkCopy.ColumnMappings.Add("BusinessActivity", "BusinessActivity");
+                bulkCopy.ColumnMappings.Add("AccountStatus", "AccountStatus");
+                bulkCopy.ColumnMappings.Add("MaturitydateLoan", "MaturitydateLoan");
+                bulkCopy.ColumnMappings.Add("PARClient", "PARClient");
+                bulkCopy.ColumnMappings.Add("DayOfOverDue", "DayOfOverDue");
+                bulkCopy.ColumnMappings.Add("AreaStatus", "AreaStatus");
+                bulkCopy.ColumnMappings.Add("CreatedOn", "CreatedOn");
 
                 bulkCopy.WriteToServer(dt);
             }
@@ -600,14 +731,51 @@ namespace CallCenter.Controllers
             return DBNull.Value;
         }
 
-        private int GetInt(CsvReader csv, string columnName)
+        private int GetInt(CsvReader csv, string columnName, bool required)
         {
-            var value = csv.GetField(columnName);
+            if (!csv.TryGetField(columnName, out string value))
+                return 0;
 
             if (string.IsNullOrWhiteSpace(value))
                 return 0;
 
-            return Convert.ToInt32(value.Trim());
+            return int.TryParse(value.Trim(), out var intValue) ? intValue : 0;
+        }
+
+        private object GetNullableInt(CsvReader csv, string columnName)
+        {
+            if (!csv.TryGetField(columnName, out string value))
+                return DBNull.Value;
+
+            if (string.IsNullOrWhiteSpace(value))
+                return DBNull.Value;
+
+            return int.TryParse(value.Trim(), out var intValue) ? (object)intValue : DBNull.Value;
+        }
+
+        private DateTime? ParseDateField(CsvReader csv, string columnName)
+        {
+            if (!csv.TryGetField(columnName, out string value))
+                return null;
+
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            if (DateTime.TryParse(value.Trim(), out var dateValue))
+                return dateValue;
+
+            if (DateTime.TryParseExact(value.Trim(), "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out dateValue))
+                return dateValue;
+
+            return null;
+        }
+
+        private string GetString(CsvReader csv, string columnName)
+        {
+            if (!csv.TryGetField(columnName, out string value))
+                return null;
+
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
 
     }

@@ -40,6 +40,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<AllianceInbound> AllianceInbounds { get; set; }
     public DbSet<AllianceOutbound> AllianceOutbounds { get; set; }
     public DbSet<CustomerLoanInformation> CustomerLoanInformations { get; set; }
+    public DbSet<UploadJob> UploadJobs { get; set; }
     public DbSet<Origin> Origins { get; set; }
 
     // ============================
