@@ -107,3 +107,9 @@ wwwroot/build/
 *.temp
 *.bak
 *.swp
+
+
+# Uploaded files
+CallCenterSecure/Uploads/
+
+CallCenterSecure/Uploads/CallCenterSecure/Uploads/ 
