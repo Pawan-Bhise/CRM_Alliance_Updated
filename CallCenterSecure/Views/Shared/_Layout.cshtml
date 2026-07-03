@@ -38,6 +38,28 @@
                 background-color: #0056b3;
             }
 
+            .global-loader {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.65);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1055;
+            }
+
+            .global-loader .global-loader-content {
+                max-width: 320px;
+                padding: 24px 28px;
+                border-radius: 12px;
+                background: rgba(0, 0, 0, 0.75);
+                box-shadow: 0 0 30px rgba(0, 0, 0, 0.35);
+            }
+
+            .global-loader .loader-text {
+                letter-spacing: 0.02em;
+            }
+
             .navbar-brand,
             .nav-link {
                 color: #ffffff !important;
@@ -197,6 +219,14 @@
         @*<hr />*@
     </main>
 
+    <div id="globalLoader" class="global-loader d-none">
+        <div class="global-loader-content text-center">
+            <div class="spinner-border text-light" role="status" style="width: 4rem; height: 4rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="loader-text mt-3 text-white fs-5">Processing, please wait...</div>
+        </div>
+    </div>
 
     <footer class="bg-black bottom-0 z-3 w-100">
             <div class="text-center text-white p-4">&copy; @DateTime.Now.Year - License</div>
@@ -215,6 +245,39 @@
     <!-- DataTables -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        (function () {
+            function showGlobalLoader() {
+                $('#globalLoader').removeClass('d-none');
+            }
+
+            function hideGlobalLoader() {
+                $('#globalLoader').addClass('d-none');
+            }
+
+            $(function () {
+                $('form').on('submit', function (event) {
+                    var form = $(this);
+                    if (form.data('submit-disabled')) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    form.data('submit-disabled', true);
+                    form.find('button[type="submit"], input[type="submit"]').prop('disabled', true);
+                    showGlobalLoader();
+                });
+
+                $('a[data-block-click-on-load=true]').on('click', function (event) {
+                    event.preventDefault();
+                    var anchor = $(this);
+                    showGlobalLoader();
+                    window.location = anchor.attr('href');
+                });
+            });
+        })();
+    </script>
 
     @RenderSection("Scripts", required: false)
 </body>

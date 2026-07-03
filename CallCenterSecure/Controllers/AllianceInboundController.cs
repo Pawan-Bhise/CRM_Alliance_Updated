@@ -229,7 +229,26 @@ namespace CallCenter.Controllers
                     }
                     else
                     {
-                        db.Entry(allianceInbound).State = EntityState.Modified;
+                        var existing = db.AllianceInbounds.Find(allianceInbound.AllianceInboundId);
+                        if (existing == null)
+                        {
+                            return HttpNotFound();
+                        }
+
+                        allianceInbound.AgentName = existing.AgentName;
+                        allianceInbound.AgentId = existing.AgentId;
+                        allianceInbound.CallStartDateTime = existing.CallStartDateTime;
+                        allianceInbound.CallEndDateTime = existing.CallEndDateTime;
+                        allianceInbound.Duration = existing.Duration;
+                        allianceInbound.CreatedOn = existing.CreatedOn;
+                        allianceInbound.FileName = existing.FileName;
+                        allianceInbound.FilePath = existing.FilePath;
+                        allianceInbound.Prev_TicketId = existing.Prev_TicketId;
+
+                        //allianceInbound.DateTime = PreserveDateTimeTime(existing.DateTime, allianceInbound.DateTime);
+                        allianceInbound.DateTime = PreserveDateTimeTime(existing.DateTime, allianceInbound.DateTime) ?? allianceInbound.DateTime;
+
+                        db.Entry(existing).CurrentValues.SetValues(allianceInbound);
                         db.SaveChanges();
                         TempData["SuccessMessage"] = "Record updated successfully!";
                     }
@@ -247,6 +266,29 @@ namespace CallCenter.Controllers
             }
             PopulateDropdowns();
             return View(allianceInbound);
+        }
+
+        private DateTime? PreserveDateTimeTime(DateTime? existingDateTime, DateTime? postedDateTime)
+        {
+            if (!postedDateTime.HasValue)
+            {
+                return existingDateTime;
+            }
+
+            if (!existingDateTime.HasValue)
+            {
+                return postedDateTime;
+            }
+
+            return new DateTime(
+                postedDateTime.Value.Year,
+                postedDateTime.Value.Month,
+                postedDateTime.Value.Day,
+                existingDateTime.Value.Hour,
+                existingDateTime.Value.Minute,
+                existingDateTime.Value.Second,
+                existingDateTime.Value.Millisecond,
+                existingDateTime.Value.Kind);
         }
 
         private void PopulateDropdowns()

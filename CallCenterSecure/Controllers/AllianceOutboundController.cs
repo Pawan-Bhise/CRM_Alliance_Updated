@@ -107,13 +107,27 @@ namespace CallCenter.Controllers
                     }
                     else
                     {
-                        db.Entry(allianceOutbound).State = EntityState.Modified;
+                        var existing = db.AllianceOutbounds.Find(allianceOutbound.AllianceOutboundId);
+                        if (existing == null)
+                        {
+                            return HttpNotFound();
+                        }
+
+                        // Preserve fields not present or not editable in the form
+                        allianceOutbound.AgentName = existing.AgentName;
+                        allianceOutbound.AgentId = existing.AgentId;
+                        allianceOutbound.CallStartDateTime = existing.CallStartDateTime;
+                        allianceOutbound.CallEndDateTime = existing.CallEndDateTime;
+                        allianceOutbound.Duration = existing.Duration;
+                        allianceOutbound.CreatedOn = existing.CreatedOn;
+
+                        allianceOutbound.DateTime = PreserveDateTimeTime(existing.DateTime, allianceOutbound.DateTime);
+
+                        db.Entry(existing).CurrentValues.SetValues(allianceOutbound);
                         db.SaveChanges();
                         TempData["SuccessMessage"] = "Record updated successfully!";
                     }
 
-                    //db.Entry(allianceOutbound).State = EntityState.Modified;
-                    //db.SaveChanges();
                     return RedirectToAction("Index");
                 }
                 catch (Exception)
@@ -127,6 +141,29 @@ namespace CallCenter.Controllers
             }
             PopulateDropdowns();
             return View(allianceOutbound);
+        }
+
+        private DateTime? PreserveDateTimeTime(DateTime? existingDateTime, DateTime? postedDateTime)
+        {
+            if (!postedDateTime.HasValue)
+            {
+                return existingDateTime;
+            }
+
+            if (!existingDateTime.HasValue)
+            {
+                return postedDateTime;
+            }
+
+            return new DateTime(
+                postedDateTime.Value.Year,
+                postedDateTime.Value.Month,
+                postedDateTime.Value.Day,
+                existingDateTime.Value.Hour,
+                existingDateTime.Value.Minute,
+                existingDateTime.Value.Second,
+                existingDateTime.Value.Millisecond,
+                existingDateTime.Value.Kind);
         }
 
         private void PopulateDropdowns()
