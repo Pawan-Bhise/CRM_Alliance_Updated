@@ -10,6 +10,7 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.Entity;
 using System.Data.SqlClient;
@@ -268,88 +269,107 @@ namespace CallCenter.Controllers
                         return;
                     }
 
-                    context.Database.ExecuteSqlCommand("TRUNCATE TABLE CustomerLoans");
+                    // Log masked connection info for diagnostics (do not store passwords)
+                    string connStr = null;
+                    try
+                    {
+                        connStr = GetDefaultConnectionString();
+                        job.Message = "Starting upload. Using DB: " + MaskConnectionString(connStr);
+                        context.SaveChanges();
+                    }
+                    catch { /* swallow logging errors */ }
 
                     var dataTable = CreateCustomerLoanTable();
                     const int batchSize = 5000;
                     int count = 0;
 
-                    using (var reader = new StreamReader(job.FilePath))
-                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                    using (var sqlConnection = new SqlConnection(connStr ?? GetDefaultConnectionString()))
                     {
-                        csv.Read();
-                        csv.ReadHeader();
+                        sqlConnection.Open();
 
-                        while (csv.Read())
+                        using (var truncateCommand = sqlConnection.CreateCommand())
                         {
-                            if (cancellationToken.IsCancellationRequested)
-                                break;
-
-                            dataTable.Rows.Add(
-                                GetNullableInt(csv, "GroupCode"),
-                                GetString(csv, "COCashAccount"),
-                                GetString(csv, "COStaffId"),
-                                GetString(csv, "COName"),
-                                GetString(csv, "ProductCode"),
-                                GetString(csv, "ProductName"),
-                                GetString(csv, "ProductCategory"),
-                                GetString(csv, "CustomerCode"),
-                                GetString(csv, "AccountNumber"),
-                                GetInt(csv, "BranchCode", true),
-                                GetString(csv, "BranchName"),
-                                GetString(csv, "ParentBranchName"),
-                                GetString(csv, "RegionalBranchName"),
-                                ParseDateField(csv, "DateOfActOpening"),
-                                GetInt(csv, "Salutation", true),
-                                GetString(csv, "CustomerName"),
-                                GetString(csv, "Gender"),
-                                GetString(csv, "FatherName"),
-                                GetString(csv, "AreaType"),
-                                GetString(csv, "Area"),
-                                GetString(csv, "VillageWard"),
-                                GetString(csv, "VillageTractTown"),
-                                GetString(csv, "CityTownship"),
-                                GetString(csv, "District"),
-                                GetString(csv, "RegionState"),
-                                GetString(csv, "NRC"),
-                                GetString(csv, "MobileNo1"),
-                                GetString(csv, "MobileNo2"),
-                                GetString(csv, "CustomerStatus"),
-                                GetString(csv, "FreezeStatus"),
-                                GetString(csv, "DisbursedAmount"),
-                                GetString(csv, "LPFAmount"),
-                                GetNullableInt(csv, "Installments"),
-                                GetString(csv, "InstallmentAmount"),
-                                GetString(csv, "PaymentFrequency"),
-                                GetString(csv, "PrincipleOutstanding"),
-                                GetString(csv, "InterestReceivable"),
-                                GetString(csv, "NonCreditCustomer"),
-                                GetString(csv, "VoluntaryDepositor"),
-                                GetString(csv, "PovertyScore"),
-                                GetString(csv, "HouseholdSurplusIncome"),
-                                GetString(csv, "Purpose"),
-                                GetString(csv, "BusinessCategory"),
-                                GetString(csv, "BusinessActivity"),
-                                GetString(csv, "AccountStatus"),
-                                ParseDateField(csv, "MaturitydateLoan"),
-                                GetString(csv, "PARClient"),
-                                GetNullableInt(csv, "DayOfOverDue"),
-                                GetString(csv, "AreaStatus"),
-                                DateTime.UtcNow
-                            );
-
-                            count++;
-
-                            if (count % batchSize == 0)
-                            {
-                                BulkInsert(context.Database.Connection.ConnectionString, dataTable);
-                                dataTable.Clear();
-                            }
+                            truncateCommand.CommandText = "TRUNCATE TABLE CustomerLoans";
+                            truncateCommand.ExecuteNonQuery();
                         }
 
-                        if (dataTable.Rows.Count > 0)
+                        using (var reader = new StreamReader(job.FilePath))
+                        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                         {
-                            BulkInsert(context.Database.Connection.ConnectionString, dataTable);
+                            csv.Read();
+                            csv.ReadHeader();
+
+                            while (csv.Read())
+                            {
+                                if (cancellationToken.IsCancellationRequested)
+                                    break;
+
+                                dataTable.Rows.Add(
+                                    GetNullableInt(csv, "GroupCode"),
+                                    GetString(csv, "COCashAccount"),
+                                    GetString(csv, "COStaffId"),
+                                    GetString(csv, "COName"),
+                                    GetString(csv, "ProductCode"),
+                                    GetString(csv, "ProductName"),
+                                    GetString(csv, "ProductCategory"),
+                                    GetString(csv, "CustomerCode"),
+                                    GetString(csv, "AccountNumber"),
+                                    GetInt(csv, "BranchCode", true),
+                                    GetString(csv, "BranchName"),
+                                    GetString(csv, "ParentBranchName"),
+                                    GetString(csv, "RegionalBranchName"),
+                                    ParseDateField(csv, "DateOfActOpening"),
+                                    GetInt(csv, "Salutation", true),
+                                    GetString(csv, "CustomerName"),
+                                    GetString(csv, "Gender"),
+                                    GetString(csv, "FatherName"),
+                                    GetString(csv, "AreaType"),
+                                    GetString(csv, "Area"),
+                                    GetString(csv, "VillageWard"),
+                                    GetString(csv, "VillageTractTown"),
+                                    GetString(csv, "CityTownship"),
+                                    GetString(csv, "District"),
+                                    GetString(csv, "RegionState"),
+                                    GetString(csv, "NRC"),
+                                    GetString(csv, "MobileNo1"),
+                                    GetString(csv, "MobileNo2"),
+                                    GetString(csv, "CustomerStatus"),
+                                    GetString(csv, "FreezeStatus"),
+                                    GetString(csv, "DisbursedAmount"),
+                                    GetString(csv, "LPFAmount"),
+                                    GetNullableInt(csv, "Installments"),
+                                    GetString(csv, "InstallmentAmount"),
+                                    GetString(csv, "PaymentFrequency"),
+                                    GetString(csv, "PrincipleOutstanding"),
+                                    GetString(csv, "InterestReceivable"),
+                                    GetString(csv, "NonCreditCustomer"),
+                                    GetString(csv, "VoluntaryDepositor"),
+                                    GetString(csv, "PovertyScore"),
+                                    GetString(csv, "HouseholdSurplusIncome"),
+                                    GetString(csv, "Purpose"),
+                                    GetString(csv, "BusinessCategory"),
+                                    GetString(csv, "BusinessActivity"),
+                                    GetString(csv, "AccountStatus"),
+                                    ParseDateField(csv, "MaturitydateLoan"),
+                                    GetString(csv, "PARClient"),
+                                    GetNullableInt(csv, "DayOfOverDue"),
+                                    GetString(csv, "AreaStatus"),
+                                    DateTime.UtcNow
+                                );
+
+                                count++;
+
+                                if (count % batchSize == 0)
+                                {
+                                    BulkInsert(sqlConnection, dataTable);
+                                    dataTable.Clear();
+                                }
+                            }
+
+                            if (dataTable.Rows.Count > 0)
+                            {
+                                BulkInsert(sqlConnection, dataTable);
+                            }
                         }
                     }
 
@@ -361,7 +381,7 @@ namespace CallCenter.Controllers
                 catch (Exception ex)
                 {
                     job.Status = "Failed";
-                    job.Message = ex.Message;
+                    job.Message = ex.ToString();
                     job.CompletedOn = DateTime.UtcNow;
                 }
 
@@ -671,9 +691,9 @@ namespace CallCenter.Controllers
             return dt;
         }
 
-        private void BulkInsert(string connectionString, DataTable dt)
+        private void BulkInsert(SqlConnection sqlConnection, DataTable dt)
         {
-            using (var bulkCopy = new SqlBulkCopy(connectionString))
+            using (var bulkCopy = new SqlBulkCopy(sqlConnection))
             {
                 bulkCopy.DestinationTableName = "dbo.CustomerLoans";
                 bulkCopy.BatchSize = 5000;
@@ -790,6 +810,30 @@ namespace CallCenter.Controllers
                 return null;
 
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        private string MaskConnectionString(string connectionString)
+        {
+            try
+            {
+                var builder = new System.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
+                var server = builder.DataSource;
+                var db = builder.InitialCatalog;
+                var user = builder.ContainsKey("User ID") ? builder.UserID : (builder.ContainsKey("Integrated Security") && builder.IntegratedSecurity ? "Integrated" : "Unknown");
+                return $"Server={server};Database={db};User={user}";
+            }
+            catch
+            {
+                return "(unable to parse connection string)";
+            }
+        }
+
+        private string GetDefaultConnectionString()
+        {
+            var settings = ConfigurationManager.ConnectionStrings["DefaultConnection"];
+            if (settings == null)
+                throw new InvalidOperationException("DefaultConnection is not defined in configuration.");
+            return settings.ConnectionString;
         }
 
     }
