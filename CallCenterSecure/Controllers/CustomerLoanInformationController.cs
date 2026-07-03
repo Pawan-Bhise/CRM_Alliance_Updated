@@ -342,14 +342,14 @@ namespace CallCenter.Controllers
 
                             if (count % batchSize == 0)
                             {
-                                BulkInsert(dataTable);
+                                BulkInsert(context.Database.Connection.ConnectionString, dataTable);
                                 dataTable.Clear();
                             }
                         }
 
                         if (dataTable.Rows.Count > 0)
                         {
-                            BulkInsert(dataTable);
+                            BulkInsert(context.Database.Connection.ConnectionString, dataTable);
                         }
                     }
 
@@ -671,10 +671,8 @@ namespace CallCenter.Controllers
             return dt;
         }
 
-        private void BulkInsert(DataTable dt)
+        private void BulkInsert(string connectionString, DataTable dt)
         {
-            var connectionString = db.Database.Connection.ConnectionString;
-
             using (var bulkCopy = new SqlBulkCopy(connectionString))
             {
                 bulkCopy.DestinationTableName = "dbo.CustomerLoans";
