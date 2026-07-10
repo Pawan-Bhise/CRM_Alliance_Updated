@@ -181,6 +181,19 @@ namespace CallCenter.Controllers
         public ActionResult Edit(AllianceInbound allianceInbound)
         {
             allianceInbound.ModifiedOn = DateTime.Now;
+
+            // Ensure string fields are populated from the posted ids before validation
+            if (allianceInbound.RegionId > 0)
+                allianceInbound.Region = Convert.ToString(allianceInbound.RegionId);
+            if (allianceInbound.BranchId > 0)
+                allianceInbound.Branch = Convert.ToString(allianceInbound.BranchId);
+
+            // Remove ModelState entries so the updated values are considered during validation
+            ModelState.Remove(nameof(allianceInbound.Region));
+            ModelState.Remove(nameof(allianceInbound.Branch));
+            ModelState.Remove(nameof(allianceInbound.RegionId));
+            ModelState.Remove(nameof(allianceInbound.BranchId));
+
             if (ModelState.IsValid)
             {
                 try
@@ -245,17 +258,73 @@ namespace CallCenter.Controllers
                         allianceInbound.FilePath = existing.FilePath;
                         allianceInbound.Prev_TicketId = existing.Prev_TicketId;
 
-                        //allianceInbound.DateTime = PreserveDateTimeTime(existing.DateTime, allianceInbound.DateTime);
-                        allianceInbound.DateTime = PreserveDateTimeTime(existing.DateTime, allianceInbound.DateTime) ?? allianceInbound.DateTime;
+                        // Merge incoming DateTime with current time when date changed; otherwise preserve existing time
+                        // (assumes allianceInbound.DateTime is non-nullable DateTime)
+                        var incomingDate = allianceInbound.DateTime;
+                        if (existing.DateTime.Date != incomingDate.Date)
+                        {
+                            // user changed the date portion -> combine new date with current time
+                            allianceInbound.DateTime = incomingDate.Date.Add(DateTime.Now.TimeOfDay);
+                        }
+                        else
+                        {
+                            // date unchanged -> preserve existing full DateTime (including time)
+                            allianceInbound.DateTime = existing.DateTime;
+                        }
 
+                        // Also handle FollowUpCallBackSchedule similarly so when user changes the schedule date
+                        // the time portion updates to current time; otherwise preserve the existing time.
+                        try
+                        {
+                            // Defensive checks: properties may be nullable DateTime (DateTime?)
+                            var existingFollow = existing.FollowUpCallBackSchedule;
+                            var incomingFollow = allianceInbound.FollowUpCallBackSchedule;
+
+                            if (existingFollow != null && incomingFollow != null)
+                            {
+                                if (existingFollow.Value.Date != incomingFollow.Value.Date)
+                                {
+                                    // user changed the date portion -> combine new date with current time
+                                    allianceInbound.FollowUpCallBackSchedule = incomingFollow.Value.Date.Add(DateTime.Now.TimeOfDay);
+                                }
+                                else
+                                {
+                                    // date unchanged -> preserve existing full DateTime (including time)
+                                    allianceInbound.FollowUpCallBackSchedule = existingFollow;
+                                }
+                            }
+                            else if (existingFollow == null && incomingFollow != null)
+                            {
+                                // no existing follow-up; incoming provided -> set incoming date with current time
+                                allianceInbound.FollowUpCallBackSchedule = incomingFollow.Value.Date.Add(DateTime.Now.TimeOfDay);
+                            }
+                            else
+                            {
+                                // either incoming is null -> keep existing (which may be null)
+                                allianceInbound.FollowUpCallBackSchedule = existingFollow;
+                            }
+                        }
+                        catch
+                        {
+                            // if property missing, null reference, or unexpected error, ignore and proceed
+                        }
+
+                        // Apply incoming values to the tracked entity
                         db.Entry(existing).CurrentValues.SetValues(allianceInbound);
+
+                        // Ensure FK and derived string fields are set on the tracked entity explicitly
+                        existing.RegionId = allianceInbound.RegionId;
+                        existing.Region = allianceInbound.Region;
+                        existing.BranchId = allianceInbound.BranchId;
+                        existing.Branch = allianceInbound.Branch;
+
                         db.SaveChanges();
                         TempData["SuccessMessage"] = "Record updated successfully!";
                     }
 
                     return RedirectToAction("Index");
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     return RedirectToAction("Index");
                 }

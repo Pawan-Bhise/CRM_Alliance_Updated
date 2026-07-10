@@ -264,6 +264,17 @@
                         return;
                     }
 
+                    //form.data('submit-disabled', true);
+                    //form.find('button[type="submit"], input[type="submit"]').prop('disabled', true);
+                    //showGlobalLoader();
+                     // Button that triggered the submit
+                    var submitter = $(document.activeElement);
+
+                    // Skip loader for export button
+                    if (submitter.is('[data-skip-loader="true"]')) {
+                        return;
+                    }
+
                     form.data('submit-disabled', true);
                     form.find('button[type="submit"], input[type="submit"]').prop('disabled', true);
                     showGlobalLoader();
