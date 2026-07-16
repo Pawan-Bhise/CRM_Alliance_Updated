@@ -136,7 +136,7 @@ namespace CallCenterSecure.Repositories
                 ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,sd.StateDivisionName AS Lead_StateRegion,
                 ds.DistrictName AS Lead_District,ct.CityName AS Lead_CityTownship,
                 vt.VillageTractName AS Lead_VillageTractTown, wv.WardEnglishName AS Lead_VillageWard,ai.Lead_Address,ai.Lead_PrimaryMobileNumber,ai.Lead_AlternateMobileNumber,
-                lp.Name AS Lead_ProductInterested,ai.Lead_Latitude,ai.Lead_Longitude,ai.Lead_NRC,ai.Lead_DateOfBirth,ai.Lead_Age,
+                lp.Name AS Lead_ProductInterested,ai.Lead_Latitude,ai.Lead_Longitude, COALESCE(ai.NRC, ai.Lead_NRC) as Lead_NRC,ai.Lead_DateOfBirth,ai.Lead_Age,
                 ai.Lead_Gender,ai.Lead_MaritalStatus,ai.Lead_SpouseName,ai.Lead_ClientOfficerName,ai.Lead_LeadStatus,ai.Lead_Priority,
                 ai.Prev_TicketId,nd.Name AS Na_Disposition,cmpdisp.Name AS Cmp_Disposition
                 from AllianceInbounds ai
@@ -192,7 +192,7 @@ namespace CallCenterSecure.Repositories
                     b.[Name] AS Branch,sd.StateDivisionName AS StateRegion,COALESCE(ds.DistrictName,ao.District) AS District,c.CityName AS CityTownship,
                         vt.VillageTractName AS VillageTractTown,
 
-                       wv.WardEnglishName AS VillageWard,ao.PrimaryMobileNumber, p.[Name] AS ProductInterested,
+                       wv.WardEnglishName AS VillageWard,ao.PrimaryMobileNumber,ao.AlternateMobileNumber, p.[Name] AS ProductInterested,
                         ao.Latitude,ao.Longitude,ao.NRC,ao.DateOfBirth,ao.Age,ao.Gender,ao.MaritalStatus,ao.SpouseName,ao.[Priority],
                         ao.ClientOfficerName,ao.CallStatus,ao.CallType,ao.AgentName,ao.Prev_TicketId,ao.DetailConversation
 

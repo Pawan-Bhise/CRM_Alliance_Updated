@@ -25,6 +25,8 @@ namespace CallCenterSecure.Models.Outbound
         public string VillageWard { get; set; }
         public string PrimaryMobileNumber { get; set; }
 
+        public string AlternateMobileNumber { get; set; }
+
         public string ProductInterested { get; set; }
 
         public double? Latitude { get; set; }
