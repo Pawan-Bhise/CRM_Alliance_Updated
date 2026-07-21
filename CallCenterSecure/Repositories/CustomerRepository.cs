@@ -41,7 +41,7 @@ namespace CallCenterSecure.Repositories
                 dscc.Designation AS cmp_complainCCDesignation, ai.ComplainResolve,
                 ai.Cmp_ComplainCC,ai.Cmp_NatureOfComplaint,ai.Cmp_CaseDetail,ai.Cmp_ComplainStatus,ai.FileName,
                 
-                ai.Lead_CustomerName,lb.[Name] AS Lead_Branch,sd.StateDivisionName AS Lead_StateRegion,
+                ai.Lead_CustomerName,lbb.BranchName AS Lead_Branch,sd.StateDivisionName AS Lead_StateRegion,
                 ds.DistrictName AS Lead_District,lc.CityName AS Lead_CityTownship,
                 vt.VillageTractName AS Lead_VillageTractTown, wv.WardEnglishName AS Lead_VillageWard,ai.Lead_Address,ai.Lead_PrimaryMobileNumber,ai.Lead_AlternateMobileNumber,
                 lp.Name AS Lead_ProductInterested,ai.Lead_Latitude,ai.Lead_Longitude,ai.Lead_NRC,ai.Lead_DateOfBirth,ai.Lead_Age,
@@ -70,6 +70,7 @@ namespace CallCenterSecure.Repositories
                 LEFT JOIN RegionBranches brn on brn.Id=TRY_CAST(ai.branch AS INT)
                 LEFT JOIN RegionBranches rbrb on rbrb.id=TRY_CAST(ai.Cmp_Region AS INT)
                 LEFT JOIN RegionBranches rbrbb on rbrbb.id=TRY_CAST(ai.Cmp_Branch AS INT)
+                LEFT JOIN RegionBranches lbb on ai.Lead_Branch=lbb.id
                 LEFT JOIN Cities lc on lc.CityCode=ai.Lead_CityTownship
                 LEFT JOIN VillageTracts vt on vt.VillageTractCode=ai.Lead_VillageTractTown
                 LEFT JOIN WardVillages wv on wv.Ward_PCode=ai.Lead_VillageWard                
