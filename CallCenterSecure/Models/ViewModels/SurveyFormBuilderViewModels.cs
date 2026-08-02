@@ -143,8 +143,11 @@ namespace CallCenterSecure.Models.ViewModels
         public const string MultipleChoice = "Multiple Choice";
         public const string Checkboxes = "Checkboxes";
         public const string Dropdown = "Dropdown";
+        public const string DateTime = "Date & Time Picker";
+        public const string Ranking = "Ranking";
         public const string FileUpload = "File Upload";
         public const string LinearScale = "Linear Scale";
+        public const string Nps = "NPS (0-10)";
         public const string MultipleChoiceGrid = "Multiple Choice Grid";
         public const string CheckboxGrid = "Checkbox Grid";
 
@@ -159,6 +162,9 @@ namespace CallCenterSecure.Models.ViewModels
                 new SelectListItem { Text = Dropdown, Value = Dropdown },
                 new SelectListItem { Text = FileUpload, Value = FileUpload },
                 new SelectListItem { Text = LinearScale, Value = LinearScale },
+                new SelectListItem { Text = Nps, Value = Nps },
+                new SelectListItem { Text = DateTime, Value = DateTime },
+                new SelectListItem { Text = Ranking, Value = Ranking },
                 new SelectListItem { Text = MultipleChoiceGrid, Value = MultipleChoiceGrid },
                 new SelectListItem { Text = CheckboxGrid, Value = CheckboxGrid }
             };

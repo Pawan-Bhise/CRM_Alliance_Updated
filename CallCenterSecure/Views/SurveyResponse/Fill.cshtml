@@ -5,6 +5,8 @@
     ViewBag.Title = "Fill Survey Response";
 }
 
+<link href="~/Content/jquery-ui.css" rel="stylesheet" />
+
 <h2>Fill Survey Response</h2>
 
 @if (TempData["ErrorMessage"] != null)
@@ -78,6 +80,10 @@
                 {
                     @Html.TextBoxFor(x => x.Questions[i].AnswerText, new { @class = "form-control" })
                 }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.DateTime)
+                {
+                    @Html.TextBoxFor(x => x.Questions[i].AnswerText, new { @class = "form-control datepicker", placeholder = "YYYY-MM-DD" })
+                }
                 else if (question.QuestionType == SurveyQuestionTypeCatalog.Paragraph)
                 {
                     @Html.TextAreaFor(x => x.Questions[i].AnswerText, new { @class = "form-control", rows = 3 })
@@ -91,6 +97,29 @@
                             <label class="form-check-label">@option.OptionText</label>
                         </div>
                     }
+                }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.Nps)
+                {
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        @for (var n = 0; n <= 10; n++)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="Questions[@i].AnswerText" id="q@i-n@n" value="@n" @(question.AnswerText == n.ToString() ? "checked" : "") />
+                                <label class="form-check-label" for="q@i-n@n">@n</label>
+                            </div>
+                        }
+                    </div>
+                }
+                else if (question.QuestionType == SurveyQuestionTypeCatalog.Ranking)
+                {
+                    <p class="small text-muted">Drag to reorder and set priority (1 = highest)</p>
+                    <ul class="list-group ranking-list" data-question-index="@i">
+                        @foreach (var option in question.Options)
+                        {
+                            <li class="list-group-item" data-value="@option.OptionText">@option.OptionText</li>
+                        }
+                    </ul>
+                    <div class="ranking-hidden" data-question-index="@i"></div>
                 }
                 else if (question.QuestionType == SurveyQuestionTypeCatalog.Checkboxes)
                 {
@@ -212,5 +241,6 @@
 }
 
 @section Scripts {
+    @Scripts.Render("~/bundles/jqueryui")
     <script src="@Url.Content("~/Scripts/survey-response.js")"></script>
 }

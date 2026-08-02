@@ -256,10 +256,10 @@ namespace CallCenterSecure.Services
                     DisplayOrder = questionIndex + 1,
                     IsRequired = question.IsRequired,
                     CreatedDate = DateTime.Now,
-                    MinValue = question.QuestionType == SurveyQuestionTypeCatalog.LinearScale ? question.MinValue : null,
-                    MaxValue = question.QuestionType == SurveyQuestionTypeCatalog.LinearScale ? question.MaxValue : null,
-                    MinLabel = question.QuestionType == SurveyQuestionTypeCatalog.LinearScale ? TrimOrNull(question.MinLabel) : null,
-                    MaxLabel = question.QuestionType == SurveyQuestionTypeCatalog.LinearScale ? TrimOrNull(question.MaxLabel) : null,
+                    MinValue = (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Nps) ? question.MinValue : null,
+                    MaxValue = (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Nps) ? question.MaxValue : null,
+                    MinLabel = (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Nps) ? TrimOrNull(question.MinLabel) : null,
+                    MaxLabel = (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Nps) ? TrimOrNull(question.MaxLabel) : null,
                     Options = new List<SurveyQuestionOption>(),
                     GridRows = new List<SurveyGridRow>(),
                     GridColumns = new List<SurveyGridColumn>()
@@ -297,7 +297,8 @@ namespace CallCenterSecure.Services
         {
             return questionType == SurveyQuestionTypeCatalog.MultipleChoice
                 || questionType == SurveyQuestionTypeCatalog.Checkboxes
-                || questionType == SurveyQuestionTypeCatalog.Dropdown;
+                || questionType == SurveyQuestionTypeCatalog.Dropdown
+                || questionType == SurveyQuestionTypeCatalog.Ranking;
         }
 
         private static bool IsGridQuestion(string questionType)
@@ -387,6 +388,24 @@ namespace CallCenterSecure.Services
                     if (question.MinValue.Value >= question.MaxValue.Value)
                     {
                         throw new InvalidOperationException("Linear scale min value must be less than max value.");
+                    }
+                }
+
+                // NPS is a fixed 0-10 scale. If NPS is selected, ensure the values are set or default them.
+                if (question.QuestionType == SurveyQuestionTypeCatalog.Nps)
+                {
+                    // If user didn't provide values, set them to 0 and 10. If provided, validate they are 0..10 and min < max.
+                    if (!question.MinValue.HasValue) question.MinValue = 0;
+                    if (!question.MaxValue.HasValue) question.MaxValue = 10;
+
+                    if (question.MinValue < 0 || question.MaxValue > 10)
+                    {
+                        throw new InvalidOperationException("NPS scale values must be within 0 and 10.");
+                    }
+
+                    if (question.MinValue >= question.MaxValue)
+                    {
+                        throw new InvalidOperationException("NPS min value must be less than max value.");
                     }
                 }
 

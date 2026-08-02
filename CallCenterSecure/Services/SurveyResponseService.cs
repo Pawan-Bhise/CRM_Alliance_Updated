@@ -279,6 +279,36 @@ namespace CallCenterSecure.Services
                             throw new InvalidOperationException("All required text questions must be answered.");
                         }
                         break;
+                    case SurveyQuestionTypeCatalog.Nps:
+                        int npsValue;
+                        if (string.IsNullOrWhiteSpace(question.AnswerText) || !int.TryParse(question.AnswerText, out npsValue))
+                        {
+                            throw new InvalidOperationException("All required NPS questions must be answered with an integer between 0 and 10.");
+                        }
+
+                        if (npsValue < 0 || npsValue > 10)
+                        {
+                            throw new InvalidOperationException("NPS answer must be between 0 and 10.");
+                        }
+                        break;
+                    case SurveyQuestionTypeCatalog.DateTime:
+                        if (string.IsNullOrWhiteSpace(question.AnswerText))
+                        {
+                            throw new InvalidOperationException("All required date/time questions must be answered.");
+                        }
+
+                        DateTime dt;
+                        if (!DateTime.TryParse(question.AnswerText, out dt))
+                        {
+                            throw new InvalidOperationException("Invalid date/time format for date question.");
+                        }
+                        break;
+                    case SurveyQuestionTypeCatalog.Ranking:
+                        if (question.SelectedOptions == null || !question.SelectedOptions.Any())
+                        {
+                            throw new InvalidOperationException("All required ranking questions must have at least one ranked option.");
+                        }
+                        break;
                     case SurveyQuestionTypeCatalog.MultipleChoice:
                     case SurveyQuestionTypeCatalog.Dropdown:
                         if (string.IsNullOrWhiteSpace(question.SelectedOption))

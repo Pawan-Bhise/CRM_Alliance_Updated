@@ -9,26 +9,75 @@
             return null;
         }
 
-        return template.content.firstElementChild.cloneNode(true);
+        // Prefer template.content (supported in modern browsers). Fall back to parsing innerHTML for older browsers.
+        if (template.content && template.content.firstElementChild) {
+            return template.content.firstElementChild.cloneNode(true);
+        }
+
+        // Fallback: create a container and set innerHTML from template's innerHTML
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = template.innerHTML.trim();
+        var first = wrapper.firstElementChild;
+        return first ? first.cloneNode(true) : null;
+    }
+
+    function normalizeQuestionType(type) {
+        return (type || '').toString().trim();
     }
 
     function isOptionType(type) {
-        return type === "Multiple Choice" || type === "Checkboxes" || type === "Dropdown";
+        var value = normalizeQuestionType(type);
+        return value === "Multiple Choice"
+            || value === "Checkboxes"
+            || value === "Dropdown"
+            || value === "Ranking"
+            || value === "NPS (0-10)"
+            || value === "Date & Time Picker"
+            || value.toLowerCase() === "ranking"
+            || value.toLowerCase() === "multiple choice"
+            || value.toLowerCase() === "checkboxes"
+            || value.toLowerCase() === "dropdown"
+            || value.toLowerCase() === "nps (0-10)"
+            || value.toLowerCase() === "date & time picker";
     }
 
     function isGridType(type) {
-        return type === "Multiple Choice Grid" || type === "Checkbox Grid";
+        var value = normalizeQuestionType(type);
+        return value === "Multiple Choice Grid" || value === "Checkbox Grid" || value.toLowerCase() === "multiple choice grid" || value.toLowerCase() === "checkbox grid";
     }
 
     function updateQuestionVisibility(questionEl) {
-        var type = questionEl.querySelector(".question-type").value;
+        var type = normalizeQuestionType(questionEl.querySelector(".question-type").value);
         var optionWrapper = questionEl.querySelector(".option-wrapper");
         var linearWrapper = questionEl.querySelector(".linear-wrapper");
         var gridWrapper = questionEl.querySelector(".grid-wrapper");
 
-        optionWrapper.style.display = isOptionType(type) ? "block" : "none";
-        linearWrapper.style.display = type === "Linear Scale" ? "flex" : "none";
-        gridWrapper.style.display = isGridType(type) ? "block" : "none";
+        if (optionWrapper) {
+            optionWrapper.style.display = isOptionType(type) ? "block" : "none";
+        }
+
+        if (linearWrapper) {
+            linearWrapper.style.display = (type === "Linear Scale" || type === "NPS (0-10)" || type.toLowerCase() === "linear scale" || type.toLowerCase() === "nps (0-10)") ? "flex" : "none";
+        }
+
+        if (gridWrapper) {
+            gridWrapper.style.display = isGridType(type) ? "block" : "none";
+        }
+
+        if (isOptionType(type)) {
+            var listEl = questionEl.querySelector('.option-list');
+            if (listEl && listEl.children.length === 0) {
+                addOption(listEl);
+                addOption(listEl);
+            }
+        }
+
+        if (type === "NPS (0-10)" || type.toLowerCase() === "nps (0-10)") {
+            var minEl = questionEl.querySelector('.scale-min-value');
+            var maxEl = questionEl.querySelector('.scale-max-value');
+            if (minEl && !minEl.value) minEl.value = '0';
+            if (maxEl && !maxEl.value) maxEl.value = '10';
+        }
     }
 
     function addOption(listEl) {
@@ -191,6 +240,19 @@
 
         container.querySelectorAll(".question-item").forEach(function (questionEl) {
             wireQuestionEvents(questionEl);
+        });
+
+        // Ensure option lists are present for any option-based questions on initial load
+        container.querySelectorAll(".question-item").forEach(function (questionEl) {
+            var type = questionEl.querySelector('.question-type').value;
+            var listEl = questionEl.querySelector('.option-list');
+            if (isOptionType(type) && listEl && listEl.children.length === 0) {
+                addOption(listEl);
+                addOption(listEl);
+                // Make sure visibility is correct and indexes update
+                updateQuestionVisibility(questionEl);
+                reindexAll();
+            }
         });
 
         var addBtn = byId("btnAddQuestion");

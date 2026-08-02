@@ -62,6 +62,9 @@
                                 <option value="@SurveyQuestionTypeCatalog.Dropdown" @(q.QuestionType == SurveyQuestionTypeCatalog.Dropdown ? "selected" : "")>@SurveyQuestionTypeCatalog.Dropdown</option>
                                 <option value="@SurveyQuestionTypeCatalog.FileUpload" @(q.QuestionType == SurveyQuestionTypeCatalog.FileUpload ? "selected" : "")>@SurveyQuestionTypeCatalog.FileUpload</option>
                                 <option value="@SurveyQuestionTypeCatalog.LinearScale" @(q.QuestionType == SurveyQuestionTypeCatalog.LinearScale ? "selected" : "")>@SurveyQuestionTypeCatalog.LinearScale</option>
+                                <option value="@SurveyQuestionTypeCatalog.Nps" @(q.QuestionType == SurveyQuestionTypeCatalog.Nps ? "selected" : "")>@SurveyQuestionTypeCatalog.Nps</option>
+                                <option value="@SurveyQuestionTypeCatalog.DateTime" @(q.QuestionType == SurveyQuestionTypeCatalog.DateTime ? "selected" : "")>@SurveyQuestionTypeCatalog.DateTime</option>
+                                <option value="@SurveyQuestionTypeCatalog.Ranking" @(q.QuestionType == SurveyQuestionTypeCatalog.Ranking ? "selected" : "")>@SurveyQuestionTypeCatalog.Ranking</option>
                                 <option value="@SurveyQuestionTypeCatalog.MultipleChoiceGrid" @(q.QuestionType == SurveyQuestionTypeCatalog.MultipleChoiceGrid ? "selected" : "")>@SurveyQuestionTypeCatalog.MultipleChoiceGrid</option>
                                 <option value="@SurveyQuestionTypeCatalog.CheckboxGrid" @(q.QuestionType == SurveyQuestionTypeCatalog.CheckboxGrid ? "selected" : "")>@SurveyQuestionTypeCatalog.CheckboxGrid</option>
                             </select>
@@ -83,6 +86,7 @@
                             @for (var j = 0; j < q.Options.Count; j++)
                             {
                                 <div class="input-group mb-2 option-item">
+                                    <span class="input-group-text option-rank">@(j + 1)</span>
                                     <input type="hidden" class="option-id" value="@q.Options[j].Id" />
                                     <input type="hidden" class="option-order" value="@q.Options[j].DisplayOrder" />
                                     <input type="text" class="form-control option-text" value="@q.Options[j].OptionText" placeholder="Option text" />
@@ -182,8 +186,11 @@
                         <option value="@SurveyQuestionTypeCatalog.MultipleChoice">@SurveyQuestionTypeCatalog.MultipleChoice</option>
                         <option value="@SurveyQuestionTypeCatalog.Checkboxes">@SurveyQuestionTypeCatalog.Checkboxes</option>
                         <option value="@SurveyQuestionTypeCatalog.Dropdown">@SurveyQuestionTypeCatalog.Dropdown</option>
+                                <option value="@SurveyQuestionTypeCatalog.Ranking">@SurveyQuestionTypeCatalog.Ranking</option>
                         <option value="@SurveyQuestionTypeCatalog.FileUpload">@SurveyQuestionTypeCatalog.FileUpload</option>
                         <option value="@SurveyQuestionTypeCatalog.LinearScale">@SurveyQuestionTypeCatalog.LinearScale</option>
+                                <option value="@SurveyQuestionTypeCatalog.Nps">@SurveyQuestionTypeCatalog.Nps</option>
+                                <option value="@SurveyQuestionTypeCatalog.DateTime">@SurveyQuestionTypeCatalog.DateTime</option>
                         <option value="@SurveyQuestionTypeCatalog.MultipleChoiceGrid">@SurveyQuestionTypeCatalog.MultipleChoiceGrid</option>
                         <option value="@SurveyQuestionTypeCatalog.CheckboxGrid">@SurveyQuestionTypeCatalog.CheckboxGrid</option>
                     </select>
@@ -247,6 +254,7 @@
 
 <template id="optionTemplate">
     <div class="input-group mb-2 option-item">
+        <span class="input-group-text option-rank">1</span>
         <input type="hidden" class="option-id" value="0" />
         <input type="hidden" class="option-order" value="0" />
         <input type="text" class="form-control option-text" placeholder="Option text" />

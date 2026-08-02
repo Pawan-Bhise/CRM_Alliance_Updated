@@ -95,6 +95,33 @@
         }
 
         responseForm.addEventListener('submit', function (event) {
+            // For date fields that only have a date, append current local time so server receives a datetime
+            $('.datepicker').each(function () {
+                if (this.value && this.value.length === 10) {
+                    const now = new Date();
+                    this.value += ' ' + now.toTimeString().split(' ')[0];
+                }
+            });
+
+            // For ranking lists, serialize the ordered items into hidden inputs named Questions[<index>].SelectedOptions
+            $('.ranking-list').each(function () {
+                var $list = $(this);
+                var qIdx = $list.data('question-index');
+                // remove any existing hidden inputs for this question
+                $('.ranking-hidden[data-question-index="' + qIdx + '"]').empty();
+                var items = $list.children();
+                for (var k = 0; k < items.length; k++) {
+                    var val = $(items[k]).data('value');
+                    if (val) {
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'Questions[' + qIdx + '].SelectedOptions';
+                        input.value = val;
+                        $('.ranking-hidden[data-question-index="' + qIdx + '"]').append(input);
+                    }
+                }
+            });
+
             var uploads = responseForm.querySelectorAll('.response-upload');
             for (var i = 0; i < uploads.length; i++) {
                 var input = uploads[i];
@@ -123,5 +150,23 @@
     document.addEventListener('DOMContentLoaded', function () {
         initStartPage();
         initFillPage();
+            // initialize datepicker and sortable for ranking
+            if (typeof $ !== 'undefined' && typeof $.fn.datepicker === 'function') {
+                $('.datepicker').datepicker({
+                    dateFormat: 'yy-mm-dd',
+                    changeMonth: true,
+                    changeYear: true,
+                    yearRange: '1900:2050',
+                    autoclose: true
+                });
+            }
+
+            if (typeof $ !== 'undefined' && typeof $.fn.sortable === 'function') {
+                $('.ranking-list').sortable({
+                    placeholder: 'list-group-item placeholder',
+                    cursor: 'move'
+                });
+                $('.ranking-list').disableSelection();
+            }
     });
 })();

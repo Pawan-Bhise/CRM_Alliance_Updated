@@ -46,6 +46,39 @@ namespace CallCenterSecure.Repositories
 
         public void RemoveQuestion(SurveyQuestion question)
         {
+            // Remove any answers that reference this question first to avoid FK constraint errors
+            var answers = _db.SurveyFormAnswers
+                .Where(a => a.SurveyQuestionId == question.Id)
+                .ToList();
+
+            foreach (var ans in answers)
+            {
+                // Remove any grid answers tied to the answer
+                var gridAnswers = _db.SurveyFormGridAnswers.Where(g => g.SurveyFormAnswerId == ans.Id).ToList();
+                if (gridAnswers.Any())
+                {
+                    _db.SurveyFormGridAnswers.RemoveRange(gridAnswers);
+                }
+
+                _db.SurveyFormAnswers.Remove(ans);
+            }
+
+            // Remove question child collections (options / grid rows / grid columns) to keep the model consistent
+            if (question.Options != null && question.Options.Any())
+            {
+                _db.SurveyQuestionOptions.RemoveRange(question.Options);
+            }
+
+            if (question.GridRows != null && question.GridRows.Any())
+            {
+                _db.SurveyGridRows.RemoveRange(question.GridRows);
+            }
+
+            if (question.GridColumns != null && question.GridColumns.Any())
+            {
+                _db.SurveyGridColumns.RemoveRange(question.GridColumns);
+            }
+
             _db.SurveyQuestions.Remove(question);
         }
 
