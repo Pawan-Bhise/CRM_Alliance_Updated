@@ -32,12 +32,17 @@ namespace CallCenterSecure.Models
         public string Branch { get; set; }
 
         [MaxLength(100)]
+        public string AreaType { get; set; }
+
+        [MaxLength(100)]
         public string Location { get; set; }
 
         [MaxLength(100)]
         public string LoanProduct { get; set; }
 
         public int? Age { get; set; }
+
+        public int? NumberOfFamilyMembers { get; set; }
 
         [MaxLength(100)]
         public string BusinessCategory { get; set; }
@@ -55,6 +60,14 @@ namespace CallCenterSecure.Models
         public string HouseholdAssets { get; set; }
 
         public int? PovertyScore { get; set; }
+
+        public int? LoanCycle { get; set; }
+
+        [MaxLength(100)]
+        public string DisbursedAmount { get; set; }
+
+        [MaxLength(50)]
+        public string CustomerStatus { get; set; }
 
         public int? SurveyTemplateTypeId { get; set; }
 

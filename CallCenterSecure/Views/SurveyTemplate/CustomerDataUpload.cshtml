@@ -36,8 +36,8 @@
 
     <div class="form-row mb-3">
         <div class="form-group col-md-6">
-            @Html.Label("Excel File", htmlAttributes: new { @class = "control-label" })
-            <input type="file" name="file" accept=".xlsx,.xls" class="form-control" />
+            @Html.Label("CSV File", htmlAttributes: new { @class = "control-label" })
+            <input type="file" name="file" accept=".csv" class="form-control" />
             @Html.ValidationMessage("file", "", new { @class = "text-danger" })
         </div>
     </div>

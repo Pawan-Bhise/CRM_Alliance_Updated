@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -7,7 +8,7 @@ using System.Web;
 using System.Web.Mvc;
 using CallCenterSecure.Models;
 using CallCenterSecure.Services;
-using ClosedXML.Excel;
+using CsvHelper;
 
 namespace CallCenterSecure.Controllers.Survey
 {
@@ -142,11 +143,11 @@ namespace CallCenterSecure.Controllers.Survey
 
             if (file == null || file.ContentLength == 0)
             {
-                ModelState.AddModelError("file", "Please select an Excel file.");
+                ModelState.AddModelError("file", "Please select a CSV file.");
             }
-            else if (!IsExcelFile(file.FileName))
+            else if (!IsCsvFile(file.FileName))
             {
-                ModelState.AddModelError("file", "Only .xlsx and .xls files are allowed.");
+                ModelState.AddModelError("file", "Only .csv files are allowed.");
             }
 
             ViewBag.SurveyTemplates = GetTemplateSelectList(surveyTemplateTypeId);
@@ -158,31 +159,81 @@ namespace CallCenterSecure.Controllers.Survey
             }
 
             var customers = new List<SurveyCustomerData>();
-            using (var workbook = new XLWorkbook(file.InputStream))
+            var requiredHeaders = new[]
             {
-                var ws = workbook.Worksheet(1);
-                var rows = ws.RangeUsed()?.RowsUsed().Skip(1) ?? Enumerable.Empty<IXLRangeRow>();
+                "ClientName",
+                "Gender",
+                "CustomerCode",
+                "MobileNumber1",
+                "MobileNumber2",
+                "Region",
+                "Branch",
+                "AreaType",
+                "Location",
+                "LoanProduct",
+                "Age",
+                "NumberOfFamilyMembers",
+                "BusinessCategory",
+                "ActivitiesSector",
+                "LevelOfEducation",
+                "IncomeLevel",
+                "HouseholdAssets",
+                "PovertyScore",
+                "LoanCycle",
+                "DisbursedAmount",
+                "CustomerStatus"
+            };
 
-                foreach (var row in rows)
+            using (var reader = new StreamReader(file.InputStream))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            {
+                csv.Read();
+                csv.ReadHeader();
+
+                var headerNames = csv.HeaderRecord ?? Array.Empty<string>();
+                if (headerNames.Length < requiredHeaders.Length)
                 {
+                    ModelState.AddModelError("file", "The CSV file does not contain enough columns. Expected at least " + requiredHeaders.Length + " columns.");
+                    return View(Enumerable.Empty<SurveyCustomerData>());
+                }
+
+                while (csv.Read())
+                {
+                    var rowValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    for (var index = 0; index < requiredHeaders.Length; index++)
+                    {
+                        rowValues[requiredHeaders[index]] = GetCsvString(csv, index);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(rowValues["ClientName"])
+                        && string.IsNullOrWhiteSpace(rowValues["CustomerCode"]))
+                    {
+                        continue;
+                    }
+
                     var customer = new SurveyCustomerData
                     {
-                        ClientName = ExcelHelper.GetString(ws, row.RowNumber(), 1),
-                        Gender = ExcelHelper.GetString(ws, row.RowNumber(), 2),
-                        CustomerCode = ExcelHelper.GetString(ws, row.RowNumber(), 3),
-                        MobileNumber1 = ExcelHelper.GetString(ws, row.RowNumber(), 4),
-                        MobileNumber2 = ExcelHelper.GetString(ws, row.RowNumber(), 5),
-                        Region = ExcelHelper.GetString(ws, row.RowNumber(), 6),
-                        Branch = ExcelHelper.GetString(ws, row.RowNumber(), 7),
-                        Location = ExcelHelper.GetString(ws, row.RowNumber(), 8),
-                        LoanProduct = ExcelHelper.GetString(ws, row.RowNumber(), 9),
-                        Age = ExcelHelper.GetInt(ws, row.RowNumber(), 10),
-                        BusinessCategory = ExcelHelper.GetString(ws, row.RowNumber(), 11),
-                        ActivitiesSector = ExcelHelper.GetString(ws, row.RowNumber(), 12),
-                        LevelOfEducation = ExcelHelper.GetString(ws, row.RowNumber(), 13),
-                        IncomeLevel = ExcelHelper.GetString(ws, row.RowNumber(), 14),
-                        HouseholdAssets = ExcelHelper.GetString(ws, row.RowNumber(), 15),
-                        PovertyScore = ExcelHelper.GetInt(ws, row.RowNumber(), 16),
+                        ClientName = rowValues["ClientName"],
+                        Gender = rowValues["Gender"],
+                        CustomerCode = rowValues["CustomerCode"],
+                        MobileNumber1 = rowValues["MobileNumber1"],
+                        MobileNumber2 = rowValues["MobileNumber2"],
+                        Region = rowValues["Region"],
+                        Branch = rowValues["Branch"],
+                        AreaType = rowValues["AreaType"],
+                        Location = rowValues["Location"],
+                        LoanProduct = rowValues["LoanProduct"],
+                        Age = GetCsvInt(csv, 10),
+                        NumberOfFamilyMembers = GetCsvInt(csv, 11),
+                        BusinessCategory = rowValues["BusinessCategory"],
+                        ActivitiesSector = rowValues["ActivitiesSector"],
+                        LevelOfEducation = rowValues["LevelOfEducation"],
+                        IncomeLevel = rowValues["IncomeLevel"],
+                        HouseholdAssets = rowValues["HouseholdAssets"],
+                        PovertyScore = GetCsvInt(csv, 16),
+                        LoanCycle = GetCsvInt(csv, 17),
+                        DisbursedAmount = rowValues["DisbursedAmount"],
+                        CustomerStatus = rowValues["CustomerStatus"],
                         SurveyTemplateTypeId = surveyTemplateTypeId.Value
                     };
 
@@ -229,11 +280,28 @@ namespace CallCenterSecure.Controllers.Survey
             return new SelectList(_surveyTemplateService.GetAll(), "Id", "Name", selectedId);
         }
 
-        private bool IsExcelFile(string fileName)
+        private static string GetCsvString(CsvReader csv, int index)
+        {
+            var value = csv.GetField(index);
+            return value == null ? null : value.Trim();
+        }
+
+        private static int? GetCsvInt(CsvReader csv, int index)
+        {
+            var value = csv.GetField(index);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            int number;
+            return int.TryParse(value.Trim(), out number) ? (int?)number : null;
+        }
+
+        private bool IsCsvFile(string fileName)
         {
             var extension = Path.GetExtension(fileName);
-            return string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(extension, ".xls", StringComparison.OrdinalIgnoreCase);
+            return string.Equals(extension, ".csv", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
