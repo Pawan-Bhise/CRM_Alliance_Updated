@@ -1,49 +1,204 @@
 @model CallCenterSecure.Models.ViewModels.SurveyFormBuilderViewModel
 @using CallCenterSecure.Models.ViewModels
 
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-6">
-                @Html.LabelFor(m => m.Title, new { @class = "form-label" })
-                @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = "Enter form title" })
-                @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger" })
-            </div>
-            <div class="col-md-6">
-                @Html.LabelFor(m => m.Category, new { @class = "form-label" })
-                @Html.TextBoxFor(m => m.Category, new { @class = "form-control", placeholder = "Enter category" })
-                @Html.ValidationMessageFor(m => m.Category, "", new { @class = "text-danger" })
-            </div>
-            <div class="col-12">
-                @Html.LabelFor(m => m.Description, new { @class = "form-label" })
-                @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = 3, placeholder = "Optional description" })
-                @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+<style>
+    .survey-form-builder-shell {
+        position: relative;
+        padding-bottom: 80px;
+    }
+
+    .survey-form-builder-shell .card {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .survey-form-builder-shell .question-item {
+        margin-bottom: 0.85rem;
+        transition: all 0.2s ease;
+    }
+
+    .survey-form-builder-shell .question-item.collapsed .question-body {
+        display: none;
+    }
+
+    .survey-form-builder-shell .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.7rem 0.9rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .survey-form-builder-shell .question-title {
+        font-size: 0.98rem;
+        font-weight: 700;
+    }
+
+    .survey-form-builder-shell .question-body {
+        padding: 0.8rem 0.9rem 0.75rem;
+    }
+
+    .survey-form-builder-shell .row.g-3 > [class^="col-"] {
+        margin-bottom: 0.25rem;
+    }
+
+    .survey-form-builder-shell .form-label {
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .survey-form-builder-shell .form-control,
+    .survey-form-builder-shell .form-select {
+        min-height: 36px;
+        font-size: 0.92rem;
+        padding: 0.42rem 0.65rem;
+    }
+
+    .survey-form-builder-shell textarea.form-control {
+        min-height: 72px;
+    }
+
+    .survey-form-builder-shell .option-wrapper,
+    .survey-form-builder-shell .linear-wrapper,
+    .survey-form-builder-shell .grid-wrapper {
+        margin-top: 0.85rem;
+    }
+
+    .survey-form-builder-shell .option-item,
+    .survey-form-builder-shell .grid-row-item,
+    .survey-form-builder-shell .grid-column-item {
+        margin-bottom: 0.4rem !important;
+    }
+
+    .survey-form-builder-shell .question-preview {
+        margin-top: 0.9rem;
+        background: #f9fafb;
+        border: 1px dashed #dfe3ea;
+        border-radius: 8px;
+        padding: 0.7rem 0.8rem;
+    }
+
+    .survey-form-builder-shell .preview-label {
+        display: block;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+    .survey-form-builder-shell .preview-surface {
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-radius: 7px;
+        padding: 0.7rem;
+    }
+
+    .survey-form-builder-shell .preview-scale {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+    }
+
+    .survey-form-builder-shell .preview-scale .form-check {
+        margin-bottom: 0;
+    }
+
+    .survey-form-builder-shell .preview-grid-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .survey-form-builder-shell .preview-grid-table th,
+    .survey-form-builder-shell .preview-grid-table td {
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem 0.45rem;
+        text-align: center;
+    }
+
+    .survey-form-builder-shell .preview-grid-table th:first-child,
+    .survey-form-builder-shell .preview-grid-table td:first-child {
+        text-align: left;
+    }
+
+    .survey-form-builder-shell .floating-action-bar {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 1040;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-end;
+    }
+
+    .survey-form-builder-shell .floating-action-bar .btn {
+        box-shadow: 0 10px 25px rgba(13, 110, 253, 0.2);
+    }
+
+    .survey-form-builder-shell .bottom-add-question {
+        margin-top: 12px;
+        text-align: center;
+    }
+
+    .survey-form-builder-shell .btn-toggle-collapse {
+        font-size: 0.78rem;
+        padding: 0.25rem 0.55rem;
+    }
+</style>
+
+<div class="survey-form-builder-shell">
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    @Html.LabelFor(m => m.Title, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = "Enter form title" })
+                    @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-6">
+                    @Html.LabelFor(m => m.Category, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.Category, new { @class = "form-control", placeholder = "Enter category" })
+                    @Html.ValidationMessageFor(m => m.Category, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-12">
+                    @Html.LabelFor(m => m.Description, new { @class = "form-label" })
+                    @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = 3, placeholder = "Optional description" })
+                    @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="d-flex justify-content-between align-items-center mb-2">
-    <h4 class="mb-0">Questions</h4>
-    <button type="button" id="btnAddQuestion" class="btn btn-success btn-sm">Add Question</button>
-</div>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4 class="mb-0">Questions</h4>
+        <button type="button" id="btnAddQuestion" class="btn btn-success btn-sm">Add Question</button>
+    </div>
 
-<div id="questionContainer">
+    <div id="questionContainer">
     @if (Model.Questions != null)
     {
         for (var i = 0; i < Model.Questions.Count; i++)
         {
             var q = Model.Questions[i];
             <div class="card mb-3 question-item">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="question-header">
                     <strong class="question-title">Question @(i + 1)</strong>
                     <div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-toggle-collapse" aria-expanded="true">Collapse</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-preview">Preview</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary btn-move-up">Up</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary btn-move-down">Down</button>
                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove-question">Delete</button>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="question-body">
                     <input type="hidden" class="question-id" value="@q.Id" />
                     <input type="hidden" class="question-order" value="@q.DisplayOrder" />
 
@@ -153,6 +308,11 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="question-preview d-none">
+                        <span class="preview-label">Live Preview</span>
+                        <div class="preview-surface"></div>
+                    </div>
                 </div>
             </div>
         }
@@ -161,15 +321,17 @@
 
 <template id="questionTemplate">
     <div class="card mb-3 question-item">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="question-header">
             <strong class="question-title">Question</strong>
             <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-toggle-collapse" aria-expanded="true">Collapse</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-preview">Preview</button>
                 <button type="button" class="btn btn-sm btn-outline-secondary btn-move-up">Up</button>
                 <button type="button" class="btn btn-sm btn-outline-secondary btn-move-down">Down</button>
                 <button type="button" class="btn btn-sm btn-outline-danger btn-remove-question">Delete</button>
             </div>
         </div>
-        <div class="card-body">
+        <div class="question-body">
             <input type="hidden" class="question-id" value="0" />
             <input type="hidden" class="question-order" value="0" />
 
@@ -186,11 +348,11 @@
                         <option value="@SurveyQuestionTypeCatalog.MultipleChoice">@SurveyQuestionTypeCatalog.MultipleChoice</option>
                         <option value="@SurveyQuestionTypeCatalog.Checkboxes">@SurveyQuestionTypeCatalog.Checkboxes</option>
                         <option value="@SurveyQuestionTypeCatalog.Dropdown">@SurveyQuestionTypeCatalog.Dropdown</option>
-                                <option value="@SurveyQuestionTypeCatalog.Ranking">@SurveyQuestionTypeCatalog.Ranking</option>
+                        <option value="@SurveyQuestionTypeCatalog.Ranking">@SurveyQuestionTypeCatalog.Ranking</option>
                         <option value="@SurveyQuestionTypeCatalog.FileUpload">@SurveyQuestionTypeCatalog.FileUpload</option>
                         <option value="@SurveyQuestionTypeCatalog.LinearScale">@SurveyQuestionTypeCatalog.LinearScale</option>
-                                <option value="@SurveyQuestionTypeCatalog.Nps">@SurveyQuestionTypeCatalog.Nps</option>
-                                <option value="@SurveyQuestionTypeCatalog.DateTime">@SurveyQuestionTypeCatalog.DateTime</option>
+                        <option value="@SurveyQuestionTypeCatalog.Nps">@SurveyQuestionTypeCatalog.Nps</option>
+                        <option value="@SurveyQuestionTypeCatalog.DateTime">@SurveyQuestionTypeCatalog.DateTime</option>
                         <option value="@SurveyQuestionTypeCatalog.MultipleChoiceGrid">@SurveyQuestionTypeCatalog.MultipleChoiceGrid</option>
                         <option value="@SurveyQuestionTypeCatalog.CheckboxGrid">@SurveyQuestionTypeCatalog.CheckboxGrid</option>
                     </select>
@@ -247,6 +409,11 @@
                         <div class="grid-column-list"></div>
                     </div>
                 </div>
+            </div>
+
+            <div class="question-preview d-none">
+                <span class="preview-label">Live Preview</span>
+                <div class="preview-surface"></div>
             </div>
         </div>
     </div>

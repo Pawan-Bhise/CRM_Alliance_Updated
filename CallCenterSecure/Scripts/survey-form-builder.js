@@ -46,6 +46,80 @@
         return value === "Multiple Choice Grid" || value === "Checkbox Grid" || value.toLowerCase() === "multiple choice grid" || value.toLowerCase() === "checkbox grid";
     }
 
+    function renderQuestionPreview(questionEl) {
+        var previewSurface = questionEl.querySelector('.preview-surface');
+        if (!previewSurface) {
+            return;
+        }
+
+        var type = normalizeQuestionType(questionEl.querySelector('.question-type').value);
+        var text = (questionEl.querySelector('.question-text').value || 'Untitled question').trim();
+        var isRequired = questionEl.querySelector('.question-required').checked;
+
+        var html = '<div class="mb-2"><strong>' + (text || 'Untitled question') + (isRequired ? ' *' : '') + '</strong></div>';
+
+        if (type === 'Short Answer' || type === 'Paragraph') {
+            html += '<input type="text" class="form-control" value="" placeholder="Sample response" />';
+            if (type === 'Paragraph') {
+                html += '<textarea class="form-control mt-2" rows="2" placeholder="Long answer"></textarea>';
+            }
+        } else if (type === 'Multiple Choice' || type === 'Dropdown' || type === 'Checkboxes' || type === 'Ranking') {
+            var options = Array.prototype.slice.call(questionEl.querySelectorAll('.option-text')).map(function (input) {
+                return (input.value || '').trim();
+            }).filter(function (v) { return v; });
+
+            if (!options.length) {
+                options = ['Option 1', 'Option 2', 'Option 3'];
+            }
+
+            if (type === 'Multiple Choice') {
+                html += options.map(function (option) {
+                    return '<div class="form-check mt-2"><input class="form-check-input" type="radio" disabled /><label class="form-check-label">' + option + '</label></div>';
+                }).join('');
+            } else if (type === 'Checkboxes') {
+                html += options.map(function (option) {
+                    return '<div class="form-check mt-2"><input class="form-check-input" type="checkbox" disabled /><label class="form-check-label">' + option + '</label></div>';
+                }).join('');
+            } else if (type === 'Dropdown') {
+                html += '<select class="form-control"><option>' + options.join('</option><option>') + '</option></select>';
+            } else {
+                html += '<ul class="list-group mt-2">' + options.map(function (option) {
+                    return '<li class="list-group-item">' + option + '</li>';
+                }).join('') + '</ul>';
+            }
+        } else if (type === 'Linear Scale' || type === 'NPS (0-10)') {
+            var min = parseInt(questionEl.querySelector('.scale-min-value').value || (type === 'NPS (0-10)' ? '0' : '1'), 10);
+            var max = parseInt(questionEl.querySelector('.scale-max-value').value || (type === 'NPS (0-10)' ? '10' : '5'), 10);
+            var labels = [
+                questionEl.querySelector('.scale-min-label').value || min,
+                questionEl.querySelector('.scale-max-label').value || max
+            ];
+
+            var range = [];
+            for (var v = min; v <= max; v++) {
+                range.push('<div class="form-check form-check-inline"><input class="form-check-input" type="radio" disabled /><label class="form-check-label">' + v + '</label></div>');
+            }
+            html += '<div class="preview-scale">' + range.join('') + '</div>';
+            html += '<div class="mt-2 small text-muted">' + labels[0] + ' &nbsp; ' + labels[1] + '</div>';
+        } else if (type === 'Date & Time Picker') {
+            html += '<input type="text" class="form-control" value="" placeholder="YYYY-MM-DD" />';
+        } else if (type === 'Multiple Choice Grid' || type === 'Checkbox Grid') {
+            var rows = Array.prototype.slice.call(questionEl.querySelectorAll('.grid-row-text')).map(function (input) { return (input.value || '').trim(); }).filter(Boolean);
+            var columns = Array.prototype.slice.call(questionEl.querySelectorAll('.grid-column-text')).map(function (input) { return (input.value || '').trim(); }).filter(Boolean);
+
+            if (!rows.length) rows = ['Row 1', 'Row 2'];
+            if (!columns.length) columns = ['Option 1', 'Option 2'];
+
+            html += '<table class="preview-grid-table"><thead><tr><th></th>' + columns.map(function (col) { return '<th>' + col + '</th>'; }).join('') + '</tr></thead><tbody>' + rows.map(function (row) {
+                return '<tr><td>' + row + '</td>' + columns.map(function () { return '<td><input type="' + (type === 'Checkbox Grid' ? 'checkbox' : 'radio') + '" disabled /></td>'; }).join('') + '</tr>';
+            }).join('') + '</tbody></table>';
+        } else {
+            html += '<input type="text" class="form-control" value="" placeholder="Sample response" />';
+        }
+
+        previewSurface.innerHTML = html;
+    }
+
     function updateQuestionVisibility(questionEl) {
         var type = normalizeQuestionType(questionEl.querySelector(".question-type").value);
         var optionWrapper = questionEl.querySelector(".option-wrapper");
@@ -78,6 +152,8 @@
             if (minEl && !minEl.value) minEl.value = '0';
             if (maxEl && !maxEl.value) maxEl.value = '10';
         }
+
+        renderQuestionPreview(questionEl);
     }
 
     function addOption(listEl) {
@@ -102,46 +178,123 @@
     }
 
     function wireQuestionEvents(questionEl) {
-        questionEl.querySelector(".btn-remove-question").addEventListener("click", function () {
-            questionEl.remove();
-            reindexAll();
-        });
-
-        questionEl.querySelector(".btn-move-up").addEventListener("click", function () {
-            var prev = questionEl.previousElementSibling;
-            if (prev) {
-                questionEl.parentNode.insertBefore(questionEl, prev);
+        var btnRemove = questionEl.querySelector(".btn-remove-question");
+        if (btnRemove) {
+            btnRemove.addEventListener("click", function () {
+                questionEl.remove();
                 reindexAll();
-            }
-        });
+            });
+        }
 
-        questionEl.querySelector(".btn-move-down").addEventListener("click", function () {
-            var next = questionEl.nextElementSibling;
-            if (next) {
-                questionEl.parentNode.insertBefore(next, questionEl);
+        var btnUp = questionEl.querySelector(".btn-move-up");
+        if (btnUp) {
+            btnUp.addEventListener("click", function () {
+                var prev = questionEl.previousElementSibling;
+                if (prev) {
+                    questionEl.parentNode.insertBefore(questionEl, prev);
+                    reindexAll();
+                }
+            });
+        }
+
+        var btnDown = questionEl.querySelector(".btn-move-down");
+        if (btnDown) {
+            btnDown.addEventListener("click", function () {
+                var next = questionEl.nextElementSibling;
+                if (next) {
+                    questionEl.parentNode.insertBefore(next, questionEl);
+                    reindexAll();
+                }
+            });
+        }
+
+        var qType = questionEl.querySelector(".question-type");
+        if (qType) {
+            qType.addEventListener("change", function () {
+                updateQuestionVisibility(questionEl);
                 reindexAll();
-            }
-        });
+            });
+        }
 
-        questionEl.querySelector(".question-type").addEventListener("change", function () {
-            updateQuestionVisibility(questionEl);
-            reindexAll();
-        });
+        var qText = questionEl.querySelector(".question-text");
+        if (qText) {
+            qText.addEventListener("input", function () {
+                renderQuestionPreview(questionEl);
+            });
+        }
 
-        questionEl.querySelector(".btn-add-option").addEventListener("click", function () {
-            addOption(questionEl.querySelector(".option-list"));
-            reindexAll();
-        });
+        var qReq = questionEl.querySelector(".question-required");
+        if (qReq) {
+            qReq.addEventListener("change", function () {
+                renderQuestionPreview(questionEl);
+            });
+        }
 
-        questionEl.querySelector(".btn-add-grid-row").addEventListener("click", function () {
-            addGridRow(questionEl.querySelector(".grid-row-list"));
-            reindexAll();
-        });
+        var sMin = questionEl.querySelector(".scale-min-value"); if (sMin) sMin.addEventListener("input", function () { renderQuestionPreview(questionEl); });
+        var sMax = questionEl.querySelector(".scale-max-value"); if (sMax) sMax.addEventListener("input", function () { renderQuestionPreview(questionEl); });
+        var sMinL = questionEl.querySelector(".scale-min-label"); if (sMinL) sMinL.addEventListener("input", function () { renderQuestionPreview(questionEl); });
+        var sMaxL = questionEl.querySelector(".scale-max-label"); if (sMaxL) sMaxL.addEventListener("input", function () { renderQuestionPreview(questionEl); });
 
-        questionEl.querySelector(".btn-add-grid-column").addEventListener("click", function () {
-            addGridColumn(questionEl.querySelector(".grid-column-list"));
-            reindexAll();
-        });
+        var inputs = questionEl.querySelectorAll(".option-text, .grid-row-text, .grid-column-text");
+        if (inputs && inputs.length) {
+            inputs.forEach(function (input) {
+                input.addEventListener("input", function () {
+                    renderQuestionPreview(questionEl);
+                });
+            });
+        }
+
+        var btnToggle = questionEl.querySelector(".btn-toggle-collapse");
+        if (btnToggle) {
+            btnToggle.addEventListener("click", function () {
+                var isCollapsed = questionEl.classList.toggle('collapsed');
+                var btn = questionEl.querySelector('.btn-toggle-collapse');
+                if (btn) {
+                    btn.textContent = isCollapsed ? 'Expand' : 'Collapse';
+                    btn.setAttribute('aria-expanded', String(!isCollapsed));
+                }
+            });
+        }
+
+        // Preview button: render and toggle preview surface
+        var btnPreview = questionEl.querySelector('.btn-preview');
+        if (btnPreview) {
+            btnPreview.addEventListener('click', function () {
+                var preview = questionEl.querySelector('.question-preview');
+                if (preview) {
+                    // re-render preview before toggling
+                    renderQuestionPreview(questionEl);
+                    preview.classList.toggle('d-none');
+                } else {
+                    renderQuestionPreview(questionEl);
+                }
+            });
+        }
+
+        var btnAddOpt = questionEl.querySelector(".btn-add-option");
+        if (btnAddOpt) {
+            btnAddOpt.addEventListener("click", function () {
+                addOption(questionEl.querySelector(".option-list"));
+                reindexAll();
+                renderQuestionPreview(questionEl);
+            });
+        }
+
+        var btnAddGridRow = questionEl.querySelector(".btn-add-grid-row");
+        if (btnAddGridRow) {
+            btnAddGridRow.addEventListener("click", function () {
+                addGridRow(questionEl.querySelector(".grid-row-list"));
+                reindexAll();
+            });
+        }
+
+        var btnAddGridCol = questionEl.querySelector(".btn-add-grid-column");
+        if (btnAddGridCol) {
+            btnAddGridCol.addEventListener("click", function () {
+                addGridColumn(questionEl.querySelector(".grid-column-list"));
+                reindexAll();
+            });
+        }
 
         questionEl.addEventListener("click", function (event) {
             if (event.target.classList.contains("btn-remove-option")) {
@@ -259,6 +412,23 @@
         if (addBtn) {
             addBtn.addEventListener("click", addQuestion);
         }
+
+        var floatingBtn = document.createElement('button');
+        floatingBtn.type = 'button';
+        floatingBtn.className = 'btn btn-success btn-lg floating-add-question';
+        floatingBtn.textContent = '+ Add Question';
+        floatingBtn.addEventListener('click', addQuestion);
+
+        var floatWrap = document.createElement('div');
+        floatWrap.className = 'floating-action-bar';
+        floatWrap.appendChild(floatingBtn);
+        document.body.appendChild(floatWrap);
+
+        var bottomButton = document.createElement('div');
+        bottomButton.className = 'bottom-add-question';
+        bottomButton.innerHTML = '<button type="button" class="btn btn-success btn-sm">+ Add Question</button>';
+        bottomButton.querySelector('button').addEventListener('click', addQuestion);
+        container.parentNode.insertBefore(bottomButton, null);
 
         form.addEventListener("submit", function () {
             reindexAll();
