@@ -132,6 +132,13 @@ namespace CallCenterSecure.Controllers.Survey
             return View(customers);
         }
 
+        [HttpGet]
+        public FileResult DownloadSampleTemplate()
+        {
+            var filePath = Server.MapPath("~/Content/Templates/SurveyCustomerData_Template.csv");
+            return File(filePath, "text/csv", "SurveyCustomerData_Template.csv");
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult CustomerDataUpload(HttpPostedFileBase file, int? surveyTemplateTypeId)

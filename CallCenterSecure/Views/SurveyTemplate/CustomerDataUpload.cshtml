@@ -20,7 +20,16 @@
     </div>
 }
 
-<p class="text-muted">Upload customer data for a survey template using Excel.</p>
+<p class="text-muted">Upload customer data for a survey template using CSV.</p>
+<p class="text-muted mb-3">
+    Download the sample template below, fill in your customer data, and upload it back here.
+    Keep the column order unchanged so the importer can read the values correctly.
+</p>
+<div class="mb-3">
+    <a href="@Url.Content("~/Content/Templates/SurveyCustomerData_Template.csv")" class="btn btn-outline-secondary" download>
+        <i class="fa fa-download"></i> Download Sample CSV Template
+    </a>
+</div>
 
 @using (Html.BeginForm("CustomerDataUpload", "SurveyTemplate", FormMethod.Post, new { enctype = "multipart/form-data", id = "customerDataUploadForm" }))
 {
