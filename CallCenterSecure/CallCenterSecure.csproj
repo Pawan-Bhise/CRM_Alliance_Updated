@@ -556,7 +556,7 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Contact.cshtml" />
-    <Content Include="Views\Home\Index.cshtml" />    
+    <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Account\Login.cshtml" />
     <Content Include="Views\Admin\CategoryMaster.cshtml" />
     <Content Include="Views\Admin\CategoryMasterAdd.cshtml" />
@@ -696,9 +696,9 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Properties\PublishProfiles\" />
-    <Folder Include="Scripts\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\SurveyCustomerData_Template.csv" />
     <None Include="packages.config" />
     <Content Include="Views\AllianceOutbound\Details.cshtml" />
     <Content Include="Views\Shared\_DisplayField.cshtml" />
