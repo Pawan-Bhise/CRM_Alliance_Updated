@@ -712,6 +712,7 @@
     <Content Include="Views\NatureOfComplaints\Create.cshtml" />
     <Content Include="Views\NatureOfComplaints\Edit.cshtml" />
     <Content Include="Views\NatureOfComplaints\Index.cshtml" />
+    <Content Include="Views\SurveyTemplate\ViewUploadLog.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.3.11.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />

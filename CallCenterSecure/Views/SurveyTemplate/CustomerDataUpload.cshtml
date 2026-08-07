@@ -22,14 +22,9 @@
 
 <p class="text-muted">Upload customer data for a survey template using CSV.</p>
 <p class="text-muted mb-3">
-    Download the sample template below, fill in your customer data, and upload it back here.
+    Download the sample template, fill in your customer data, and upload it back here.
     Keep the column order unchanged so the importer can read the values correctly.
 </p>
-<div class="mb-3">
-    <a href="@Url.Content("~/Content/Templates/SurveyCustomerData_Template.csv")" class="btn btn-outline-secondary" download>
-        <i class="fa fa-download"></i> Download Sample CSV Template
-    </a>
-</div>
 
 @using (Html.BeginForm("CustomerDataUpload", "SurveyTemplate", FormMethod.Post, new { enctype = "multipart/form-data", id = "customerDataUploadForm" }))
 {
@@ -46,10 +41,38 @@
     <div class="form-row mb-3">
         <div class="form-group col-md-6">
             @Html.Label("CSV File", htmlAttributes: new { @class = "control-label" })
-            <input type="file" name="file" accept=".csv" class="form-control" />
+            <div class="input-group">
+                <input type="file" name="file" accept=".csv" class="form-control" />
+                <div class="input-group-append">
+                    <a href="@Url.Content("~/Content/Templates/SurveyCustomerData_Template.csv")" class="btn btn-outline-secondary" download>
+                        <i class="fa fa-download"></i> Sample Template
+                    </a>
+                </div>
+            </div>
             @Html.ValidationMessage("file", "", new { @class = "text-danger" })
         </div>
     </div>
+
+    <div class="form-row mb-3">
+        <div class="form-group col-md-6">
+            @Html.Label("Campaign Batch", htmlAttributes: new { @class = "control-label" })
+            <input type="text" name="campaignBatch" class="form-control" placeholder="e.g. Q3-Launch-001" />
+            <small class="form-text text-muted">Optional tag used for tracking this upload batch.</small>
+        </div>
+    </div>
+
+    if (ViewBag.ValidationErrors != null && ((IEnumerable<string>)ViewBag.ValidationErrors).Any())
+    {
+        <div class="alert alert-warning" role="alert">
+            <strong>Validation issues found:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach (var error in (IEnumerable<string>)ViewBag.ValidationErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
 
     <button type="submit" class="btn btn-primary">Upload Customer Data</button>
     @Html.RouteLink("Back to Templates", "SurveyTemplate", new { action = "Index" }, new { @class = "btn btn-secondary ml-2" })
@@ -59,6 +82,57 @@
         Uploading, please wait...
     </div>
 }
+
+<hr class="mt-4" />
+
+<h4 class="mt-4">Upload History</h4>
+<p class="text-muted">Recent upload attempts and their current status.</p>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>File Name</th>
+            <th>Uploaded Date &amp; Time</th>
+            <th>Uploaded By</th>
+            <th>Total Rows</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (ViewBag.UploadHistory != null && ((IEnumerable<CallCenterSecure.Models.UploadJob>)ViewBag.UploadHistory).Any())
+        {
+            foreach (var job in (IEnumerable<CallCenterSecure.Models.UploadJob>)ViewBag.UploadHistory)
+            {
+                <tr>
+                    <td>@job.FileName</td>
+                    <td>@job.CreatedOn.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@(string.IsNullOrWhiteSpace(job.UploadedBy) ? "System" : job.UploadedBy)</td>
+                    <td>@(job.ProcessedRows ?? 0)</td>
+                    <td>
+                        @if (string.Equals(job.Status, "Success", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="badge badge-success">Success</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-danger">Failed</span>
+                        }
+                    </td>
+                    <td>
+                        @Html.ActionLink("View Logs", "ViewUploadLog", new { id = job.UploadJobId }, new { @class = "btn btn-sm btn-outline-primary" })
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="6" class="text-muted">No upload history yet.</td>
+            </tr>
+        }
+    </tbody>
+</table>
 
 @section Scripts {
     <script>

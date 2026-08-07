@@ -19,6 +19,10 @@ namespace CallCenterSecure.Models
 
         public string Message { get; set; }
 
+        public string UploadedBy { get; set; }
+
+        public string BatchTag { get; set; }
+
         public DateTime CreatedOn { get; set; }
         public DateTime? StartedOn { get; set; }
         public DateTime? CompletedOn { get; set; }
