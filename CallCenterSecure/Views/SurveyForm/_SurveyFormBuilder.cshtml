@@ -251,6 +251,25 @@
                         </div>
                     </div>
 
+                    <div class="conditional-wrapper mt-3 row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Show this question only when</label>
+                            <select class="form-control conditional-parent-question" data-selected-value="@(q.ConditionalParentQuestionIndex.HasValue ? q.ConditionalParentQuestionIndex.Value.ToString() : "")">
+                                <option value="">-- Select parent question --</option>
+                                @for (var p = 0; p < Model.Questions.Count; p++)
+                                {
+                                    if (p == i) { continue; }
+                                    var parentQuestion = Model.Questions[p];
+                                    <option value="@p" @(q.ConditionalParentQuestionIndex.HasValue && q.ConditionalParentQuestionIndex.Value == p ? "selected" : "")>@(p + 1). @parentQuestion.QuestionText</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6" style="display:none;">
+                            <label class="form-label">Parent answer value</label>
+                            <input type="text" class="form-control conditional-parent-option" value="@q.ConditionalParentOptionText" placeholder="e.g. Yes" />
+                        </div>
+                    </div>
+
                     <div class="linear-wrapper mt-3 row g-2">
                         <div class="col-md-3">
                             <label class="form-label">Min Value</label>
@@ -371,6 +390,19 @@
                     <button type="button" class="btn btn-sm btn-outline-primary btn-add-option">Add Option</button>
                 </div>
                 <div class="option-list"></div>
+            </div>
+
+            <div class="conditional-wrapper mt-3 row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Show this question only when</label>
+                    <select class="form-control conditional-parent-question" data-selected-value="">
+                        <option value="">-- Select parent question --</option>
+                    </select>
+                </div>
+                <div class="col-md-6" style="display:none;">
+                    <label class="form-label">Parent answer value</label>
+                    <input type="text" class="form-control conditional-parent-option" placeholder="e.g. Yes" />
+                </div>
             </div>
 
             <div class="linear-wrapper mt-3 row g-2">

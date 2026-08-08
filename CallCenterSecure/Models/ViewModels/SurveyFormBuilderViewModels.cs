@@ -99,6 +99,11 @@ namespace CallCenterSecure.Models.ViewModels
 
         public bool IsRequired { get; set; }
 
+        public int? ConditionalParentQuestionIndex { get; set; }
+
+        [MaxLength(500)]
+        public string ConditionalParentOptionText { get; set; }
+
         public int? MinValue { get; set; }
 
         public int? MaxValue { get; set; }

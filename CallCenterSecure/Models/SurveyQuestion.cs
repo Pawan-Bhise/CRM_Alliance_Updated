@@ -32,6 +32,11 @@ namespace CallCenterSecure.Models
 
         public bool IsRequired { get; set; }
 
+        public int? ConditionalParentQuestionIndex { get; set; }
+
+        [MaxLength(500)]
+        public string ConditionalParentOptionText { get; set; }
+
         public DateTime CreatedDate { get; set; }
 
         public int? MinValue { get; set; }

@@ -73,6 +73,8 @@ namespace CallCenterSecure.Models.ViewModels
         public string QuestionType { get; set; }
         public int DisplayOrder { get; set; }
         public bool IsRequired { get; set; }
+        public int? ConditionalParentQuestionIndex { get; set; }
+        public string ConditionalParentOptionText { get; set; }
 
         public int? MinValue { get; set; }
         public int? MaxValue { get; set; }

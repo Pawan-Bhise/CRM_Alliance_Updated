@@ -62,7 +62,8 @@
     for (var i = 0; i < Model.Questions.Count; i++)
     {
         var question = Model.Questions[i];
-        <div class="card mb-3">
+        var shouldHide = question.ConditionalParentQuestionIndex.HasValue;
+        <div class="card mb-3 survey-question-card" data-question-index="@i" data-parent-question-index="@(question.ConditionalParentQuestionIndex.HasValue ? question.ConditionalParentQuestionIndex.Value.ToString() : "")" data-parent-answer="@question.ConditionalParentOptionText" style="@(shouldHide ? "display:none;" : "")">
             <div class="card-body">
                 @Html.HiddenFor(x => x.Questions[i].SurveyQuestionId)
                 @Html.HiddenFor(x => x.Questions[i].QuestionType)
@@ -113,7 +114,7 @@
                 else if (question.QuestionType == SurveyQuestionTypeCatalog.Ranking)
                 {
                     <p class="small text-muted">Drag to reorder and set priority (1 = highest)</p>
-                    <ul class="list-group ranking-list" data-question-index="@i">
+                    <ul class="list-group ranking-list" data-question-index="@i" data-completed="false">
                         @foreach (var option in question.Options)
                         {
                             <li class="list-group-item" data-value="@option.OptionText">@option.OptionText</li>

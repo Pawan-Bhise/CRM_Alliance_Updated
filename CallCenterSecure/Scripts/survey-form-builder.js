@@ -220,6 +220,17 @@
         if (qText) {
             qText.addEventListener("input", function () {
                 renderQuestionPreview(questionEl);
+                updateAllParentSelectLabels();
+            });
+            qText.addEventListener("blur", function () {
+                updateAllParentSelectLabels();
+            });
+        }
+
+        var parentSelect = questionEl.querySelector('.conditional-parent-question');
+        if (parentSelect) {
+            parentSelect.addEventListener('focus', function () {
+                populateConditionalParentOptions(questionEl);
             });
         }
 
@@ -342,6 +353,8 @@
             setName(questionEl.querySelector(".question-text"), "Questions[" + questionIndex + "].QuestionText");
             setName(questionEl.querySelector(".question-type"), "Questions[" + questionIndex + "].QuestionType");
             setName(questionEl.querySelector(".question-required"), "Questions[" + questionIndex + "].IsRequired");
+            setName(questionEl.querySelector(".conditional-parent-question"), "Questions[" + questionIndex + "].ConditionalParentQuestionIndex");
+            setName(questionEl.querySelector(".conditional-parent-option"), "Questions[" + questionIndex + "].ConditionalParentOptionText");
 
             var optionItems = questionEl.querySelectorAll(".option-item");
             optionItems.forEach(function (optionEl, optionIndex) {
@@ -369,6 +382,56 @@
             setName(questionEl.querySelector(".scale-min-label"), "Questions[" + questionIndex + "].MinLabel");
             setName(questionEl.querySelector(".scale-max-label"), "Questions[" + questionIndex + "].MaxLabel");
         });
+
+        container.querySelectorAll('.question-item').forEach(function (questionEl) {
+            populateConditionalParentOptions(questionEl);
+        });
+    }
+
+    function populateConditionalParentOptions(questionEl) {
+        var select = questionEl.querySelector('.conditional-parent-question');
+        if (!select) {
+            return;
+        }
+
+        var container = byId('questionContainer');
+        if (!container) {
+            return;
+        }
+
+        var currentQuestionItem = questionEl;
+        var questionItems = Array.prototype.slice.call(container.querySelectorAll('.question-item'));
+        var currentIndex = questionItems.indexOf(currentQuestionItem);
+
+        var selectedValue = select.value || select.getAttribute('data-selected-value');
+
+        select.innerHTML = '<option value="">-- Select parent question --</option>';
+        questionItems.forEach(function (item, index) {
+            if (index === currentIndex) {
+                return;
+            }
+
+            var text = (item.querySelector('.question-text').value || 'Untitled question').trim();
+            var opt = document.createElement('option');
+            opt.value = index;
+            opt.textContent = (index + 1) + '. ' + text;
+            select.appendChild(opt);
+        });
+
+        if (selectedValue !== null && typeof selectedValue !== 'undefined' && selectedValue !== '') {
+            select.value = selectedValue;
+        }
+    }
+
+    function updateAllParentSelectLabels() {
+        var container = byId('questionContainer');
+        if (!container) {
+            return;
+        }
+
+        Array.prototype.slice.call(container.querySelectorAll('.question-item')).forEach(function (questionEl) {
+            populateConditionalParentOptions(questionEl);
+        });
     }
 
     function addQuestion() {
@@ -381,6 +444,7 @@
         container.appendChild(questionEl);
         wireQuestionEvents(questionEl);
         reindexAll();
+        updateAllParentSelectLabels();
     }
 
     function init() {
@@ -392,6 +456,11 @@
         }
 
         container.querySelectorAll(".question-item").forEach(function (questionEl) {
+            var selectedValue = questionEl.querySelector('.conditional-parent-question') && questionEl.querySelector('.conditional-parent-question').value;
+            if (selectedValue !== null && typeof selectedValue !== 'undefined' && selectedValue !== '') {
+                questionEl.querySelector('.conditional-parent-question').setAttribute('data-selected-value', selectedValue);
+            }
+            populateConditionalParentOptions(questionEl);
             wireQuestionEvents(questionEl);
         });
 
@@ -435,6 +504,7 @@
         });
 
         reindexAll();
+        updateAllParentSelectLabels();
     }
 
     document.addEventListener("DOMContentLoaded", init);

@@ -243,6 +243,8 @@ namespace CallCenterSecure.Services
                 QuestionType = question.QuestionType,
                 DisplayOrder = question.DisplayOrder,
                 IsRequired = question.IsRequired,
+                ConditionalParentQuestionIndex = question.ConditionalParentQuestionIndex,
+                ConditionalParentOptionText = question.ConditionalParentOptionText,
                 MinValue = question.MinValue,
                 MaxValue = question.MaxValue,
                 MinLabel = question.MinLabel,
@@ -265,6 +267,11 @@ namespace CallCenterSecure.Services
         {
             foreach (var question in model.Questions)
             {
+                if (ShouldSkipQuestion(question, model.Questions))
+                {
+                    continue;
+                }
+
                 if (!question.IsRequired)
                 {
                     continue;
@@ -364,6 +371,54 @@ namespace CallCenterSecure.Services
                     ValidateFile(question.File);
                 }
             }
+        }
+
+        private static bool ShouldSkipQuestion(SurveyQuestionResponseViewModel question, IList<SurveyQuestionResponseViewModel> allQuestions)
+        {
+            if (question == null || !question.ConditionalParentQuestionIndex.HasValue)
+            {
+                return false;
+            }
+
+            var parentIndex = question.ConditionalParentQuestionIndex.Value;
+            if (parentIndex < 0 || parentIndex >= allQuestions.Count)
+            {
+                return false;
+            }
+
+            var parent = allQuestions[parentIndex];
+            if (parent == null)
+            {
+                return false;
+            }
+
+            var parentAnswer = GetAnswerValue(parent);
+            return string.IsNullOrWhiteSpace(parentAnswer);
+        }
+
+        private static string GetAnswerValue(SurveyQuestionResponseViewModel question)
+        {
+            if (question == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(question.SelectedOption))
+            {
+                return question.SelectedOption.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(question.AnswerText))
+            {
+                return question.AnswerText.Trim();
+            }
+
+            if (question.SelectedOptions != null && question.SelectedOptions.Any(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                return string.Join(",", question.SelectedOptions.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()));
+            }
+
+            return string.Empty;
         }
 
         private static void ValidateFile(HttpPostedFileBase file)

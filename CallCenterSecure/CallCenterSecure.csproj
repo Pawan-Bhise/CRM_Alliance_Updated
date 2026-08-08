@@ -539,6 +539,7 @@
     <Content Include="Content\bootstrap-grid.min.css.map" />
     <Content Include="Content\bootstrap-grid.css.map" />
     <Content Include="libman.json" />
+    <Content Include="Scripts\Sql\AddSurveyQuestionConditionalColumns.sql" />
     <Content Include="Scripts\survey-form-builder.js" />
     <Content Include="Scripts\survey-response.js" />
     <Content Include="Scripts\Sql\SurveyFormBuilder.sql" />
