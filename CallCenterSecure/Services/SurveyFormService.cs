@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Web.Mvc;
+using ClosedXML.Excel;
 using CallCenterSecure.Models;
 using CallCenterSecure.Models.ViewModels;
 using CallCenterSecure.Repositories;
@@ -202,6 +204,142 @@ namespace CallCenterSecure.Services
                 existing.Questions.Add(question);
             }
 
+            _surveyFormRepository.SaveChanges();
+        }
+
+        public byte[] ExportExcel(int formId)
+        {
+            var form = _surveyFormRepository.GetFormById(formId);
+            if (form == null)
+            {
+                throw new InvalidOperationException("Survey form not found.");
+            }
+
+            var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Survey Form");
+            worksheet.Cell(1, 1).Value = "Survey Form Export";
+            worksheet.Cell(2, 1).Value = "Title";
+            worksheet.Cell(2, 2).Value = form.Title;
+            worksheet.Cell(3, 1).Value = "Category";
+            worksheet.Cell(3, 2).Value = form.Category;
+            worksheet.Cell(4, 1).Value = "Description";
+            worksheet.Cell(4, 2).Value = form.Description ?? string.Empty;
+
+            worksheet.Cell(6, 1).Value = "#";
+            worksheet.Cell(6, 2).Value = "Question";
+            worksheet.Cell(6, 3).Value = "Type";
+            worksheet.Cell(6, 4).Value = "Required";
+            worksheet.Cell(6, 5).Value = "Parent Question Index";
+            worksheet.Cell(6, 6).Value = "Parent Option";
+
+            var questionRow = 7;
+            foreach (var question in form.Questions.OrderBy(x => x.DisplayOrder))
+            {
+                worksheet.Cell(questionRow, 1).Value = question.DisplayOrder;
+                worksheet.Cell(questionRow, 2).Value = question.QuestionText;
+                worksheet.Cell(questionRow, 3).Value = question.QuestionType;
+                worksheet.Cell(questionRow, 4).Value = question.IsRequired ? "Yes" : "No";
+                worksheet.Cell(questionRow, 5).Value = question.ConditionalParentQuestionIndex?.ToString() ?? string.Empty;
+                worksheet.Cell(questionRow, 6).Value = question.ConditionalParentOptionText ?? string.Empty;
+                questionRow++;
+            }
+
+            worksheet.Columns().AdjustToContents();
+
+            using (var stream = new MemoryStream())
+            {
+                workbook.SaveAs(stream);
+                return stream.ToArray();
+            }
+        }
+
+        public int Duplicate(int formId, string userName)
+        {
+            var source = _surveyFormRepository.GetFormById(formId);
+            if (source == null)
+            {
+                throw new InvalidOperationException("Survey form not found.");
+            }
+
+            var duplicate = new SurveyForm
+            {
+                SurveyTemplateId = source.SurveyTemplateId,
+                Title = string.Format("{0} Copy", source.Title).Trim(),
+                Category = source.Category,
+                Description = source.Description,
+                CreatedBy = string.IsNullOrWhiteSpace(userName) ? "System" : userName,
+                CreatedDate = DateTime.Now,
+                ModifiedBy = null,
+                IsActive = true,
+                Questions = source.Questions
+                    .OrderBy(q => q.DisplayOrder)
+                    .Select(q => new SurveyQuestion
+                    {
+                        QuestionText = q.QuestionText,
+                        QuestionType = q.QuestionType,
+                        DisplayOrder = q.DisplayOrder,
+                        IsRequired = q.IsRequired,
+                        ConditionalParentQuestionIndex = q.ConditionalParentQuestionIndex,
+                        ConditionalParentOptionText = q.ConditionalParentOptionText,
+                        MinValue = q.MinValue,
+                        MaxValue = q.MaxValue,
+                        MinLabel = q.MinLabel,
+                        MaxLabel = q.MaxLabel,
+                        CreatedDate = DateTime.Now,
+                        Options = (q.Options ?? new List<SurveyQuestionOption>())
+                            .OrderBy(o => o.DisplayOrder)
+                            .Select(o => new SurveyQuestionOption
+                            {
+                                OptionText = o.OptionText,
+                                DisplayOrder = o.DisplayOrder
+                            }).ToList(),
+                        GridRows = (q.GridRows ?? new List<SurveyGridRow>())
+                            .OrderBy(r => r.DisplayOrder)
+                            .Select(r => new SurveyGridRow
+                            {
+                                RowText = r.RowText,
+                                DisplayOrder = r.DisplayOrder
+                            }).ToList(),
+                        GridColumns = (q.GridColumns ?? new List<SurveyGridColumn>())
+                            .OrderBy(c => c.DisplayOrder)
+                            .Select(c => new SurveyGridColumn
+                            {
+                                ColumnText = c.ColumnText,
+                                DisplayOrder = c.DisplayOrder
+                            }).ToList()
+                    }).ToList()
+            };
+
+            _surveyFormRepository.AddForm(duplicate);
+            _surveyFormRepository.SaveChanges();
+            return duplicate.Id;
+        }
+
+        public void ToggleStatus(int formId, string userName)
+        {
+            var existing = _surveyFormRepository.GetFormById(formId);
+            if (existing == null)
+            {
+                throw new InvalidOperationException("Survey form not found.");
+            }
+
+            existing.IsActive = !existing.IsActive;
+            existing.ModifiedBy = string.IsNullOrWhiteSpace(userName) ? "System" : userName;
+            existing.ModifiedDate = DateTime.Now;
+            _surveyFormRepository.SaveChanges();
+        }
+
+        public void Delete(int formId, string userName)
+        {
+            var existing = _surveyFormRepository.GetFormById(formId);
+            if (existing == null)
+            {
+                throw new InvalidOperationException("Survey form not found.");
+            }
+
+            existing.IsActive = false;
+            existing.ModifiedBy = string.IsNullOrWhiteSpace(userName) ? "System" : userName;
+            existing.ModifiedDate = DateTime.Now;
             _surveyFormRepository.SaveChanges();
         }
 

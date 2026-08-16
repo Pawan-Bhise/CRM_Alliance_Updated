@@ -215,7 +215,8 @@ namespace CallCenter.Controllers
                 FileName = uniqueFileName,
                 FilePath = filePath,
                 Status = "Pending",
-                CreatedOn = DateTime.UtcNow
+                CreatedOn = DateTime.UtcNow,
+                Source = "CustomerLoan"
             };
 
             db.UploadJobs.Add(uploadJob);

@@ -10,5 +10,9 @@ namespace CallCenterSecure.Services
         SurveyFormBuilderViewModel PrepareBuilderModel(SurveyFormBuilderViewModel model);
         void Create(SurveyFormBuilderViewModel model, string userName);
         void Update(SurveyFormBuilderViewModel model, string userName);
+        byte[] ExportExcel(int formId);
+        int Duplicate(int formId, string userName);
+        void ToggleStatus(int formId, string userName);
+        void Delete(int formId, string userName);
     }
 }

@@ -43,7 +43,7 @@ namespace CallCenterSecure.Controllers.Survey
 
             try
             {
-                _surveyFormService.Create(model, User != null && User.Identity != null ? User.Identity.Name : null);
+                _surveyFormService.Create(model, GetCurrentUserName());
                 TempData["SuccessMessage"] = "Survey form created successfully.";
                 return RedirectToAction("Index", new { templateId = model.SurveyTemplateId });
             }
@@ -86,7 +86,7 @@ namespace CallCenterSecure.Controllers.Survey
 
             try
             {
-                _surveyFormService.Update(model, User != null && User.Identity != null ? User.Identity.Name : null);
+                _surveyFormService.Update(model, GetCurrentUserName());
                 TempData["SuccessMessage"] = "Survey form updated successfully.";
                 return RedirectToAction("Index", new { templateId = model.SurveyTemplateId });
             }
@@ -95,6 +95,96 @@ namespace CallCenterSecure.Controllers.Survey
                 ModelState.AddModelError(string.Empty, ex.Message);
                 return View(_surveyFormService.PrepareBuilderModel(model));
             }
+        }
+
+        public ActionResult ExportExcel(int id)
+        {
+            if (id <= 0)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            try
+            {
+                var workbookBytes = _surveyFormService.ExportExcel(id);
+                return File(workbookBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", string.Format("survey-form-{0}.xlsx", id));
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Index");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Duplicate(int id, int? templateId)
+        {
+            if (id <= 0)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            try
+            {
+                _surveyFormService.Duplicate(id, GetCurrentUserName());
+                TempData["SuccessMessage"] = "Survey form duplicated successfully.";
+                return RedirectToAction("Index", new { templateId = templateId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Index", new { templateId = templateId });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ToggleStatus(int id, int? templateId)
+        {
+            if (id <= 0)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            try
+            {
+                _surveyFormService.ToggleStatus(id, GetCurrentUserName());
+                TempData["SuccessMessage"] = "Survey form status updated successfully.";
+                return RedirectToAction("Index", new { templateId = templateId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Index", new { templateId = templateId });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Delete(int id, int? templateId)
+        {
+            if (id <= 0)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            try
+            {
+                _surveyFormService.Delete(id, GetCurrentUserName());
+                TempData["SuccessMessage"] = "Survey form deleted successfully.";
+                return RedirectToAction("Index", new { templateId = templateId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Index", new { templateId = templateId });
+            }
+        }
+
+        private string GetCurrentUserName()
+        {
+            return User != null && User.Identity != null ? User.Identity.Name : null;
         }
     }
 }

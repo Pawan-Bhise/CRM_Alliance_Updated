@@ -23,6 +23,9 @@ namespace CallCenterSecure.Models
 
         public string BatchTag { get; set; }
 
+        [MaxLength(50)]
+        public string Source { get; set; }
+
         public DateTime CreatedOn { get; set; }
         public DateTime? StartedOn { get; set; }
         public DateTime? CompletedOn { get; set; }
