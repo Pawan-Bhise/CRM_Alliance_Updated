@@ -398,8 +398,8 @@ namespace CallCenterSecure.Services
                     ConditionalParentQuestionIndex = question.ConditionalParentQuestionIndex,
                     ConditionalParentOptionText = TrimOrNull(question.ConditionalParentOptionText),
                     CreatedDate = DateTime.Now,
-                    MinValue = (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Nps) ? question.MinValue : null,
-                    MaxValue = (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Nps) ? question.MaxValue : null,
+                    MinValue = IsRatingQuestion(question.QuestionType) ? 1 : (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Nps) ? question.MinValue : null,
+                    MaxValue = IsRatingQuestion(question.QuestionType) ? (question.MaxValue ?? 5) : (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Nps) ? question.MaxValue : null,
                     MinLabel = (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Nps) ? TrimOrNull(question.MinLabel) : null,
                     MaxLabel = (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Nps) ? TrimOrNull(question.MaxLabel) : null,
                     Options = new List<SurveyQuestionOption>(),
@@ -439,9 +439,13 @@ namespace CallCenterSecure.Services
         {
             return questionType == SurveyQuestionTypeCatalog.MultipleChoice
                 || questionType == SurveyQuestionTypeCatalog.Checkboxes
-                || questionType == SurveyQuestionTypeCatalog.Dropdown
-                || questionType == SurveyQuestionTypeCatalog.Ranking;
+                || questionType == SurveyQuestionTypeCatalog.Dropdown;
         }
+
+            private static bool IsRatingQuestion(string questionType)
+            {
+                return questionType == SurveyQuestionTypeCatalog.Ranking;
+            }
 
         private static bool IsGridQuestion(string questionType)
         {
@@ -515,6 +519,11 @@ namespace CallCenterSecure.Services
 
             foreach (var question in model.Questions)
             {
+                if (question.QuestionType == SurveyQuestionTypeCatalog.Ranking && (!question.MaxValue.HasValue || question.MaxValue.Value < 3 || question.MaxValue.Value > 10))
+                {
+                    question.MaxValue = 5;
+                }
+
                 if (IsOptionQuestion(question.QuestionType) && !question.Options.Any())
                 {
                     throw new InvalidOperationException("Option-based questions require at least one option.");

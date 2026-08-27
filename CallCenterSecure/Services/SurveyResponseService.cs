@@ -311,9 +311,11 @@ namespace CallCenterSecure.Services
                         }
                         break;
                     case SurveyQuestionTypeCatalog.Ranking:
-                        if (question.SelectedOptions == null || !question.SelectedOptions.Any())
+                        int ratingValue;
+                        var maxRating = question.MaxValue ?? 5;
+                        if (string.IsNullOrWhiteSpace(question.AnswerText) || !int.TryParse(question.AnswerText, out ratingValue) || ratingValue < 1 || ratingValue > maxRating)
                         {
-                            throw new InvalidOperationException("All required ranking questions must have at least one ranked option.");
+                            throw new InvalidOperationException("All required rating questions must be answered with a valid rating.");
                         }
                         break;
                     case SurveyQuestionTypeCatalog.MultipleChoice:

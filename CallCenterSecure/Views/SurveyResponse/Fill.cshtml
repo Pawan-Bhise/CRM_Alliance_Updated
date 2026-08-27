@@ -113,14 +113,17 @@
                 }
                 else if (question.QuestionType == SurveyQuestionTypeCatalog.Ranking)
                 {
-                    <p class="small text-muted">Drag to reorder and set priority (1 = highest)</p>
-                    <ul class="list-group ranking-list" data-question-index="@i" data-completed="false">
-                        @foreach (var option in question.Options)
+                    <div class="survey-rating" role="radiogroup" aria-label="Rating from 1 to 5">
+                        @for (var rating = 1; rating <= (question.MaxValue ?? 5); rating++)
                         {
-                            <li class="list-group-item" data-value="@option.OptionText">@option.OptionText</li>
+                            var ratingId = "q" + i + "-rating" + rating;
+                            <label class="survey-rating-option" for="@ratingId">
+                                <input id="@ratingId" type="radio" name="Questions[@i].AnswerText" value="@rating" @(question.AnswerText == rating.ToString() ? "checked" : "") />
+                                <span class="survey-rating-star" aria-hidden="true">&#9733;</span>
+                                <span class="survey-rating-number">@rating</span>
+                            </label>
                         }
-                    </ul>
-                    <div class="ranking-hidden" data-question-index="@i"></div>
+                    </div>
                 }
                 else if (question.QuestionType == SurveyQuestionTypeCatalog.Checkboxes)
                 {
@@ -242,6 +245,15 @@
 }
 
 @section Scripts {
+    <style>
+        .survey-rating { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start; }
+        .survey-rating-option { display: flex; flex-direction: column; align-items: center; gap: .4rem; cursor: pointer; min-width: 3rem; }
+        .survey-rating-option input { position: absolute; opacity: 0; }
+        .survey-rating-number { font-size: 1.05rem; line-height: 1; }
+        .survey-rating-star { color: #6c757d; font-size: 2.5rem; line-height: 1; }
+        .survey-rating-option:hover .survey-rating-star, .survey-rating-option.is-selected .survey-rating-star, .survey-rating-option input:focus-visible + .survey-rating-star { color: #f4b400; }
+        .survey-rating-option input:focus-visible + .survey-rating-star { outline: 2px solid #0d6efd; outline-offset: 3px; }
+    </style>
     @Scripts.Render("~/bundles/jqueryui")
     <script src="@Url.Content("~/Scripts/survey-response.js")"></script>
 }

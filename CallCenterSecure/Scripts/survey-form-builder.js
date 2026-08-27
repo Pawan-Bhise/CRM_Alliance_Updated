@@ -30,10 +30,8 @@
         return value === "Multiple Choice"
             || value === "Checkboxes"
             || value === "Dropdown"
-            || value === "Ranking"
             || value === "NPS (0-10)"
             || value === "Date & Time Picker"
-            || value.toLowerCase() === "ranking"
             || value.toLowerCase() === "multiple choice"
             || value.toLowerCase() === "checkboxes"
             || value.toLowerCase() === "dropdown"
@@ -63,7 +61,7 @@
             if (type === 'Paragraph') {
                 html += '<textarea class="form-control mt-2" rows="2" placeholder="Long answer"></textarea>';
             }
-        } else if (type === 'Multiple Choice' || type === 'Dropdown' || type === 'Checkboxes' || type === 'Ranking') {
+        } else if (type === 'Multiple Choice' || type === 'Dropdown' || type === 'Checkboxes') {
             var options = Array.prototype.slice.call(questionEl.querySelectorAll('.option-text')).map(function (input) {
                 return (input.value || '').trim();
             }).filter(function (v) { return v; });
@@ -82,14 +80,22 @@
                 }).join('');
             } else if (type === 'Dropdown') {
                 html += '<select class="form-control"><option>' + options.join('</option><option>') + '</option></select>';
-            } else {
-                html += '<ul class="list-group mt-2">' + options.map(function (option) {
-                    return '<li class="list-group-item">' + option + '</li>';
-                }).join('') + '</ul>';
             }
-        } else if (type === 'Linear Scale' || type === 'NPS (0-10)') {
+        } else if (type === 'Linear Scale' || type === 'NPS (0-10)' || type === 'Ranking') {
             var min = parseInt(questionEl.querySelector('.scale-min-value').value || (type === 'NPS (0-10)' ? '0' : '1'), 10);
             var max = parseInt(questionEl.querySelector('.scale-max-value').value || (type === 'NPS (0-10)' ? '10' : '5'), 10);
+
+            if (type === 'Ranking') {
+                var ratingMax = parseInt(questionEl.querySelector('.rating-scale-value').value || '5', 10);
+                var ratingOptions = [];
+                for (var ratingValue = 1; ratingValue <= ratingMax; ratingValue++) {
+                    ratingOptions.push(ratingValue);
+                }
+                html += '<div class="rating-preview" aria-label="Star rating preview">' + ratingOptions.map(function (value) {
+                    return '<span class="rating-preview-item"><span class="rating-star">&#9733;</span><span>' + value + '</span></span>';
+                }).join('') + '</div>';
+                return previewSurface.innerHTML = html;
+            }
             var labels = [
                 questionEl.querySelector('.scale-min-label').value || min,
                 questionEl.querySelector('.scale-max-label').value || max
@@ -125,13 +131,24 @@
         var optionWrapper = questionEl.querySelector(".option-wrapper");
         var linearWrapper = questionEl.querySelector(".linear-wrapper");
         var gridWrapper = questionEl.querySelector(".grid-wrapper");
+        var rankingWrapper = questionEl.querySelector(".ranking-wrapper");
+        var scaleConfigs = questionEl.querySelectorAll(".scale-config");
+        var isRanking = type === "Ranking" || type.toLowerCase() === "ranking";
 
         if (optionWrapper) {
             optionWrapper.style.display = isOptionType(type) ? "block" : "none";
         }
 
         if (linearWrapper) {
-            linearWrapper.style.display = (type === "Linear Scale" || type === "NPS (0-10)" || type.toLowerCase() === "linear scale" || type.toLowerCase() === "nps (0-10)") ? "flex" : "none";
+            linearWrapper.style.display = (type === "Linear Scale" || type === "NPS (0-10)" || isRanking || type.toLowerCase() === "linear scale" || type.toLowerCase() === "nps (0-10)") ? "flex" : "none";
+        }
+
+        scaleConfigs.forEach(function (scaleConfig) {
+            scaleConfig.style.display = isRanking ? "none" : "block";
+        });
+
+        if (rankingWrapper) {
+            rankingWrapper.style.display = isRanking ? "block" : "none";
         }
 
         if (gridWrapper) {
@@ -151,6 +168,15 @@
             var maxEl = questionEl.querySelector('.scale-max-value');
             if (minEl && !minEl.value) minEl.value = '0';
             if (maxEl && !maxEl.value) maxEl.value = '10';
+        }
+
+        if (isRanking) {
+            var rankingMinEl = questionEl.querySelector('.scale-min-value');
+            var rankingMaxEl = questionEl.querySelector('.scale-max-value');
+            var ratingScaleEl = questionEl.querySelector('.rating-scale-value');
+            if (rankingMinEl) rankingMinEl.value = '1';
+            if (rankingMaxEl && !rankingMaxEl.value) rankingMaxEl.value = '5';
+            if (ratingScaleEl && !ratingScaleEl.value) ratingScaleEl.value = '5';
         }
 
         renderQuestionPreview(questionEl);
@@ -245,6 +271,7 @@
         var sMax = questionEl.querySelector(".scale-max-value"); if (sMax) sMax.addEventListener("input", function () { renderQuestionPreview(questionEl); });
         var sMinL = questionEl.querySelector(".scale-min-label"); if (sMinL) sMinL.addEventListener("input", function () { renderQuestionPreview(questionEl); });
         var sMaxL = questionEl.querySelector(".scale-max-label"); if (sMaxL) sMaxL.addEventListener("input", function () { renderQuestionPreview(questionEl); });
+        var ratingScale = questionEl.querySelector(".rating-scale-value"); if (ratingScale) ratingScale.addEventListener("change", function () { renderQuestionPreview(questionEl); });
 
         var inputs = questionEl.querySelectorAll(".option-text, .grid-row-text, .grid-column-text");
         if (inputs && inputs.length) {
@@ -332,7 +359,11 @@
             return;
         }
 
-        element.name = name;
+        if (name === null) {
+            element.removeAttribute('name');
+        } else {
+            element.name = name;
+        }
         if (typeof value !== "undefined") {
             element.value = value;
         }
@@ -381,6 +412,14 @@
             setName(questionEl.querySelector(".scale-max-value"), "Questions[" + questionIndex + "].MaxValue");
             setName(questionEl.querySelector(".scale-min-label"), "Questions[" + questionIndex + "].MinLabel");
             setName(questionEl.querySelector(".scale-max-label"), "Questions[" + questionIndex + "].MaxLabel");
+            var isRanking = normalizeQuestionType(questionEl.querySelector(".question-type").value).toLowerCase() === "ranking";
+            setName(questionEl.querySelector(".rating-scale-value"), isRanking ? "Questions[" + questionIndex + "].MaxValue" : null);
+            if (isRanking) {
+                setName(questionEl.querySelector(".scale-min-value"), null, 1);
+                setName(questionEl.querySelector(".scale-max-value"), null);
+                setName(questionEl.querySelector(".scale-min-label"), null);
+                setName(questionEl.querySelector(".scale-max-label"), null);
+            }
         });
 
         container.querySelectorAll('.question-item').forEach(function (questionEl) {

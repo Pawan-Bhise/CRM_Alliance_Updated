@@ -37,12 +37,11 @@
 
     function initStartPage() {
         var template = byId('templateId');
-        var category = byId('categoryId');
         var form = byId('formId');
         var customer = byId('customerId');
         var btnStart = byId('btnStartResponse');
 
-        if (!template || !category || !form || !btnStart) {
+        if (!template || !form || !btnStart) {
             return;
         }
 
@@ -69,17 +68,12 @@
         });
 
         btnStart.addEventListener('click', function () {
-            if (!category.value) {
-                alert('Please select a category.');
-                return;
-            }
-
             if (!form.value) {
                 alert('Please select a survey form.');
                 return;
             }
 
-            var url = '/Survey/SurveyResponse/Fill?formId=' + encodeURIComponent(form.value) + '&categoryId=' + encodeURIComponent(category.value);
+            var url = '/Survey/SurveyResponse/Fill?formId=' + encodeURIComponent(form.value);
             if (customer && customer.value) {
                 url += '&customerId=' + encodeURIComponent(customer.value);
             }
@@ -111,6 +105,23 @@
                 }
             }
         });
+    }
+
+    function updateRatingVisual(input) {
+        if (!input || input.name.indexOf('AnswerText') === -1) {
+            return;
+        }
+
+        var rating = parseInt(input.value, 10);
+        var ratingContainer = input.closest('.survey-rating');
+        if (!ratingContainer) {
+            return;
+        }
+
+        var options = ratingContainer.querySelectorAll('.survey-rating-option');
+        for (var index = 0; index < options.length; index++) {
+            options[index].classList.toggle('is-selected', index < rating);
+        }
     }
 
     function shouldTriggerOnBlur(input) {
@@ -201,6 +212,7 @@
             var inputs = card.querySelectorAll('input, select, textarea');
             inputs.forEach(function (input) {
                 input.addEventListener('change', function () {
+                    updateRatingVisual(input);
                     serializeRankingSelections(responseForm);
                     updateConditionalVisibility(responseForm);
                 });
@@ -212,6 +224,7 @@
                     });
                 } else if (input.type === 'radio' || input.type === 'checkbox') {
                     input.addEventListener('click', function () {
+                        updateRatingVisual(input);
                         serializeRankingSelections(responseForm);
                         updateConditionalVisibility(responseForm);
                     });
@@ -223,6 +236,8 @@
                 }
             });
         });
+
+        responseForm.querySelectorAll('.survey-rating input:checked').forEach(updateRatingVisual);
 
         updateConditionalVisibility(responseForm);
 

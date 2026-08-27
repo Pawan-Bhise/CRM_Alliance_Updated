@@ -271,21 +271,30 @@
                     </div>
 
                     <div class="linear-wrapper mt-3 row g-2">
-                        <div class="col-md-3">
+                        <div class="col-md-3 scale-config">
                             <label class="form-label">Min Value</label>
                             <input type="number" class="form-control scale-min-value" value="@(q.MinValue.HasValue ? q.MinValue.Value.ToString() : "")" />
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 scale-config">
                             <label class="form-label">Max Value</label>
                             <input type="number" class="form-control scale-max-value" value="@(q.MaxValue.HasValue ? q.MaxValue.Value.ToString() : "")" />
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 scale-config">
                             <label class="form-label">Min Label</label>
                             <input type="text" class="form-control scale-min-label" value="@q.MinLabel" />
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 scale-config">
                             <label class="form-label">Max Label</label>
                             <input type="text" class="form-control scale-max-label" value="@q.MaxLabel" />
+                        </div>
+                        <div class="col-md-3 ranking-wrapper">
+                            <label class="form-label">Number of stars</label>
+                            <select class="form-control rating-scale-value">
+                                @for (var ratingCount = 3; ratingCount <= 10; ratingCount++)
+                                {
+                                    <option value="@ratingCount" @(q.MaxValue == ratingCount ? "selected" : "")>@ratingCount</option>
+                                }
+                            </select>
                         </div>
                     </div>
 
@@ -406,21 +415,30 @@
             </div>
 
             <div class="linear-wrapper mt-3 row g-2">
-                <div class="col-md-3">
+                <div class="col-md-3 scale-config">
                     <label class="form-label">Min Value</label>
                     <input type="number" class="form-control scale-min-value" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 scale-config">
                     <label class="form-label">Max Value</label>
                     <input type="number" class="form-control scale-max-value" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 scale-config">
                     <label class="form-label">Min Label</label>
                     <input type="text" class="form-control scale-min-label" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 scale-config">
                     <label class="form-label">Max Label</label>
                     <input type="text" class="form-control scale-max-label" />
+                </div>
+                <div class="col-md-3 ranking-wrapper">
+                    <label class="form-label">Number of stars</label>
+                    <select class="form-control rating-scale-value">
+                        @for (var ratingCount = 3; ratingCount <= 10; ratingCount++)
+                        {
+                            <option value="@ratingCount" @(ratingCount == 5 ? "selected" : "")>@ratingCount</option>
+                        }
+                    </select>
                 </div>
             </div>
 
