@@ -16,9 +16,13 @@ namespace CallCenterSecure.Services
             {
                 var query = ApplyDateFilter(db.AllianceInbounds.AsNoTracking(), fromDate, toDate)
                     .AsEnumerable()
-                    .Where(IsComplaintRecord);
+                    .Where(x => HasCallObjective(x, 2));
 
                 var rows = query.ToList();
+                var branchNames = db.RegionBranches.AsNoTracking()
+                    .ToDictionary(x => x.Id, x => x.BranchName);
+                var complaintCategories = db.NatureOfComplaint.AsNoTracking()
+                    .ToDictionary(x => x.ComplaintId, x => x.ComplaintsDescrption);
 
                 var report = new ComplaintReportViewModel
                 {
@@ -28,7 +32,7 @@ namespace CallCenterSecure.Services
                     UnresolvedCount = rows.Count(x => !IsClosed(x.Cmp_ComplainStatus)),
                     AverageResponseTimeMinutes = CalculateAverageMinutes(rows.Select(CalculateResponseMinutes)),
                     AverageCsatScore = null,
-                    Notes = "CSAT is not stored in the current schema. Branch is available from Cmp_Branch."
+                    Notes = "CSAT is not stored in the current schema. Response time uses call duration when available."
                 };
 
                 report.ResolutionRate = report.TotalTickets == 0
@@ -36,10 +40,12 @@ namespace CallCenterSecure.Services
                     : Math.Round((decimal)report.ResolvedCount * 100m / report.TotalTickets, 2);
 
                 report.CategoryBreakdown = BuildCategoryBreakdown(
-                    rows.Select(x => NormalizeComplaintCategory(x.Cmp_NatureOfComplaint)).ToList());
+                    rows.Select(x => NormalizeComplaintCategory(x.Cmp_NatureOfComplaint, complaintCategories)).ToList(),
+                    new[] { "Product Issues", "Service Delay", "Staff Behavior", "Others" });
 
                 report.TopBranches = BuildBreakdown(
-                    rows.Where(x => !string.IsNullOrWhiteSpace(x.Cmp_Branch)).Select(x => x.Cmp_Branch.Trim()).ToList(),
+                    rows.Where(x => !string.IsNullOrWhiteSpace(x.Cmp_Branch))
+                        .Select(x => ResolveLookupLabel(x.Cmp_Branch, branchNames)).ToList(),
                     5);
 
                 return report;
@@ -52,9 +58,13 @@ namespace CallCenterSecure.Services
             {
                 var query = ApplyDateFilter(db.AllianceInbounds.AsNoTracking(), fromDate, toDate)
                     .AsEnumerable()
-                    .Where(IsEnquiryRecord);
+                    .Where(x => HasCallObjective(x, 1));
 
                 var rows = query.ToList();
+                var branchNames = db.RegionBranches.AsNoTracking()
+                    .ToDictionary(x => x.Id, x => x.BranchName);
+                var productNames = db.Products.AsNoTracking()
+                    .ToDictionary(x => x.Id, x => x.Name);
 
                 var report = new EnquiryReportViewModel
                 {
@@ -62,7 +72,7 @@ namespace CallCenterSecure.Services
                     TotalEnquiries = rows.Count,
                     TotalLeadCreation = rows.Count(x => !string.IsNullOrWhiteSpace(x.Lead_CustomerName)),
                     AverageResponseTimeMinutes = CalculateAverageMinutes(rows.Select(CalculateResponseMinutes)),
-                    Notes = "Lead category mapping is provisional and based on Lead_ProductInterested text."
+                    Notes = "Lead creation uses a populated lead customer name. Response time uses call duration when available."
                 };
 
                 report.LeadStatusBreakdown = BuildBreakdown(
@@ -70,10 +80,13 @@ namespace CallCenterSecure.Services
                     10);
 
                 report.CategoryBreakdown = BuildCategoryBreakdown(
-                    rows.Select(x => NormalizeEnquiryCategory(x.Lead_ProductInterested)).ToList());
+                    rows.Select(x => NormalizeEnquiryCategory(
+                        ResolveLookupLabel(x.Lead_ProductInterested, productNames))).ToList(),
+                    new[] { "SA", "MM", "Agri", "Savings" });
 
                 report.TopLocations = BuildBreakdown(
-                    rows.Where(x => !string.IsNullOrWhiteSpace(x.Lead_Branch)).Select(x => x.Lead_Branch.Trim()).ToList(),
+                    rows.Where(x => !string.IsNullOrWhiteSpace(x.Lead_Branch))
+                        .Select(x => ResolveLookupLabel(x.Lead_Branch, branchNames)).ToList(),
                     5);
 
                 return report;
@@ -97,21 +110,22 @@ namespace CallCenterSecure.Services
             return query;
         }
 
-        private static bool IsComplaintRecord(AllianceInbound inbound)
+        private static bool HasCallObjective(AllianceInbound inbound, int objectiveId)
         {
-            return !string.IsNullOrWhiteSpace(inbound.Cmp_CustomerName)
-                   || !string.IsNullOrWhiteSpace(inbound.Cmp_CaseDetail)
-                   || !string.IsNullOrWhiteSpace(inbound.Cmp_ComplainStatus)
-                   || !string.IsNullOrWhiteSpace(inbound.Cmp_Branch)
-                   || !string.IsNullOrWhiteSpace(inbound.Cmp_NatureOfComplaint);
+            return int.TryParse(inbound.CallObjective, out var storedObjectiveId)
+                   && storedObjectiveId == objectiveId;
         }
 
-        private static bool IsEnquiryRecord(AllianceInbound inbound)
+        private static string ResolveLookupLabel(string rawValue, Dictionary<int, string> lookup)
         {
-            return !string.IsNullOrWhiteSpace(inbound.Lead_CustomerName)
-                   || !string.IsNullOrWhiteSpace(inbound.Lead_LeadStatus)
-                   || !string.IsNullOrWhiteSpace(inbound.Lead_Branch)
-                   || !string.IsNullOrWhiteSpace(inbound.Lead_ProductInterested);
+            var value = (rawValue ?? string.Empty).Trim();
+            if (int.TryParse(value, out var id) && lookup.TryGetValue(id, out var label)
+                && !string.IsNullOrWhiteSpace(label))
+            {
+                return label.Trim();
+            }
+
+            return value;
         }
 
         private static bool IsClosed(string status)
@@ -145,9 +159,8 @@ namespace CallCenterSecure.Services
             return Math.Round(list.Average(), 2);
         }
 
-        private static List<ReportBreakdownRowViewModel> BuildCategoryBreakdown(List<string> labels)
+        private static List<ReportBreakdownRowViewModel> BuildCategoryBreakdown(List<string> labels, string[] fixedOrder)
         {
-            var fixedOrder = new[] { "Product Issues", "Service Delay", "Staff Behavior", "Others" };
             var normalized = labels.GroupBy(x => x)
                 .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
 
@@ -185,9 +198,9 @@ namespace CallCenterSecure.Services
             }).ToList();
         }
 
-        private static string NormalizeComplaintCategory(string raw)
+        private static string NormalizeComplaintCategory(string raw, Dictionary<int, string> complaintCategories)
         {
-            var value = (raw ?? string.Empty).Trim();
+            var value = ResolveLookupLabel(raw, complaintCategories);
             if (string.IsNullOrWhiteSpace(value))
             {
                 return "Others";

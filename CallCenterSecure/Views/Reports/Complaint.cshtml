@@ -28,7 +28,7 @@
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Total Tickets</div><h3>@Model.TotalTickets</h3></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Average Response Time</div><h3>@(Model.AverageResponseTimeMinutes.HasValue ? Model.AverageResponseTimeMinutes.Value.ToString("0.00") + " min" : "N/A")</h3></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Resolution Rate</div><h3>@Model.ResolutionRate.ToString("0.00")%</h3></div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">CSAT</div><h3>N/A</h3></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Average CSAT Score</div><h3>@(Model.AverageCsatScore.HasValue ? Model.AverageCsatScore.Value.ToString("0.00") : "N/A")</h3></div></div></div>
 </div>
 
 <div class="row g-3 mb-4">

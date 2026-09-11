@@ -28,7 +28,7 @@
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Total Enquiries</div><h3>@Model.TotalEnquiries</h3></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Total Lead Creation</div><h3>@Model.TotalLeadCreation</h3></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Average Response Time</div><h3>@(Model.AverageResponseTimeMinutes.HasValue ? Model.AverageResponseTimeMinutes.Value.ToString("0.00") + " min" : "N/A")</h3></div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Lead Status Buckets</div><h3>@Model.LeadStatusBreakdown.Count</h3></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">Lead Status (LOS)</div><h3>@Model.LeadStatusBreakdown.Count</h3></div></div></div>
 </div>
 
 <div class="card mb-3">
