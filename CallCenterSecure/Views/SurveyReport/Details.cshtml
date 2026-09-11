@@ -1,0 +1,36 @@
+@model CallCenterSecure.Models.ViewModels.SurveyResponseDetailViewModel
+
+@{
+    ViewBag.Title = "Survey Response Details";
+}
+
+<h2 class="mb-3">Survey Response Details</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6"><strong>Template:</strong> @Model.TemplateName</div>
+            <div class="col-md-6"><strong>Form:</strong> @Model.FormTitle</div>
+            <div class="col-md-4"><strong>Respondent:</strong> @(string.IsNullOrWhiteSpace(Model.RespondentName) ? "Anonymous" : Model.RespondentName)</div>
+            <div class="col-md-4"><strong>Mobile:</strong> @Model.RespondentMobile</div>
+            <div class="col-md-4"><strong>Submitted:</strong> @Model.SubmittedDate.ToString("yyyy-MM-dd HH:mm")</div>
+            <div class="col-md-4"><strong>Submitted By:</strong> @Model.SubmittedBy</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h4 class="mb-3">Answers</h4>
+        @foreach (var answer in Model.Answers)
+        {
+            <div class="border-bottom py-3">
+                <div class="fw-bold">@answer.QuestionText</div>
+                <div class="small text-muted">@answer.QuestionType</div>
+                <div class="mt-1">@(string.IsNullOrWhiteSpace(answer.Answer) ? "No answer" : answer.Answer)</div>
+            </div>
+        }
+    </div>
+</div>
+
+@Html.ActionLink("Back to Survey Reports", "Index", "SurveyReport", null, new { @class = "btn btn-outline-secondary" })

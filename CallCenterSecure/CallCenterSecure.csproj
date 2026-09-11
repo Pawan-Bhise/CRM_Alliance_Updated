@@ -319,6 +319,7 @@
     <Compile Include="Controllers\SurveyController.cs" />
     <Compile Include="Controllers\Survey\SurveyFormController.cs" />
     <Compile Include="Controllers\Survey\SurveyResponseController.cs" />
+    <Compile Include="Controllers\Survey\SurveyReportController.cs" />
     <Compile Include="Controllers\Survey\SurveyTemplateController.cs" />
     <Compile Include="Controllers\VillageController.cs" />
     <Compile Include="Controllers\VillageTractController.cs" />
@@ -349,6 +350,7 @@
     <Compile Include="Services\SurveyFormService.cs" />
     <Compile Include="Services\ISurveyResponseService.cs" />
     <Compile Include="Services\SurveyResponseService.cs" />
+    <Compile Include="Services\SurveyReportService.cs" />
     <Compile Include="Services\ISurveyTemplateService.cs" />
     <Compile Include="Services\SurveyTemplateService.cs" />
     <Compile Include="Global.asax.cs">
@@ -469,6 +471,7 @@
     <Compile Include="Models\SurveyCustomerData.cs" />
     <Compile Include="Models\ViewModels\SurveyFormBuilderViewModels.cs" />
     <Compile Include="Models\ViewModels\SurveyFormResponseViewModels.cs" />
+    <Compile Include="Models\ViewModels\SurveyReportViewModels.cs" />
     <Compile Include="Models\ViewModels\ReportingViewModels.cs" />
     <Compile Include="Models\ViewModels\CustomerLoanIndexViewModel.cs" />
     <Compile Include="Models\InboundCall.cs" />
@@ -690,6 +693,8 @@
     <Content Include="Views\SurveyForm\_SurveyFormBuilder.cshtml" />
     <Content Include="Views\SurveyResponse\Index.cshtml" />
     <Content Include="Views\SurveyResponse\Fill.cshtml" />
+    <Content Include="Views\SurveyReport\Index.cshtml" />
+    <Content Include="Views\SurveyReport\Details.cshtml" />
     <Content Include="Views\Reports\Index.cshtml" />
     <Content Include="Views\Reports\Complaint.cshtml" />
     <Content Include="Views\Reports\Enquiry.cshtml" />

@@ -32,6 +32,12 @@ namespace CallCenterSecure
             );
 
             routes.MapRoute(
+                name: "SurveyReport",
+                url: "Survey/SurveyReport/{action}/{id}",
+                defaults: new { controller = "SurveyReport", action = "Index", id = UrlParameter.Optional }
+            );
+
+            routes.MapRoute(
                 name: "Reports",
                 url: "Reports/{action}/{id}",
                 defaults: new { controller = "Reports", action = "Index", id = UrlParameter.Optional }
