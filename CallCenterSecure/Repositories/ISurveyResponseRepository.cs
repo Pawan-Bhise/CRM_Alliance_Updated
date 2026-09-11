@@ -8,6 +8,7 @@ namespace CallCenterSecure.Repositories
         IEnumerable<SurveyTemplateType> GetTemplates();
         IEnumerable<SurveyForm> GetFormsByTemplateId(int templateId);
         IEnumerable<SurveyCustomerData> GetCustomersByTemplateId(int templateId);
+        IEnumerable<SurveyCustomerData> GetCustomersByPhone(string phoneNumber);
         SurveyForm GetFormWithQuestions(int formId);
         SurveyCustomerData GetCustomerById(int customerId);
         void AddResponse(SurveyFormResponse response);

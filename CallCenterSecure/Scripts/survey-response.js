@@ -48,7 +48,7 @@
         template.addEventListener('change', function () {
             var templateId = template.value;
             fillSelect(form, [], 'Title');
-            if (customer) {
+            if (customer && customer.tagName && customer.tagName.toLowerCase() === 'select') {
                 fillSelect(customer, [], 'Name');
             }
 
@@ -60,7 +60,7 @@
                 fillSelect(form, items, 'Title');
             });
 
-            if (customer) {
+            if (customer && customer.tagName && customer.tagName.toLowerCase() === 'select') {
                 fetchJson('/Survey/SurveyResponse/GetCustomers?templateId=' + encodeURIComponent(templateId), function (items) {
                     fillSelect(customer, items, 'Name');
                 });

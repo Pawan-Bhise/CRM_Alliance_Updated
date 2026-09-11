@@ -19,9 +19,10 @@ namespace CallCenterSecure.Controllers.Survey
             _surveyResponseService = surveyResponseService;
         }
 
-        public ActionResult Index(int? templateId, int? formId, int? customerId, int? categoryId)
+        public ActionResult Index(int? templateId, int? formId, int? customerId, int? categoryId, string phoneNumber, string phone)
         {
-            var model = _surveyResponseService.GetStartModel(templateId, formId, customerId, categoryId);
+            phoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? phone : phoneNumber;
+            var model = _surveyResponseService.GetStartModel(templateId, formId, customerId, categoryId, phoneNumber);
             return View(model);
         }
 

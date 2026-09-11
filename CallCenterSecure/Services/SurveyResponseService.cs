@@ -30,11 +30,48 @@ namespace CallCenterSecure.Services
             _surveyResponseRepository = surveyResponseRepository;
         }
 
-        public SurveyFormResponseListViewModel GetStartModel(int? templateId, int? formId, int? customerId, int? categoryId)
+        public SurveyFormResponseListViewModel GetStartModel(int? templateId, int? formId, int? customerId, int? categoryId, string phoneNumber = null)
         {
             var model = new SurveyFormResponseListViewModel();
             model.Categories = GetCategories();
             var templates = _surveyResponseRepository.GetTemplates().ToList();
+            var phoneMatches = !string.IsNullOrWhiteSpace(phoneNumber)
+                ? _surveyResponseRepository.GetCustomersByPhone(phoneNumber).ToList()
+                : new List<SurveyCustomerData>();
+
+            model.PhoneNumber = phoneNumber;
+            model.IsPhoneLookup = !string.IsNullOrWhiteSpace(phoneNumber);
+
+            if (model.IsPhoneLookup)
+            {
+                if (templateId.HasValue)
+                {
+                    phoneMatches = phoneMatches
+                        .Where(x => x.SurveyTemplateTypeId == templateId.Value)
+                        .ToList();
+                }
+
+                var selectedPhoneCustomer = phoneMatches.FirstOrDefault();
+                if (!templateId.HasValue && selectedPhoneCustomer != null && selectedPhoneCustomer.SurveyTemplateTypeId.HasValue)
+                {
+                    templateId = selectedPhoneCustomer.SurveyTemplateTypeId.Value;
+                }
+
+                if (phoneMatches.Count == 0)
+                {
+                    model.CustomerLookupMessage = "No customer was found for this phone number.";
+                }
+                else
+                {
+                    var customer = selectedPhoneCustomer;
+                    model.SelectedCustomerId = customer.Id;
+                    model.CustomerName = customer.ClientName;
+                    model.CustomerCode = customer.CustomerCode;
+                    model.CustomerPhone = !string.IsNullOrWhiteSpace(customer.MobileNumber1) ? customer.MobileNumber1 : customer.MobileNumber2;
+                    model.CustomerRegion = customer.Region;
+                    model.CustomerBranch = customer.Branch;
+                }
+            }
 
             model.Templates = templates.Select(x => new SurveyTemplateLookupViewModel
             {
@@ -54,6 +91,11 @@ namespace CallCenterSecure.Services
                         Title = x.Title
                     }).ToList();
 
+                if (!formId.HasValue && model.Forms.Count == 1)
+                {
+                    model.SelectedFormId = model.Forms[0].Id;
+                }
+
                 model.Customers = _surveyResponseRepository.GetCustomersByTemplateId(model.SelectedTemplateId.Value)
                     .Select(x => new SurveyCustomerLookupViewModel
                     {
@@ -64,8 +106,16 @@ namespace CallCenterSecure.Services
                     }).ToList();
             }
 
-            model.SelectedFormId = formId;
-            model.SelectedCustomerId = customerId;
+            if (model.IsPhoneLookup && model.SelectedCustomerId.HasValue && string.IsNullOrWhiteSpace(model.CustomerLookupMessage))
+            {
+                model.Customers = new List<SurveyCustomerLookupViewModel>();
+            }
+
+            model.SelectedFormId = formId ?? model.SelectedFormId;
+            if (customerId.HasValue)
+            {
+                model.SelectedCustomerId = customerId;
+            }
             model.SelectedCategoryId = categoryId;
 
             return model;

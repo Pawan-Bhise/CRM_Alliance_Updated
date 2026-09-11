@@ -18,6 +18,14 @@ namespace CallCenterSecure.Models.ViewModels
         public int? SelectedTemplateId { get; set; }
         public int? SelectedFormId { get; set; }
         public int? SelectedCustomerId { get; set; }
+        public string PhoneNumber { get; set; }
+        public bool IsPhoneLookup { get; set; }
+        public string CustomerLookupMessage { get; set; }
+        public string CustomerName { get; set; }
+        public string CustomerCode { get; set; }
+        public string CustomerPhone { get; set; }
+        public string CustomerRegion { get; set; }
+        public string CustomerBranch { get; set; }
 
         public List<SurveyCategoryLookupViewModel> Categories { get; set; }
         public List<SurveyTemplateLookupViewModel> Templates { get; set; }

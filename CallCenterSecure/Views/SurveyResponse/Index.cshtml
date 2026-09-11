@@ -16,7 +16,12 @@
     <div class="alert alert-danger" role="alert">@TempData["ErrorMessage"]</div>
 }
 
-<p class="text-muted">Select a template, form, and optional customer to start filling response.</p>
+<p class="text-muted">Select a template and form to start filling response.</p>
+
+@if (!string.IsNullOrWhiteSpace(Model.CustomerLookupMessage))
+{
+    <div class="alert alert-warning" role="alert">@Model.CustomerLookupMessage</div>
+}
 
 <div class="card mb-3">
     <div class="card-body">
@@ -41,16 +46,35 @@
                     }
                 </select>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Customer (optional)</label>
-                <select id="customerId" class="form-control">
-                    <option value="">Select customer</option>
-                    @foreach (var item in Model.Customers)
-                    {
-                        <option value="@item.Id" @(Model.SelectedCustomerId == item.Id ? "selected" : "")>@item.ClientName (@item.CustomerCode)</option>
-                    }
-                </select>
-            </div>
+            @if (Model.IsPhoneLookup && Model.SelectedCustomerId.HasValue && string.IsNullOrWhiteSpace(Model.CustomerLookupMessage))
+            {
+                <div class="col-md-4">
+                    <label class="form-label">Customer</label>
+                    <div class="form-control-plaintext">
+                        <strong>@Model.CustomerName</strong><br />
+                        <span>Code: @Model.CustomerCode</span><br />
+                        <span>Phone: @Model.CustomerPhone</span><br />
+                        @if (!string.IsNullOrWhiteSpace(Model.CustomerRegion) || !string.IsNullOrWhiteSpace(Model.CustomerBranch))
+                        {
+                            <span>Location: @Model.CustomerRegion@(string.IsNullOrWhiteSpace(Model.CustomerRegion) || string.IsNullOrWhiteSpace(Model.CustomerBranch) ? "" : " / ")@Model.CustomerBranch</span>
+                        }
+                    </div>
+                    <input type="hidden" id="customerId" value="@Model.SelectedCustomerId" />
+                </div>
+            }
+            else if (!Model.IsPhoneLookup)
+            {
+                <div class="col-md-4">
+                    <label class="form-label">Customer (optional)</label>
+                    <select id="customerId" class="form-control">
+                        <option value="">Select customer</option>
+                        @foreach (var item in Model.Customers)
+                        {
+                            <option value="@item.Id" @(Model.SelectedCustomerId == item.Id ? "selected" : "")>@item.ClientName (@item.CustomerCode)</option>
+                        }
+                    </select>
+                </div>
+            }
         </div>
 
         <div class="mt-3">

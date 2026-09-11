@@ -30,6 +30,26 @@ namespace CallCenterSecure.Repositories
                 .ToList();
         }
 
+        public IEnumerable<SurveyCustomerData> GetCustomersByPhone(string phoneNumber)
+        {
+            var digits = new string((phoneNumber ?? string.Empty).Where(char.IsDigit).ToArray());
+            if (string.IsNullOrWhiteSpace(digits))
+            {
+                return new List<SurveyCustomerData>();
+            }
+
+            return _db.SurveyCustomerData
+                .ToList()
+                .Where(x => NormalizePhone(x.MobileNumber1) == digits || NormalizePhone(x.MobileNumber2) == digits)
+                .OrderBy(x => x.Id)
+                .ToList();
+        }
+
+        private static string NormalizePhone(string phoneNumber)
+        {
+            return new string((phoneNumber ?? string.Empty).Where(char.IsDigit).ToArray());
+        }
+
         public SurveyForm GetFormWithQuestions(int formId)
         {
             return _db.SurveyForms
