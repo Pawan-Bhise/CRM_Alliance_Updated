@@ -16,7 +16,7 @@ namespace CallCenterSecure.Services
             {
                 var query = ApplyDateFilter(db.AllianceInbounds.AsNoTracking(), fromDate, toDate)
                     .AsEnumerable()
-                    .Where(x => HasCallObjective(x, 2));
+                    .Where(x => HasCallObjective(x, 2) && HasTicketType(x, 3));
 
                 var rows = query.ToList();
                 var branchNames = db.RegionBranches.AsNoTracking()
@@ -56,11 +56,8 @@ namespace CallCenterSecure.Services
         {
             using (var db = new ApplicationDbContext())
             {
-                var query = ApplyDateFilter(db.AllianceInbounds.AsNoTracking(), fromDate, toDate)
-                    .AsEnumerable()
-                    .Where(x => HasCallObjective(x, 1));
-
-                var rows = query.ToList();
+                var allRows = ApplyDateFilter(db.AllianceInbounds.AsNoTracking(), fromDate, toDate).ToList();
+                var rows = allRows.Where(x => HasCallObjective(x, 1)).ToList();
                 var branchNames = db.RegionBranches.AsNoTracking()
                     .ToDictionary(x => x.Id, x => x.BranchName);
                 var productNames = db.Products.AsNoTracking()
@@ -79,10 +76,31 @@ namespace CallCenterSecure.Services
                     rows.Where(x => !string.IsNullOrWhiteSpace(x.Lead_LeadStatus)).Select(x => x.Lead_LeadStatus.Trim()).ToList(),
                     10);
 
-                report.CategoryBreakdown = BuildCategoryBreakdown(
-                    rows.Select(x => NormalizeEnquiryCategory(
-                        ResolveLookupLabel(x.Lead_ProductInterested, productNames))).ToList(),
-                    new[] { "SA", "MM", "Agri", "Savings" });
+                var productUsageCounts = rows
+                    .Select(x => int.TryParse((x.Product ?? string.Empty).Trim(), out var productId)
+                        ? (int?)productId
+                        : null)
+                    .Where(x => x.HasValue && productNames.ContainsKey(x.Value))
+                    .GroupBy(x => x.Value)
+                    .ToDictionary(x => x.Key, x => x.Count());
+                var productUsageTotal = productUsageCounts.Values.Sum();
+
+                report.CategoryBreakdown = productNames
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                    .OrderBy(x => x.Value)
+                    .Select(x =>
+                    {
+                        var count = productUsageCounts.ContainsKey(x.Key) ? productUsageCounts[x.Key] : 0;
+                        return new ReportBreakdownRowViewModel
+                        {
+                            Label = x.Value.Trim(),
+                            Count = count,
+                            Percentage = productUsageTotal == 0
+                                ? 0
+                                : Math.Round((decimal)count * 100m / productUsageTotal, 2)
+                        };
+                    })
+                    .ToList();
 
                 report.TopLocations = BuildBreakdown(
                     rows.Where(x => !string.IsNullOrWhiteSpace(x.Lead_Branch))
@@ -114,6 +132,12 @@ namespace CallCenterSecure.Services
         {
             return int.TryParse(inbound.CallObjective, out var storedObjectiveId)
                    && storedObjectiveId == objectiveId;
+        }
+
+        private static bool HasTicketType(AllianceInbound inbound, int ticketTypeId)
+        {
+            return int.TryParse(inbound.TicketType, out var storedTicketTypeId)
+                   && storedTicketTypeId == ticketTypeId;
         }
 
         private static string ResolveLookupLabel(string rawValue, Dictionary<int, string> lookup)
