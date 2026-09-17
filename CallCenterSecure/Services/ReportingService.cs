@@ -44,8 +44,8 @@ namespace CallCenterSecure.Services
                     new[] { "Product Issues", "Service Delay", "Staff Behavior", "Others" });
 
                 report.TopBranches = BuildBreakdown(
-                    rows.Where(x => !string.IsNullOrWhiteSpace(x.Cmp_Branch))
-                        .Select(x => ResolveLookupLabel(x.Cmp_Branch, branchNames)).ToList(),
+                    rows.Where(x => !string.IsNullOrWhiteSpace(x.Branch))
+                        .Select(x => ResolveLookupLabel(x.Branch, branchNames)).ToList(),
                     5);
 
                 return report;
@@ -103,8 +103,8 @@ namespace CallCenterSecure.Services
                     .ToList();
 
                 report.TopLocations = BuildBreakdown(
-                    rows.Where(x => !string.IsNullOrWhiteSpace(x.Lead_Branch))
-                        .Select(x => ResolveLookupLabel(x.Lead_Branch, branchNames)).ToList(),
+                    rows.Where(x => !string.IsNullOrWhiteSpace(x.Branch))
+                        .Select(x => ResolveLookupLabel(x.Branch, branchNames)).ToList(),
                     5);
 
                 return report;
