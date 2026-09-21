@@ -405,13 +405,13 @@ namespace CallCenterSecure.Services
                         }
                         break;
                     case SurveyQuestionTypeCatalog.MultipleChoiceGrid:
-                        if (question.GridAnswers.Any(x => string.IsNullOrWhiteSpace(x.SelectedColumnText)))
+                        if (question.GridAnswers == null || !question.GridAnswers.Any() || question.GridAnswers.Any(x => string.IsNullOrWhiteSpace(x.SelectedColumnText)))
                         {
                             throw new InvalidOperationException("All required multiple choice grid rows must be answered.");
                         }
                         break;
                     case SurveyQuestionTypeCatalog.CheckboxGrid:
-                        if (question.GridAnswers.Any(x => x.SelectedColumnTexts == null || !x.SelectedColumnTexts.Any()))
+                        if (question.GridAnswers == null || !question.GridAnswers.Any() || question.GridAnswers.Any(x => x.SelectedColumnTexts == null || !x.SelectedColumnTexts.Any()))
                         {
                             throw new InvalidOperationException("All required checkbox grid rows must be answered.");
                         }

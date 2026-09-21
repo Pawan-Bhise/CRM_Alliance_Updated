@@ -105,7 +105,7 @@
                         @for (var n = 0; n <= 10; n++)
                         {
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="Questions[@i].AnswerText" id="q@i-n@n" value="@n" @(question.AnswerText == n.ToString() ? "checked" : "") />
+                                <input class="form-check-input" type="radio" name="Questions[@i].AnswerText" id="q@i-n@n" value="@n" @(question.AnswerText == n.ToString() ? "checked" : "") @(question.IsRequired ? "required" : null) />
                                 <label class="form-check-label" for="q@i-n@n">@n</label>
                             </div>
                         }
@@ -118,7 +118,7 @@
                         {
                             var ratingId = "q" + i + "-rating" + rating;
                             <label class="survey-rating-option" for="@ratingId">
-                                <input id="@ratingId" type="radio" name="Questions[@i].AnswerText" value="@rating" @(question.AnswerText == rating.ToString() ? "checked" : "") />
+                                <input id="@ratingId" type="radio" name="Questions[@i].AnswerText" value="@rating" @(question.AnswerText == rating.ToString() ? "checked" : "") @(question.IsRequired ? "required" : null) />
                                 <span class="survey-rating-star" aria-hidden="true">&#9733;</span>
                                 <span class="survey-rating-number">@rating</span>
                             </label>
@@ -132,11 +132,11 @@
                         <div class="form-check">
                             @if ((question.SelectedOptions ?? new List<string>()).Contains(option.OptionText))
                             {
-                                <input class="form-check-input" type="checkbox" name="Questions[@i].SelectedOptions" value="@option.OptionText" checked="checked" @(question.IsRequired ? "required" : null) />
+                                <input class="form-check-input" type="checkbox" name="Questions[@i].SelectedOptions" value="@option.OptionText" checked="checked" />
                             }
                             else
                             {
-                                <input class="form-check-input" type="checkbox" name="Questions[@i].SelectedOptions" value="@option.OptionText" @(question.IsRequired ? "required" : null) />
+                                <input class="form-check-input" type="checkbox" name="Questions[@i].SelectedOptions" value="@option.OptionText" />
                             }
                             <label class="form-check-label">@option.OptionText</label>
                         </div>
@@ -188,7 +188,7 @@
                                         {
                                             var col = question.GridColumns[c];
                                             <td class="text-center">
-                                                @Html.RadioButton("Questions[" + i + "].GridAnswers[" + r + "].SelectedColumnText", col, question.GridAnswers[r].SelectedColumnText == col)
+                                                @Html.RadioButton("Questions[" + i + "].GridAnswers[" + r + "].SelectedColumnText", col, question.GridAnswers[r].SelectedColumnText == col, new { @required = question.IsRequired })
                                             </td>
                                         }
                                     </tr>

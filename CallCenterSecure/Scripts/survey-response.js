@@ -133,6 +133,53 @@
     }
 
     function hasAnswerValue(questionCard) {
+        var questionTypeInput = questionCard.querySelector('input[name$=".QuestionType"]');
+        var questionType = questionTypeInput ? questionTypeInput.value : '';
+
+        if (questionType === 'Multiple Choice Grid') {
+            var multipleChoiceRows = questionCard.querySelectorAll('input[type="radio"][name*="GridAnswers["]');
+            var multipleChoiceRowNames = {};
+            for (var multipleChoiceIndex = 0; multipleChoiceIndex < multipleChoiceRows.length; multipleChoiceIndex++) {
+                multipleChoiceRowNames[multipleChoiceRows[multipleChoiceIndex].name] = true;
+            }
+
+            for (var multipleChoiceName in multipleChoiceRowNames) {
+                if (!questionCard.querySelector('input[type="radio"][name="' + multipleChoiceName + '"]:checked')) {
+                    return false;
+                }
+            }
+
+            return Object.keys(multipleChoiceRowNames).length > 0;
+        }
+
+        if (questionType === 'Checkbox Grid') {
+            var checkboxGridRows = questionCard.querySelectorAll('input[type="checkbox"][name*="GridAnswers["]');
+            var checkboxGridRowNames = {};
+            for (var checkboxGridIndex = 0; checkboxGridIndex < checkboxGridRows.length; checkboxGridIndex++) {
+                checkboxGridRowNames[checkboxGridRows[checkboxGridIndex].name] = true;
+            }
+
+            var checkboxGridRowsByIndex = {};
+            for (var checkboxGridInputIndex = 0; checkboxGridInputIndex < checkboxGridRows.length; checkboxGridInputIndex++) {
+                var checkboxGridName = checkboxGridRows[checkboxGridInputIndex].name;
+                var rowMatch = checkboxGridName.match(/GridAnswers\[(\d+)\]/);
+                if (!rowMatch) {
+                    continue;
+                }
+
+                checkboxGridRowsByIndex[rowMatch[1]] = checkboxGridRowsByIndex[rowMatch[1]] || [];
+                checkboxGridRowsByIndex[rowMatch[1]].push(checkboxGridRows[checkboxGridInputIndex]);
+            }
+
+            for (var checkboxGridRowIndex in checkboxGridRowsByIndex) {
+                if (!checkboxGridRowsByIndex[checkboxGridRowIndex].some(function (input) { return input.checked; })) {
+                    return false;
+                }
+            }
+
+            return Object.keys(checkboxGridRowsByIndex).length > 0;
+        }
+
         var rankingList = questionCard.querySelector('.ranking-list');
         if (rankingList) {
             var completed = rankingList.getAttribute('data-completed') === 'true';
@@ -165,6 +212,13 @@
 
             if (input.type === 'radio' || input.type === 'checkbox') {
                 if (input.checked && String(input.value).trim()) {
+                    return true;
+                }
+                continue;
+            }
+
+            if (input.type === 'file') {
+                if (input.files && input.files.length > 0) {
                     return true;
                 }
                 continue;
