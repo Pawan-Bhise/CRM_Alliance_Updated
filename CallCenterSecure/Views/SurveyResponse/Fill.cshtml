@@ -79,22 +79,22 @@
 
                 @if (question.QuestionType == SurveyQuestionTypeCatalog.ShortAnswer)
                 {
-                    @Html.TextBoxFor(x => x.Questions[i].AnswerText, new { @class = "form-control" })
+                    @Html.TextBoxFor(x => x.Questions[i].AnswerText, new { @class = "form-control", @required = question.IsRequired })
                 }
                 else if (question.QuestionType == SurveyQuestionTypeCatalog.DateTime)
                 {
-                    @Html.TextBoxFor(x => x.Questions[i].AnswerText, new { @class = "form-control datepicker", placeholder = "YYYY-MM-DD" })
+                    @Html.TextBoxFor(x => x.Questions[i].AnswerText, new { @class = "form-control datepicker", placeholder = "YYYY-MM-DD", @required = question.IsRequired })
                 }
                 else if (question.QuestionType == SurveyQuestionTypeCatalog.Paragraph)
                 {
-                    @Html.TextAreaFor(x => x.Questions[i].AnswerText, new { @class = "form-control", rows = 3 })
+                    @Html.TextAreaFor(x => x.Questions[i].AnswerText, new { @class = "form-control", rows = 3, @required = question.IsRequired })
                 }
                 else if (question.QuestionType == SurveyQuestionTypeCatalog.MultipleChoice)
                 {
                     foreach (var option in question.Options)
                     {
                         <div class="form-check">
-                            @Html.RadioButton("Questions[" + i + "].SelectedOption", option.OptionText, question.SelectedOption == option.OptionText, new { @class = "form-check-input" })
+                            @Html.RadioButton("Questions[" + i + "].SelectedOption", option.OptionText, question.SelectedOption == option.OptionText, new { @class = "form-check-input", @required = question.IsRequired && question.SelectedOption == null })
                             <label class="form-check-label">@option.OptionText</label>
                         </div>
                     }
@@ -132,11 +132,11 @@
                         <div class="form-check">
                             @if ((question.SelectedOptions ?? new List<string>()).Contains(option.OptionText))
                             {
-                                <input class="form-check-input" type="checkbox" name="Questions[@i].SelectedOptions" value="@option.OptionText" checked="checked" />
+                                <input class="form-check-input" type="checkbox" name="Questions[@i].SelectedOptions" value="@option.OptionText" checked="checked" @(question.IsRequired ? "required" : null) />
                             }
                             else
                             {
-                                <input class="form-check-input" type="checkbox" name="Questions[@i].SelectedOptions" value="@option.OptionText" />
+                                <input class="form-check-input" type="checkbox" name="Questions[@i].SelectedOptions" value="@option.OptionText" @(question.IsRequired ? "required" : null) />
                             }
                             <label class="form-check-label">@option.OptionText</label>
                         </div>
@@ -148,11 +148,11 @@
                         "Questions[" + i + "].SelectedOption",
                         new SelectList(question.Options, "OptionText", "OptionText", question.SelectedOption),
                         "Select",
-                        new { @class = "form-control" })
+                        new { @class = "form-control", @required = question.IsRequired })
                 }
                 else if (question.QuestionType == SurveyQuestionTypeCatalog.FileUpload)
                 {
-                    <input type="file" name="Questions[@i].File" class="form-control response-upload" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" />
+                    <input type="file" name="Questions[@i].File" class="form-control response-upload" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" @(question.IsRequired ? "required" : null) />
                     <div class="form-text">Allowed: pdf, doc, docx, xls, xlsx, jpg, jpeg, png (max 5MB)</div>
                 }
                 else if (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale)
@@ -160,7 +160,7 @@
                     <div class="row g-2 align-items-center">
                         <div class="col-md-3">@question.MinValue @question.MinLabel</div>
                         <div class="col-md-6">
-                            @Html.TextBoxFor(x => x.Questions[i].AnswerText, new { @class = "form-control", type = "number", min = question.MinValue, max = question.MaxValue })
+                            @Html.TextBoxFor(x => x.Questions[i].AnswerText, new { @class = "form-control", type = "number", min = question.MinValue, max = question.MaxValue, @required = question.IsRequired })
                         </div>
                         <div class="col-md-3 text-end">@question.MaxValue @question.MaxLabel</div>
                     </div>

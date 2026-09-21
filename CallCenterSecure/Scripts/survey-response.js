@@ -202,6 +202,38 @@
         });
     }
 
+    function validateRequiredSurveyQuestions(responseForm) {
+        if (!responseForm) {
+            return true;
+        }
+
+        var cards = responseForm.querySelectorAll('.survey-question-card');
+        for (var i = 0; i < cards.length; i++) {
+            var card = cards[i];
+            if (card.style.display === 'none') {
+                continue;
+            }
+
+            var requiredInput = card.querySelector('input[name$=".IsRequired"]');
+            if (!requiredInput || requiredInput.value !== 'True' && requiredInput.value !== 'true') {
+                continue;
+            }
+
+            if (!hasAnswerValue(card)) {
+                var requiredLabel = card.querySelector('.form-label.fw-bold');
+                var questionText = requiredLabel ? requiredLabel.textContent.replace(/\*\s*$/, '').trim() : 'This question';
+                alert('Please answer the required question: ' + questionText);
+                var firstField = card.querySelector('input:not([type="hidden"]), textarea, select');
+                if (firstField) {
+                    firstField.focus();
+                }
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     function initFillPage() {
         var responseForm = byId('surveyResponseForm');
         if (!responseForm) {
@@ -242,6 +274,11 @@
         updateConditionalVisibility(responseForm);
 
         responseForm.addEventListener('submit', function (event) {
+            if (!validateRequiredSurveyQuestions(responseForm)) {
+                event.preventDefault();
+                return;
+            }
+
             // For date fields that only have a date, append current local time so server receives a datetime
             $('.datepicker').each(function () {
                 if (this.value && this.value.length === 10) {

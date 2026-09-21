@@ -359,6 +359,33 @@
             return;
         }
 
+        if (element.classList && element.classList.contains('question-required')) {
+            var hidden = element.parentNode.querySelector('.question-required-hidden');
+            if (!hidden) {
+                hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.className = 'question-required-hidden';
+                hidden.value = 'false';
+                element.parentNode.insertBefore(hidden, element);
+            }
+
+            if (name === null) {
+                element.removeAttribute('name');
+                hidden.removeAttribute('name');
+            } else {
+                element.name = name;
+                hidden.name = name;
+                element.value = 'true';
+                hidden.value = 'false';
+            }
+
+            if (typeof value !== "undefined") {
+                element.checked = value === true || value === 'true' || value === 'True' || value === 1 || value === '1';
+            }
+
+            return;
+        }
+
         if (name === null) {
             element.removeAttribute('name');
         } else {

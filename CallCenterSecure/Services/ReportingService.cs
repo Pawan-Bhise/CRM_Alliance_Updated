@@ -21,6 +21,8 @@ namespace CallCenterSecure.Services
                 var rows = query.ToList();
                 var branchNames = db.RegionBranches.AsNoTracking()
                     .ToDictionary(x => x.Id, x => x.BranchName);
+                var productNames = db.Products.AsNoTracking()
+                    .ToDictionary(x => x.Id, x => x.Name);
                 var complaintCategories = db.NatureOfComplaint.AsNoTracking()
                     .ToDictionary(x => x.ComplaintId, x => x.ComplaintsDescrption);
 
@@ -39,9 +41,32 @@ namespace CallCenterSecure.Services
                     ? 0m
                     : Math.Round((decimal)report.ResolvedCount * 100m / report.TotalTickets, 2);
 
-                report.CategoryBreakdown = BuildCategoryBreakdown(
-                    rows.Select(x => NormalizeComplaintCategory(x.Cmp_NatureOfComplaint, complaintCategories)).ToList(),
-                    new[] { "Product Issues", "Service Delay", "Staff Behavior", "Others" });
+                var complaintProductUsageCounts = rows
+                    .Select(x => int.TryParse((x.Product ?? string.Empty).Trim(), out var productId)
+                        ? (int?)productId
+                        : null)
+                    .Where(x => x.HasValue && productNames.ContainsKey(x.Value))
+                    .GroupBy(x => x.Value)
+                    .ToDictionary(x => x.Key, x => x.Count());
+                var complaintProductUsageTotal = complaintProductUsageCounts.Values.Sum();
+
+                report.CategoryBreakdown = productNames
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                    .OrderBy(x => x.Value)
+                    .Select(x =>
+                    {
+                        var count = complaintProductUsageCounts.ContainsKey(x.Key) ? complaintProductUsageCounts[x.Key] : 0;
+                        return new ReportBreakdownRowViewModel
+                        {
+                            Label = x.Value.Trim(),
+                            Count = count,
+                            Percentage = complaintProductUsageTotal == 0 || count == 0
+                                ? 0
+                                : Math.Round((decimal)count * 100m / complaintProductUsageTotal, 2)
+                        };
+                    })
+                    .Where(x => x.Count > 0)
+                    .ToList();
 
                 report.TopBranches = BuildBreakdown(
                     rows.Where(x => !string.IsNullOrWhiteSpace(x.Branch))
@@ -95,11 +120,12 @@ namespace CallCenterSecure.Services
                         {
                             Label = x.Value.Trim(),
                             Count = count,
-                            Percentage = productUsageTotal == 0
+                            Percentage = productUsageTotal == 0 || count == 0
                                 ? 0
                                 : Math.Round((decimal)count * 100m / productUsageTotal, 2)
                         };
                     })
+                    .Where(x => x.Count > 0)
                     .ToList();
 
                 report.TopLocations = BuildBreakdown(
