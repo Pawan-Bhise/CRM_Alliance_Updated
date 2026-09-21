@@ -366,7 +366,7 @@
                 hidden.type = 'hidden';
                 hidden.className = 'question-required-hidden';
                 hidden.value = 'false';
-                element.parentNode.insertBefore(hidden, element);
+                element.parentNode.insertBefore(hidden, element.nextSibling);
             }
 
             if (name === null) {
