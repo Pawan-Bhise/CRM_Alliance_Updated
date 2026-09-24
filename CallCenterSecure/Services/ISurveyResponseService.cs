@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Web;
 using CallCenterSecure.Models.ViewModels;
 
@@ -9,5 +10,8 @@ namespace CallCenterSecure.Services
         SurveyFormResponseSubmitViewModel BuildSubmitModel(int formId, int? customerId, int? categoryId);
         SurveyFormResponseSubmitViewModel RehydrateSubmitModel(SurveyFormResponseSubmitViewModel model);
         void Submit(SurveyFormResponseSubmitViewModel model, string submittedBy, HttpServerUtilityBase server);
+        IEnumerable<SurveyStatusOptionViewModel> GetCallStatusOptions();
+        IEnumerable<SurveyStatusOptionViewModel> GetFormStatusOptions();
+        void UpdateCustomerStatus(SurveyCustomerStatusEditViewModel model, string userName);
     }
 }

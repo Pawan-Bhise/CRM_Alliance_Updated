@@ -96,13 +96,33 @@ namespace CallCenterSecure.Services
                     model.SelectedFormId = model.Forms[0].Id;
                 }
 
+                var selectedFormId = formId;
+                var trackingByCustomer = selectedFormId.HasValue
+                    ? _surveyResponseRepository.GetCustomerFormTrackings(model.SelectedTemplateId.Value, selectedFormId.Value).ToDictionary(x => x.SurveyCustomerDataId)
+                    : new Dictionary<int, SurveyCustomerFormTracking>();
+
                 model.Customers = _surveyResponseRepository.GetCustomersByTemplateId(model.SelectedTemplateId.Value)
                     .Select(x => new SurveyCustomerLookupViewModel
                     {
                         Id = x.Id,
                         SurveyTemplateTypeId = x.SurveyTemplateTypeId,
                         ClientName = x.ClientName,
-                        CustomerCode = x.CustomerCode
+                        Gender = x.Gender,
+                        LoanProduct = x.LoanProduct,
+                        CustomerCode = x.CustomerCode,
+                        MobileNumber1 = x.MobileNumber1,
+                        MobileNumber2 = x.MobileNumber2,
+                        Region = x.Region,
+                        Branch = x.Branch,
+                        BusinessCategory = x.BusinessCategory,
+                        ActivitiesSector = x.ActivitiesSector,
+                        LoanCycle = x.LoanCycle,
+                        DisbursedAmount = x.DisbursedAmount,
+                        CallStatus = trackingByCustomer.ContainsKey(x.Id) && trackingByCustomer[x.Id].CallStatus != null ? trackingByCustomer[x.Id].CallStatus.Name : string.Empty,
+                        CallStatusId = trackingByCustomer.ContainsKey(x.Id) ? trackingByCustomer[x.Id].CallStatusId : null,
+                        FormStatus = trackingByCustomer.ContainsKey(x.Id) && trackingByCustomer[x.Id].FormStatus != null ? trackingByCustomer[x.Id].FormStatus.Name : "Not Started",
+                        FormStatusId = trackingByCustomer.ContainsKey(x.Id) ? trackingByCustomer[x.Id].FormStatusId : null,
+                        CallRemarks = trackingByCustomer.ContainsKey(x.Id) ? trackingByCustomer[x.Id].CallRemarks : string.Empty
                     }).ToList();
             }
 
@@ -119,6 +139,53 @@ namespace CallCenterSecure.Services
             model.SelectedCategoryId = categoryId;
 
             return model;
+        }
+
+        public IEnumerable<SurveyStatusOptionViewModel> GetCallStatusOptions()
+        {
+            return _surveyResponseRepository.GetCallStatuses().Select(x => new SurveyStatusOptionViewModel { Id = x.Id, Name = x.Name }).ToList();
+        }
+
+        public IEnumerable<SurveyStatusOptionViewModel> GetFormStatusOptions()
+        {
+            return _surveyResponseRepository.GetFormStatuses().Select(x => new SurveyStatusOptionViewModel { Id = x.Id, Name = x.Name }).ToList();
+        }
+
+        public void UpdateCustomerStatus(SurveyCustomerStatusEditViewModel model, string userName)
+        {
+            if (model == null || model.SurveyCustomerDataId <= 0 || model.SurveyTemplateTypeId <= 0 || model.SurveyFormId <= 0)
+            {
+                throw new InvalidOperationException("Invalid customer survey context.");
+            }
+
+            if (_surveyResponseRepository.GetCustomerById(model.SurveyCustomerDataId) == null)
+            {
+                throw new InvalidOperationException("Customer not found.");
+            }
+
+            var tracking = _surveyResponseRepository.GetCustomerFormTracking(model.SurveyCustomerDataId, model.SurveyTemplateTypeId, model.SurveyFormId);
+            if (tracking == null)
+            {
+                tracking = new SurveyCustomerFormTracking
+                {
+                    SurveyCustomerDataId = model.SurveyCustomerDataId,
+                    SurveyTemplateTypeId = model.SurveyTemplateTypeId,
+                    SurveyFormId = model.SurveyFormId,
+                    FormStatusId = _surveyResponseRepository.GetFormStatuses().FirstOrDefault(x => x.Name == "Not Started")?.Id
+                };
+                _surveyResponseRepository.AddCustomerFormTracking(tracking);
+            }
+
+            if (model.CallStatusId.HasValue && _surveyResponseRepository.GetCallStatus(model.CallStatusId.Value) == null)
+            {
+                throw new InvalidOperationException("Selected call status is invalid.");
+            }
+
+            tracking.CallStatusId = model.CallStatusId;
+            tracking.CallRemarks = string.IsNullOrWhiteSpace(model.CallRemarks) ? null : model.CallRemarks.Trim();
+            tracking.ModifiedBy = string.IsNullOrWhiteSpace(userName) ? "System" : userName;
+            tracking.ModifiedDate = DateTime.Now;
+            _surveyResponseRepository.SaveChanges();
         }
 
         public SurveyFormResponseSubmitViewModel BuildSubmitModel(int formId, int? customerId, int? categoryId)
@@ -269,6 +336,26 @@ namespace CallCenterSecure.Services
                 }
 
                 response.Answers.Add(answer);
+            }
+
+            if (hydrated.SurveyCustomerDataId.HasValue)
+            {
+                var tracking = _surveyResponseRepository.GetCustomerFormTracking(hydrated.SurveyCustomerDataId.Value, hydrated.SurveyTemplateId, hydrated.SurveyFormId);
+                if (tracking == null)
+                {
+                    tracking = new SurveyCustomerFormTracking
+                    {
+                        SurveyCustomerDataId = hydrated.SurveyCustomerDataId.Value,
+                        SurveyTemplateTypeId = hydrated.SurveyTemplateId,
+                        SurveyFormId = hydrated.SurveyFormId
+                    };
+                    _surveyResponseRepository.AddCustomerFormTracking(tracking);
+                }
+
+                var completedStatus = _surveyResponseRepository.GetFormStatuses().FirstOrDefault(x => x.Name == "Completed");
+                tracking.FormStatusId = completedStatus != null ? (int?)completedStatus.Id : null;
+                tracking.ModifiedBy = string.IsNullOrWhiteSpace(submittedBy) ? "System" : submittedBy;
+                tracking.ModifiedDate = DateTime.Now;
             }
 
             _surveyResponseRepository.AddResponse(response);

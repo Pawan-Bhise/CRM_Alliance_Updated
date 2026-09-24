@@ -65,6 +65,47 @@ namespace CallCenterSecure.Repositories
             return _db.SurveyCustomerData.FirstOrDefault(x => x.Id == customerId);
         }
 
+        public SurveyCustomerFormTracking GetCustomerFormTracking(int customerId, int templateId, int formId)
+        {
+            return _db.SurveyCustomerFormTrackings.FirstOrDefault(x => x.SurveyCustomerDataId == customerId
+                && x.SurveyTemplateTypeId == templateId
+                && x.SurveyFormId == formId);
+        }
+
+            public IEnumerable<SurveyCustomerFormTracking> GetCustomerFormTrackings(int templateId, int formId)
+            {
+                return _db.SurveyCustomerFormTrackings
+                .Include(x => x.CallStatus)
+                .Include(x => x.FormStatus)
+                .Where(x => x.SurveyTemplateTypeId == templateId && x.SurveyFormId == formId)
+                .ToList();
+            }
+
+        public SurveyCallStatusMaster GetCallStatus(int id)
+        {
+            return _db.SurveyCallStatusMasters.FirstOrDefault(x => x.Id == id && x.IsActive);
+        }
+
+        public SurveyFormStatusMaster GetFormStatus(int id)
+        {
+            return _db.SurveyFormStatusMasters.FirstOrDefault(x => x.Id == id && x.IsActive);
+        }
+
+        public IEnumerable<SurveyCallStatusMaster> GetCallStatuses()
+        {
+            return _db.SurveyCallStatusMasters.Where(x => x.IsActive).OrderBy(x => x.Id).ToList();
+        }
+
+        public IEnumerable<SurveyFormStatusMaster> GetFormStatuses()
+        {
+            return _db.SurveyFormStatusMasters.Where(x => x.IsActive).OrderBy(x => x.Id).ToList();
+        }
+
+        public void AddCustomerFormTracking(SurveyCustomerFormTracking tracking)
+        {
+            _db.SurveyCustomerFormTrackings.Add(tracking);
+        }
+
         public void AddResponse(SurveyFormResponse response)
         {
             _db.SurveyFormResponses.Add(response);

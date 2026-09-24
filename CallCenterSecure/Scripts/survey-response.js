@@ -3,7 +3,7 @@
         return document.getElementById(id);
     }
 
-    function fetchJson(url, onSuccess) {
+    function fetchJson(url, onSuccess, onError) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.onreadystatechange = function () {
@@ -12,7 +12,15 @@
             }
 
             if (xhr.status >= 200 && xhr.status < 300) {
-                onSuccess(JSON.parse(xhr.responseText || '[]'));
+                try {
+                    onSuccess(JSON.parse(xhr.responseText || '[]'));
+                } catch (error) {
+                    if (onError) {
+                        onError('Invalid response from server.');
+                    }
+                }
+            } else if (onError) {
+                onError('Unable to load data (HTTP ' + xhr.status + ').');
             }
         };
         xhr.send();
@@ -35,6 +43,145 @@
         });
     }
 
+    function loadCustomerGrid(templateId, formId) {
+        var table = byId('surveyCustomerTable');
+        var message = byId('customerGridMessage');
+        var customerId = byId('customerId');
+        if (!table) {
+            return;
+        }
+
+        if (typeof $ !== 'undefined' && $.fn.DataTable && $.fn.DataTable.isDataTable(table)) {
+            $(table).DataTable().destroy();
+        }
+
+        var tbody = table.querySelector('tbody');
+        tbody.innerHTML = '';
+        if (message) {
+            message.textContent = templateId ? 'Loading customers...' : 'Select a survey template to load customers.';
+        }
+
+        if (!templateId) {
+            return;
+        }
+
+        var customerUrl = '/Survey/SurveyResponse/GetCustomers?templateId=' + encodeURIComponent(templateId);
+        if (formId) {
+            customerUrl += '&formId=' + encodeURIComponent(formId);
+        }
+
+        fetchJson(customerUrl, function (items) {
+            items.forEach(function (item, index) {
+                var row = document.createElement('tr');
+                var values = [
+                    '<input type="radio" name="selectedCustomer" value="' + item.Id + '" aria-label="Select customer"' + (customerId && customerId.value === String(item.Id) ? ' checked' : '') + '>',
+                    '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-customer" data-customer-id="' + item.Id + '" data-call-status-id="' + (item.CallStatusId || '') + '" data-form-status="' + (item.FormStatus || '') + '" data-call-remarks="' + (item.CallRemarks || '').replace(/"/g, '&quot;') + '">Edit</button>',
+                    index + 1,
+                    item.ClientName,
+                    item.Gender,
+                    item.Product,
+                    item.CustomerCode,
+                    item.MobileNumber1,
+                    item.MobileNumber2,
+                    item.RegionState,
+                    item.Branch,
+                    item.BusinessCategory,
+                    item.ActivitiesSector,
+                    item.LoanCycle,
+                    item.DisbursedAmount,
+                    item.CallStatus,
+                    item.FormStatus,
+                    item.CallRemarks
+                ];
+
+                values.forEach(function (value, valueIndex) {
+                    var cell = document.createElement('td');
+                    if (valueIndex === 0 || valueIndex === 1) {
+                        cell.innerHTML = value;
+                    } else {
+                        cell.textContent = value === null || typeof value === 'undefined' ? '' : value;
+                    }
+                    row.appendChild(cell);
+                });
+
+                row.querySelector('input[name="selectedCustomer"]').addEventListener('change', function () {
+                    if (customerId) {
+                        customerId.value = this.value;
+                    }
+                });
+                tbody.appendChild(row);
+            });
+
+            if (message) {
+                message.textContent = items.length + ' customer(s) loaded.';
+            }
+
+            if (typeof $ !== 'undefined' && $.fn.DataTable) {
+                $(table).DataTable({
+                    pageLength: 10,
+                    order: [[3, 'asc']],
+                    scrollX: false,
+                    autoWidth: false,
+                    columnDefs: [
+                        { targets: [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17], className: 'survey-grid-cell' }
+                    ]
+                });
+            }
+
+            table.querySelectorAll('.btn-edit-customer').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    openCustomerStatusEditor(this, templateId, formId || '');
+                });
+            });
+        }, function (errorMessage) {
+            if (message) {
+                message.textContent = errorMessage + ' Check that the survey status tables are installed.';
+                message.className = 'text-danger small';
+            }
+        });
+    }
+
+    function openCustomerStatusEditor(button, templateId, formId) {
+        if (!formId) {
+            alert('Please select a survey form before editing customer status.');
+            return;
+        }
+
+        var modal = byId('customerStatusModal');
+        var customerId = byId('editCustomerId');
+        var templateInput = byId('editTemplateId');
+        var formInput = byId('editFormId');
+        var callStatus = byId('editCallStatusId');
+        var formStatus = byId('editFormStatus');
+        var remarks = byId('editCallRemarks');
+        if (!modal || !customerId || !templateInput || !formInput || !callStatus || !formStatus || !remarks) {
+            return;
+        }
+
+        customerId.value = button.getAttribute('data-customer-id') || '';
+        templateInput.value = templateId || '';
+        formInput.value = formId || '';
+        remarks.value = button.getAttribute('data-call-remarks') || '';
+        formStatus.value = button.getAttribute('data-form-status') || 'Not Started';
+        callStatus.innerHTML = '<option value="">Select call status</option>';
+
+        fetchJson('/Survey/SurveyResponse/GetStatusOptions', function (data) {
+            (data.CallStatuses || []).forEach(function (status) {
+                var option = document.createElement('option');
+                option.value = status.Id;
+                option.textContent = status.Name;
+                callStatus.appendChild(option);
+            });
+            callStatus.value = button.getAttribute('data-call-status-id') || '';
+        });
+
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            bootstrap.Modal.getOrCreateInstance(modal).show();
+        } else {
+            modal.style.display = 'block';
+        }
+    }
+
     function initStartPage() {
         var template = byId('templateId');
         var form = byId('formId');
@@ -48,9 +195,10 @@
         template.addEventListener('change', function () {
             var templateId = template.value;
             fillSelect(form, [], 'Title');
-            if (customer && customer.tagName && customer.tagName.toLowerCase() === 'select') {
-                fillSelect(customer, [], 'Name');
+            if (customer) {
+                customer.value = '';
             }
+            loadCustomerGrid(templateId, '');
 
             if (!templateId) {
                 return;
@@ -58,14 +206,19 @@
 
             fetchJson('/Survey/SurveyResponse/GetForms?templateId=' + encodeURIComponent(templateId), function (items) {
                 fillSelect(form, items, 'Title');
+                if (items.length === 1) {
+                    form.value = items[0].Id;
+                    loadCustomerGrid(templateId, form.value);
+                }
             });
 
-            if (customer && customer.tagName && customer.tagName.toLowerCase() === 'select') {
-                fetchJson('/Survey/SurveyResponse/GetCustomers?templateId=' + encodeURIComponent(templateId), function (items) {
-                    fillSelect(customer, items, 'Name');
-                });
-            }
         });
+
+        form.addEventListener('change', function () {
+            loadCustomerGrid(template.value, form.value);
+        });
+
+        loadCustomerGrid(template.value, form.value);
 
         btnStart.addEventListener('click', function () {
             if (!form.value) {

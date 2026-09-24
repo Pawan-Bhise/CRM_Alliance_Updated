@@ -346,9 +346,7 @@ namespace CallCenterSecure.Services
                 throw new InvalidOperationException("Survey form not found.");
             }
 
-            existing.IsActive = false;
-            existing.ModifiedBy = string.IsNullOrWhiteSpace(userName) ? "System" : userName;
-            existing.ModifiedDate = DateTime.Now;
+            _surveyFormRepository.RemoveForm(existing);
             _surveyFormRepository.SaveChanges();
         }
 

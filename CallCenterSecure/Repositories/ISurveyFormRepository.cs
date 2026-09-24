@@ -10,6 +10,7 @@ namespace CallCenterSecure.Repositories
         IEnumerable<SurveyForm> GetFormsByTemplateId(int surveyTemplateId);
         SurveyForm GetFormById(int id);
         void AddForm(SurveyForm form);
+        void RemoveForm(SurveyForm form);
         void RemoveQuestion(SurveyQuestion question);
         void SaveChanges();
     }

@@ -131,7 +131,38 @@ namespace CallCenterSecure.Models.ViewModels
         public int Id { get; set; }
         public int? SurveyTemplateTypeId { get; set; }
         public string ClientName { get; set; }
+        public string Gender { get; set; }
+        public string LoanProduct { get; set; }
         public string CustomerCode { get; set; }
+        public string MobileNumber1 { get; set; }
+        public string MobileNumber2 { get; set; }
+        public string Region { get; set; }
+        public string Branch { get; set; }
+        public string BusinessCategory { get; set; }
+        public string ActivitiesSector { get; set; }
+        public int? LoanCycle { get; set; }
+        public string DisbursedAmount { get; set; }
+        public string CallStatus { get; set; }
+        public int? CallStatusId { get; set; }
+        public string FormStatus { get; set; }
+        public int? FormStatusId { get; set; }
+        public string CallRemarks { get; set; }
+    }
+
+    public class SurveyCustomerStatusEditViewModel
+    {
+        public int SurveyCustomerDataId { get; set; }
+        public int SurveyTemplateTypeId { get; set; }
+        public int SurveyFormId { get; set; }
+        public int? CallStatusId { get; set; }
+        public int? FormStatusId { get; set; }
+        public string CallRemarks { get; set; }
+    }
+
+    public class SurveyStatusOptionViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
     }
 
     public class SurveyOptionLookupViewModel

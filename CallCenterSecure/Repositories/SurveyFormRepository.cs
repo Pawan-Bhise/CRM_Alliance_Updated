@@ -44,6 +44,20 @@ namespace CallCenterSecure.Repositories
             _db.SurveyForms.Add(form);
         }
 
+        public void RemoveForm(SurveyForm form)
+        {
+            var trackingRows = _db.SurveyCustomerFormTrackings
+                .Where(x => x.SurveyFormId == form.Id)
+                .ToList();
+
+            if (trackingRows.Any())
+            {
+                _db.SurveyCustomerFormTrackings.RemoveRange(trackingRows);
+            }
+
+            _db.SurveyForms.Remove(form);
+        }
+
         public void RemoveQuestion(SurveyQuestion question)
         {
             // Remove any answers that reference this question first to avoid FK constraint errors

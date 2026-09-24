@@ -74,11 +74,58 @@ namespace CallCenterSecure.Controllers.Survey
         }
 
         [HttpGet]
-        public JsonResult GetCustomers(int templateId)
+        public JsonResult GetCustomers(int templateId, int? formId)
         {
-            var model = _surveyResponseService.GetStartModel(templateId, null, null, null);
-            var data = model.Customers.Select(x => new { x.Id, Name = x.ClientName + " (" + x.CustomerCode + ")" }).ToList();
+            var model = _surveyResponseService.GetStartModel(templateId, formId, null, null);
+            var data = model.Customers.Select(x => new
+            {
+                x.Id,
+                x.ClientName,
+                x.Gender,
+                Product = x.LoanProduct,
+                x.CustomerCode,
+                MobileNumber1 = x.MobileNumber1,
+                MobileNumber2 = x.MobileNumber2,
+                RegionState = x.Region,
+                x.Branch,
+                x.BusinessCategory,
+                ActivitiesSector = x.ActivitiesSector,
+                x.LoanCycle,
+                x.DisbursedAmount,
+                x.CallStatus,
+                x.CallStatusId,
+                x.FormStatus,
+                x.FormStatusId,
+                x.CallRemarks
+            }).ToList();
             return Json(data, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult GetStatusOptions()
+        {
+            return Json(new
+            {
+                CallStatuses = _surveyResponseService.GetCallStatusOptions(),
+                FormStatuses = _surveyResponseService.GetFormStatusOptions()
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult UpdateCustomerStatus(CallCenterSecure.Models.ViewModels.SurveyCustomerStatusEditViewModel model)
+        {
+            try
+            {
+                _surveyResponseService.UpdateCustomerStatus(model, User != null && User.Identity != null ? User.Identity.Name : null);
+                TempData["SuccessMessage"] = "Customer call status updated successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction("Index", new { templateId = model.SurveyTemplateTypeId, formId = model.SurveyFormId });
         }
     }
 }

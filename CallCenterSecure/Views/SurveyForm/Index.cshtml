@@ -126,7 +126,7 @@ else
                                     @using (Html.BeginForm("Delete", "SurveyForm", new { id = item.Id, templateId = Model.SelectedSurveyTemplateId }, FormMethod.Post, new { @class = "d-inline" }))
                                     {
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Delete this survey form?');">Delete</button>
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Permanently delete this survey form and its related questions and responses?');">Delete</button>
                                     }
                                 </div>
                             </td>

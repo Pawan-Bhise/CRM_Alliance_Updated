@@ -88,5 +88,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<SurveyFormResponse> SurveyFormResponses { get; set; }
     public DbSet<SurveyFormAnswer> SurveyFormAnswers { get; set; }
     public DbSet<SurveyFormGridAnswer> SurveyFormGridAnswers { get; set; }
+    public DbSet<SurveyCallStatusMaster> SurveyCallStatusMasters { get; set; }
+    public DbSet<SurveyFormStatusMaster> SurveyFormStatusMasters { get; set; }
+    public DbSet<SurveyCustomerFormTracking> SurveyCustomerFormTrackings { get; set; }
 
 }
