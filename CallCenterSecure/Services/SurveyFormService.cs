@@ -224,15 +224,24 @@ namespace CallCenterSecure.Services
             worksheet.Cell(3, 2).Value = form.Category;
             worksheet.Cell(4, 1).Value = "Description";
             worksheet.Cell(4, 2).Value = form.Description ?? string.Empty;
+            worksheet.Cell(5, 1).Value = "Survey Date";
+            worksheet.Cell(5, 2).Value = form.CreatedDate;
+            worksheet.Cell(5, 2).Style.DateFormat.Format = "yyyy-MM-dd HH:mm";
+            worksheet.Cell(6, 1).Value = "Last Modified";
+            worksheet.Cell(6, 2).Value = form.ModifiedDate.HasValue ? (object)form.ModifiedDate.Value : string.Empty;
+            if (form.ModifiedDate.HasValue)
+            {
+                worksheet.Cell(6, 2).Style.DateFormat.Format = "yyyy-MM-dd HH:mm";
+            }
 
-            worksheet.Cell(6, 1).Value = "#";
-            worksheet.Cell(6, 2).Value = "Question";
-            worksheet.Cell(6, 3).Value = "Type";
-            worksheet.Cell(6, 4).Value = "Required";
-            worksheet.Cell(6, 5).Value = "Parent Question Index";
-            worksheet.Cell(6, 6).Value = "Parent Option";
+            worksheet.Cell(8, 1).Value = "#";
+            worksheet.Cell(8, 2).Value = "Question";
+            worksheet.Cell(8, 3).Value = "Type";
+            worksheet.Cell(8, 4).Value = "Required";
+            worksheet.Cell(8, 5).Value = "Parent Question Index";
+            worksheet.Cell(8, 6).Value = "Parent Option";
 
-            var questionRow = 7;
+            var questionRow = 9;
             foreach (var question in form.Questions.OrderBy(x => x.DisplayOrder))
             {
                 worksheet.Cell(questionRow, 1).Value = question.DisplayOrder;
