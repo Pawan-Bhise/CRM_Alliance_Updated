@@ -116,18 +116,48 @@ namespace CallCenterSecure.Services
                 var responses = GetFilteredResponses(db, form.Id, null, categoryId, fromDate, toDate);
                 var questions = form.Questions.OrderBy(x => x.DisplayOrder).ToList();
                 var builder = new StringBuilder();
-                builder.AppendLine(string.Join(",", new[] { "Response Id", "Respondent Name", "Respondent Mobile", "Submitted By", "Submitted Date" }
-                    .Concat(questions.Select(x => x.QuestionText)).Select(CsvEscape)));
+                var headers = new[]
+                {
+                    "ClientName", "Gender", "CustomerCode", "MobileNumber1", "MobileNumber2",
+                    "Region", "Branch", "AreaType", "Location", "LoanProduct", "Age",
+                    "NumberOfFamilyMembers", "BusinessCategory", "ActivitiesSector", "LevelOfEducation",
+                    "IncomeLevel", "HouseholdAssets", "PovertyScore", "LoanCycle", "DisbursedAmount",
+                    "CustomerStatus", "Response Id", "Respondent Name", "Respondent Mobile",
+                    "Submitted By", "Submitted Date"
+                }.Concat(questions.Select((question, index) => "Question " + (index + 1)));
+                builder.AppendLine(string.Join(",", headers.Select(CsvEscape)));
 
                 foreach (var response in responses.OrderByDescending(x => x.SubmittedDate))
                 {
+                    var customer = response.SurveyCustomerData;
                     var values = new List<string>
                     {
+                        customer != null ? customer.ClientName : string.Empty,
+                        customer != null ? customer.Gender : string.Empty,
+                        customer != null ? customer.CustomerCode : string.Empty,
+                        customer != null ? customer.MobileNumber1 : string.Empty,
+                        customer != null ? customer.MobileNumber2 : string.Empty,
+                        customer != null ? customer.Region : string.Empty,
+                        customer != null ? customer.Branch : string.Empty,
+                        customer != null ? customer.AreaType : string.Empty,
+                        customer != null ? customer.Location : string.Empty,
+                        customer != null ? customer.LoanProduct : string.Empty,
+                        customer != null && customer.Age.HasValue ? customer.Age.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        customer != null && customer.NumberOfFamilyMembers.HasValue ? customer.NumberOfFamilyMembers.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        customer != null ? customer.BusinessCategory : string.Empty,
+                        customer != null ? customer.ActivitiesSector : string.Empty,
+                        customer != null ? customer.LevelOfEducation : string.Empty,
+                        customer != null ? customer.IncomeLevel : string.Empty,
+                        customer != null ? customer.HouseholdAssets : string.Empty,
+                        customer != null && customer.PovertyScore.HasValue ? customer.PovertyScore.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        customer != null && customer.LoanCycle.HasValue ? customer.LoanCycle.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        customer != null ? customer.DisbursedAmount : string.Empty,
+                        customer != null ? customer.CustomerStatus : string.Empty,
                         response.Id.ToString(CultureInfo.InvariantCulture),
                         response.RespondentName,
                         response.RespondentMobile,
                         response.SubmittedBy,
-                        response.SubmittedDate.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
+                        response.SubmittedDate.ToString("d/M/yyyy HH:mm", CultureInfo.InvariantCulture)
                     };
                     values.AddRange(questions.Select(question =>
                     {
@@ -145,6 +175,7 @@ namespace CallCenterSecure.Services
         {
             var query = db.SurveyFormResponses.AsNoTracking()
                 .Include(x => x.SurveyForm)
+                .Include(x => x.SurveyCustomerData)
                 .Include(x => x.Answers.Select(a => a.GridAnswers))
                 .AsQueryable();
 
