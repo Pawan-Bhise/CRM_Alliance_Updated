@@ -23,7 +23,7 @@
             <div class="col-md-3">
                 <label class="form-label">Survey Form</label>
                 <select name="formId" class="form-control">
-                    <option value="">Select a form</option>
+                    <option value="" @(Model.SelectedFormId.HasValue ? "" : "selected")>All forms</option>
                     @foreach (var item in Model.Forms)
                     {
                         <option value="@item.Id" @(Model.SelectedFormId == item.Id ? "selected" : "")>@item.Title</option>
@@ -60,19 +60,20 @@
 
 @if (!Model.SelectedFormId.HasValue)
 {
-    <div class="alert alert-info">Select a survey form to view its response summary.</div>
+    <div class="alert alert-info">Showing individual responses across all forms matching the selected template and filters. Select a specific form to view its question summary.</div>
 }
-else
-{
+
     <div class="row g-3 mb-4">
         <div class="col-md-4">
             <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">Total Responses</div><h3 class="mb-0">@Model.TotalResponses</h3></div></div>
         </div>
         <div class="col-md-8">
-            <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">Form</div><h3 class="mb-0">@Model.SelectedFormTitle</h3></div></div>
+            <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">Form</div><h3 class="mb-0">@(Model.SelectedFormId.HasValue ? Model.SelectedFormTitle : "All forms")</h3></div></div>
         </div>
     </div>
 
+@if (Model.SelectedFormId.HasValue)
+{
     <h4 class="mb-3">Question Summary</h4>
 
     foreach (var question in Model.Questions)
@@ -125,23 +126,44 @@ else
             </div>
         </div>
     }
-
-    <div class="card mb-4">
-        <div class="card-body">
-            <h4 class="mb-3">Individual Responses</h4>
-            @if (Model.Responses.Any())
-            {
-                <div class="table-responsive"><table class="table table-sm table-hover mb-0"><thead><tr><th>Respondent</th><th>Mobile</th><th>Submitted</th><th>Submitted By</th><th></th></tr></thead><tbody>
-                @foreach (var response in Model.Responses)
-                {
-                    <tr><td>@(string.IsNullOrWhiteSpace(response.RespondentName) ? "Anonymous" : response.RespondentName)</td><td>@response.RespondentMobile</td><td>@response.SubmittedDate.ToString("yyyy-MM-dd HH:mm")</td><td>@response.SubmittedBy</td><td>@Html.ActionLink("View", "Details", "SurveyReport", new { id = response.Id }, new { @class = "btn btn-sm btn-outline-primary" })</td></tr>
-                }
-                </tbody></table></div>
-            }
-            else
-            {
-                <div class="text-muted">No responses match the selected filters.</div>
-            }
-        </div>
-    </div>
 }
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h4 class="mb-3">Individual Responses</h4>
+        @if (Model.Responses.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Form</th>
+                            <th>Respondent</th>
+                            <th>Mobile</th>
+                            <th>Submitted</th>
+                            <th>Submitted By</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var response in Model.Responses)
+                        {
+                            <tr>
+                                <td>@response.FormTitle</td>
+                                <td>@(string.IsNullOrWhiteSpace(response.RespondentName) ? "Anonymous" : response.RespondentName)</td>
+                                <td>@response.RespondentMobile</td>
+                                <td>@response.SubmittedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@response.SubmittedBy</td>
+                                <td>@Html.ActionLink("View", "Details", "SurveyReport", new { id = response.Id }, new { @class = "btn btn-sm btn-outline-primary" })</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-muted">No responses match the selected filters.</div>
+        }
+    </div>
+</div>

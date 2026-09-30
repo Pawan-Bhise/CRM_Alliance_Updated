@@ -74,6 +74,7 @@ namespace CallCenterSecure.Models.ViewModels
     public class SurveyResponseSummaryViewModel
     {
         public int Id { get; set; }
+        public string FormTitle { get; set; }
         public string RespondentName { get; set; }
         public string RespondentMobile { get; set; }
         public string SubmittedBy { get; set; }

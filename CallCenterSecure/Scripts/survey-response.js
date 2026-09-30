@@ -550,7 +550,11 @@
                 changeMonth: true,
                 changeYear: true,
                 yearRange: '1900:2050',
-                autoclose: true
+                autoclose: true,
+                onSelect: function () {
+                    this.dispatchEvent(new Event('change', { bubbles: true }));
+                    updateConditionalVisibility(responseForm);
+                }
             });
         }
 

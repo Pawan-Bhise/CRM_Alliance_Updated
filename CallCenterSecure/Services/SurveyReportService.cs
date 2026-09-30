@@ -21,16 +21,16 @@ namespace CallCenterSecure.Services
                     .ToList();
                 var selectedForm = formId.HasValue
                     ? forms.FirstOrDefault(x => x.Id == formId.Value)
-                    : forms.FirstOrDefault(x => x.IsActive);
+                    : null;
 
                 var report = new SurveyReportViewModel
                 {
                     SelectedTemplateId = templateId,
-                    SelectedFormId = selectedForm != null ? (int?)selectedForm.Id : formId,
+                    SelectedFormId = selectedForm != null ? (int?)selectedForm.Id : null,
                     SelectedCategoryId = categoryId,
                     FromDate = fromDate,
                     ToDate = toDate,
-                    SelectedFormTitle = selectedForm != null ? selectedForm.Title : string.Empty,
+                    SelectedFormTitle = selectedForm != null ? selectedForm.Title : "All forms",
                     Templates = db.SurveyTemplateTypes.AsNoTracking().OrderBy(x => x.Id)
                         .Select(x => new SurveyTemplateLookupViewModel { Id = x.Id, Name = x.Name }).ToList(),
                     Forms = forms.Select(x => new SurveyFormLookupViewModel
@@ -41,23 +41,19 @@ namespace CallCenterSecure.Services
                     }).ToList()
                 };
 
-                if (selectedForm == null)
-                {
-                    return report;
-                }
-
-                var responses = GetFilteredResponses(db, selectedForm.Id, categoryId, fromDate, toDate);
+                var responses = GetFilteredResponses(db, selectedForm != null ? (int?)selectedForm.Id : null, templateId, categoryId, fromDate, toDate);
                 report.TotalResponses = responses.Count;
-                report.Responses = responses.OrderByDescending(x => x.SubmittedDate).Select(x => new SurveyResponseSummaryViewModel
+                report.Responses = responses.OrderByDescending(x => x.SubmittedDate).ThenByDescending(x => x.Id).Select(x => new SurveyResponseSummaryViewModel
                 {
                     Id = x.Id,
+                    FormTitle = x.SurveyForm.Title,
                     RespondentName = x.RespondentName,
                     RespondentMobile = x.RespondentMobile,
                     SubmittedBy = x.SubmittedBy,
                     SubmittedDate = x.SubmittedDate
                 }).ToList();
 
-                var form = db.SurveyForms.AsNoTracking()
+                var form = selectedForm == null ? null : db.SurveyForms.AsNoTracking()
                     .Include(x => x.Questions.Select(q => q.Options))
                     .Include(x => x.Questions.Select(q => q.GridRows))
                     .Include(x => x.Questions.Select(q => q.GridColumns))
@@ -117,7 +113,7 @@ namespace CallCenterSecure.Services
                     throw new InvalidOperationException("Survey form not found.");
                 }
 
-                var responses = GetFilteredResponses(db, form.Id, categoryId, fromDate, toDate);
+                var responses = GetFilteredResponses(db, form.Id, null, categoryId, fromDate, toDate);
                 var questions = form.Questions.OrderBy(x => x.DisplayOrder).ToList();
                 var builder = new StringBuilder();
                 builder.AppendLine(string.Join(",", new[] { "Response Id", "Respondent Name", "Respondent Mobile", "Submitted By", "Submitted Date" }
@@ -145,11 +141,21 @@ namespace CallCenterSecure.Services
             }
         }
 
-        private static List<SurveyFormResponse> GetFilteredResponses(ApplicationDbContext db, int formId, int? categoryId, DateTime? fromDate, DateTime? toDate)
+        private static List<SurveyFormResponse> GetFilteredResponses(ApplicationDbContext db, int? formId, int? templateId, int? categoryId, DateTime? fromDate, DateTime? toDate)
         {
             var query = db.SurveyFormResponses.AsNoTracking()
+                .Include(x => x.SurveyForm)
                 .Include(x => x.Answers.Select(a => a.GridAnswers))
-                .Where(x => x.SurveyFormId == formId);
+                .AsQueryable();
+
+            if (formId.HasValue)
+            {
+                query = query.Where(x => x.SurveyFormId == formId.Value);
+            }
+            else if (templateId.HasValue)
+            {
+                query = query.Where(x => x.SurveyForm.SurveyTemplateId == templateId.Value);
+            }
 
             if (categoryId.HasValue)
             {
