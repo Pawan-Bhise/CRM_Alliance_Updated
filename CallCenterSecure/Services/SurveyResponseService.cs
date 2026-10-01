@@ -97,9 +97,23 @@ namespace CallCenterSecure.Services
                 }
 
                 var selectedFormId = formId;
-                var trackingByCustomer = selectedFormId.HasValue
-                    ? _surveyResponseRepository.GetCustomerFormTrackings(model.SelectedTemplateId.Value, selectedFormId.Value).ToDictionary(x => x.SurveyCustomerDataId)
-                    : new Dictionary<int, SurveyCustomerFormTracking>();
+                var trackingByCustomer = new Dictionary<int, SurveyCustomerFormTracking>();
+                if (selectedFormId.HasValue)
+                {
+                    try
+                    {
+                        trackingByCustomer = _surveyResponseRepository
+                            .GetCustomerFormTrackings(model.SelectedTemplateId.Value, selectedFormId.Value)
+                            .ToDictionary(x => x.SurveyCustomerDataId);
+                    }
+                    catch (Exception exception)
+                    {
+                        if (!IsMissingSurveyTrackingSchema(exception))
+                        {
+                            throw;
+                        }
+                    }
+                }
 
                 model.Customers = _surveyResponseRepository.GetCustomersByTemplateId(model.SelectedTemplateId.Value)
                     .Select(x => new SurveyCustomerLookupViewModel
@@ -139,6 +153,23 @@ namespace CallCenterSecure.Services
             model.SelectedCategoryId = categoryId;
 
             return model;
+        }
+
+        private static bool IsMissingSurveyTrackingSchema(Exception exception)
+        {
+            for (var current = exception; current != null; current = current.InnerException)
+            {
+                var message = current.Message ?? string.Empty;
+                if (message.IndexOf("Invalid object name", StringComparison.OrdinalIgnoreCase) >= 0
+                    && (message.IndexOf("SurveyCustomerFormTracking", StringComparison.OrdinalIgnoreCase) >= 0
+                        || message.IndexOf("SurveyCallStatusMaster", StringComparison.OrdinalIgnoreCase) >= 0
+                        || message.IndexOf("SurveyFormStatusMaster", StringComparison.OrdinalIgnoreCase) >= 0))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public IEnumerable<SurveyStatusOptionViewModel> GetCallStatusOptions()

@@ -135,7 +135,7 @@
             });
         }, function (errorMessage) {
             if (message) {
-                message.textContent = errorMessage + ' Check that the survey status tables are installed.';
+                message.textContent = errorMessage + ' Verify the selected template and its customer records.';
                 message.className = 'text-danger small';
             }
         });
