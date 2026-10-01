@@ -236,7 +236,7 @@ namespace CallCenterSecure.Controllers.Survey
             var customers = new List<SurveyCustomerData>();
             var validationErrors = new List<string>();
             var seenCustomerCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var requiredHeaders = new[]
+            var importHeaders = new[]
             {
                 "ClientName",
                 "Gender",
@@ -260,6 +260,7 @@ namespace CallCenterSecure.Controllers.Survey
                 "DisbursedAmount",
                 "CustomerStatus"
             };
+            var requiredHeaders = importHeaders.Where(header => !string.Equals(header, "MobileNumber2", StringComparison.OrdinalIgnoreCase)).ToArray();
 
             var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
             if (extension == ".csv")
@@ -271,9 +272,11 @@ namespace CallCenterSecure.Controllers.Survey
                     csv.ReadHeader();
 
                     var headerNames = csv.HeaderRecord ?? Array.Empty<string>();
-                    if (headerNames.Length < requiredHeaders.Length)
+                    var headerIndexes = BuildHeaderIndexes(headerNames);
+                    var missingHeaders = requiredHeaders.Where(header => !headerIndexes.ContainsKey(header)).ToList();
+                    if (missingHeaders.Any())
                     {
-                        ModelState.AddModelError("file", "The file does not contain enough columns. Expected at least " + requiredHeaders.Length + " columns.");
+                        ModelState.AddModelError("file", "The file is missing required columns: " + string.Join(", ", missingHeaders) + ".");
                         return View(Enumerable.Empty<SurveyCustomerData>());
                     }
 
@@ -281,11 +284,7 @@ namespace CallCenterSecure.Controllers.Survey
                     while (csv.Read())
                     {
                         rowNumber++;
-                        var rowValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                        for (var index = 0; index < requiredHeaders.Length; index++)
-                        {
-                            rowValues[requiredHeaders[index]] = GetCsvString(csv, index);
-                        }
+                        var rowValues = ReadImportRow(importHeaders, headerIndexes, index => GetCsvString(csv, index));
 
                         if (string.IsNullOrWhiteSpace(rowValues["ClientName"])
                             && string.IsNullOrWhiteSpace(rowValues["CustomerCode"])
@@ -324,21 +323,21 @@ namespace CallCenterSecure.Controllers.Survey
                             Gender = rowValues["Gender"],
                             CustomerCode = customerCode,
                             MobileNumber1 = rowValues["MobileNumber1"],
-                            MobileNumber2 = rowValues["MobileNumber2"],
+                            MobileNumber2 = string.IsNullOrWhiteSpace(rowValues["MobileNumber2"]) ? null : rowValues["MobileNumber2"],
                             Region = rowValues["Region"],
                             Branch = rowValues["Branch"],
                             AreaType = rowValues["AreaType"],
                             Location = rowValues["Location"],
                             LoanProduct = rowValues["LoanProduct"],
-                            Age = GetCsvInt(csv, 10),
-                            NumberOfFamilyMembers = GetCsvInt(csv, 11),
+                            Age = GetOptionalInt(rowValues, "Age"),
+                            NumberOfFamilyMembers = GetOptionalInt(rowValues, "NumberOfFamilyMembers"),
                             BusinessCategory = rowValues["BusinessCategory"],
                             ActivitiesSector = rowValues["ActivitiesSector"],
                             LevelOfEducation = rowValues["LevelOfEducation"],
                             IncomeLevel = rowValues["IncomeLevel"],
                             HouseholdAssets = rowValues["HouseholdAssets"],
-                            PovertyScore = GetCsvInt(csv, 16),
-                            LoanCycle = GetCsvInt(csv, 17),
+                            PovertyScore = GetOptionalInt(rowValues, "PovertyScore"),
+                            LoanCycle = GetOptionalInt(rowValues, "LoanCycle"),
                             DisbursedAmount = rowValues["DisbursedAmount"],
                             CustomerStatus = rowValues["CustomerStatus"],
                             SurveyTemplateTypeId = surveyTemplateTypeId.Value
@@ -358,22 +357,22 @@ namespace CallCenterSecure.Controllers.Survey
                 {
                     var worksheet = workbook.Worksheets.First();
                     var headerRow = worksheet.Row(1);
-                    var headerNames = headerRow.Cells().Select(c => (c.Value ?? string.Empty).ToString()).ToArray();
-                    if (headerNames.Length < requiredHeaders.Length)
+                    var lastHeaderColumn = headerRow.LastCellUsed()?.Address.ColumnNumber ?? 0;
+                    var headerNames = Enumerable.Range(1, lastHeaderColumn)
+                        .Select(column => worksheet.Cell(1, column).GetValue<string>())
+                        .ToArray();
+                    var headerIndexes = BuildHeaderIndexes(headerNames);
+                    var missingHeaders = requiredHeaders.Where(header => !headerIndexes.ContainsKey(header)).ToList();
+                    if (missingHeaders.Any())
                     {
-                        ModelState.AddModelError("file", "The file does not contain enough columns. Expected at least " + requiredHeaders.Length + " columns.");
+                        ModelState.AddModelError("file", "The file is missing required columns: " + string.Join(", ", missingHeaders) + ".");
                         return View(Enumerable.Empty<SurveyCustomerData>());
                     }
 
                     var lastRow = worksheet.LastRowUsed().RowNumber();
                     for (var rowNumber = 2; rowNumber <= lastRow; rowNumber++)
                     {
-                        var rowValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                        for (var index = 0; index < requiredHeaders.Length; index++)
-                        {
-                            var cell = worksheet.Cell(rowNumber, index + 1);
-                            rowValues[requiredHeaders[index]] = cell?.GetValue<string>()?.Trim();
-                        }
+                        var rowValues = ReadImportRow(importHeaders, headerIndexes, index => worksheet.Cell(rowNumber, index + 1).GetValue<string>()?.Trim());
 
                         if (string.IsNullOrWhiteSpace(rowValues["ClientName"])
                             && string.IsNullOrWhiteSpace(rowValues["CustomerCode"])
@@ -422,7 +421,7 @@ namespace CallCenterSecure.Controllers.Survey
                             Gender = rowValues["Gender"],
                             CustomerCode = customerCode,
                             MobileNumber1 = rowValues["MobileNumber1"],
-                            MobileNumber2 = rowValues["MobileNumber2"],
+                            MobileNumber2 = string.IsNullOrWhiteSpace(rowValues["MobileNumber2"]) ? null : rowValues["MobileNumber2"],
                             Region = rowValues["Region"],
                             Branch = rowValues["Branch"],
                             AreaType = rowValues["AreaType"],
@@ -607,16 +606,40 @@ END;";
             return value == null ? null : value.Trim();
         }
 
-        private static int? GetCsvInt(CsvReader csv, int index)
+        private static Dictionary<string, int> BuildHeaderIndexes(IEnumerable<string> headers)
         {
-            var value = csv.GetField(index);
-            if (string.IsNullOrWhiteSpace(value))
+            var indexes = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var index = 0;
+            foreach (var header in headers)
             {
-                return null;
+                var name = (header ?? string.Empty).Trim();
+                if (!string.IsNullOrWhiteSpace(name) && !indexes.ContainsKey(name))
+                {
+                    indexes.Add(name, index);
+                }
+                index++;
             }
 
+            return indexes;
+        }
+
+        private static Dictionary<string, string> ReadImportRow(IEnumerable<string> importHeaders, IDictionary<string, int> headerIndexes, Func<int, string> getValue)
+        {
+            var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var header in importHeaders)
+            {
+                int index;
+                values[header] = headerIndexes.TryGetValue(header, out index) ? getValue(index) : null;
+            }
+
+            return values;
+        }
+
+        private static int? GetOptionalInt(IDictionary<string, string> values, string key)
+        {
+            string value;
             int number;
-            return int.TryParse(value.Trim(), out number) ? (int?)number : null;
+            return values.TryGetValue(key, out value) && int.TryParse(value, out number) ? (int?)number : null;
         }
 
         private bool IsCsvFile(string fileName)

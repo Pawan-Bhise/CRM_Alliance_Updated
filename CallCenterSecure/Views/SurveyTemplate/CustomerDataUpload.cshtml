@@ -23,7 +23,7 @@
 <p class="text-muted">Upload customer data for a survey template using CSV.</p>
 <p class="text-muted mb-3">
     Download the sample template, fill in your customer data, and upload it back here.
-    Keep the column order unchanged so the importer can read the values correctly.
+    Include all required columns; MobileNumber2 is optional and may be left blank or omitted.
 </p>
 
 @using (Html.BeginForm("CustomerDataUpload", "SurveyTemplate", FormMethod.Post, new { enctype = "multipart/form-data", id = "customerDataUploadForm" }))
