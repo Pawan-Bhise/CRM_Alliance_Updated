@@ -101,69 +101,24 @@ namespace CallCenterSecure.Services
             }
         }
 
-        public byte[] ExportCsv(int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate)
+        public byte[] ExportCsv(int? templateId, int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate)
         {
             using (var db = new ApplicationDbContext())
             {
-                var form = db.SurveyForms.AsNoTracking()
-                    .Include(x => x.Questions)
-                    .FirstOrDefault(x => x.Id == formId.Value);
-                if (form == null)
-                {
-                    throw new InvalidOperationException("Survey form not found.");
-                }
-
-                var responses = GetFilteredResponses(db, form.Id, null, categoryId, fromDate, toDate);
-                var questions = form.Questions.OrderBy(x => x.DisplayOrder).ToList();
+                var responses = GetFilteredResponses(db, formId, templateId, categoryId, fromDate, toDate);
                 var builder = new StringBuilder();
-                var headers = new[]
-                {
-                    "ClientName", "Gender", "CustomerCode", "MobileNumber1", "MobileNumber2",
-                    "Region", "Branch", "AreaType", "Location", "LoanProduct", "Age",
-                    "NumberOfFamilyMembers", "BusinessCategory", "ActivitiesSector", "LevelOfEducation",
-                    "IncomeLevel", "HouseholdAssets", "PovertyScore", "LoanCycle", "DisbursedAmount",
-                    "CustomerStatus", "Response Id", "Respondent Name", "Respondent Mobile",
-                    "Submitted By", "Submitted Date"
-                }.Concat(questions.Select((question, index) => "Question " + (index + 1)));
-                builder.AppendLine(string.Join(",", headers.Select(CsvEscape)));
+                builder.AppendLine(string.Join(",", new[] { "Form", "Respondent", "Mobile", "Submitted", "Submitted By" }.Select(CsvEscape)));
 
                 foreach (var response in responses.OrderByDescending(x => x.SubmittedDate))
                 {
-                    var customer = response.SurveyCustomerData;
                     var values = new List<string>
                     {
-                        customer != null ? customer.ClientName : string.Empty,
-                        customer != null ? customer.Gender : string.Empty,
-                        customer != null ? customer.CustomerCode : string.Empty,
-                        customer != null ? customer.MobileNumber1 : string.Empty,
-                        customer != null ? customer.MobileNumber2 : string.Empty,
-                        customer != null ? customer.Region : string.Empty,
-                        customer != null ? customer.Branch : string.Empty,
-                        customer != null ? customer.AreaType : string.Empty,
-                        customer != null ? customer.Location : string.Empty,
-                        customer != null ? customer.LoanProduct : string.Empty,
-                        customer != null && customer.Age.HasValue ? customer.Age.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
-                        customer != null && customer.NumberOfFamilyMembers.HasValue ? customer.NumberOfFamilyMembers.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
-                        customer != null ? customer.BusinessCategory : string.Empty,
-                        customer != null ? customer.ActivitiesSector : string.Empty,
-                        customer != null ? customer.LevelOfEducation : string.Empty,
-                        customer != null ? customer.IncomeLevel : string.Empty,
-                        customer != null ? customer.HouseholdAssets : string.Empty,
-                        customer != null && customer.PovertyScore.HasValue ? customer.PovertyScore.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
-                        customer != null && customer.LoanCycle.HasValue ? customer.LoanCycle.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
-                        customer != null ? customer.DisbursedAmount : string.Empty,
-                        customer != null ? customer.CustomerStatus : string.Empty,
-                        response.Id.ToString(CultureInfo.InvariantCulture),
+                        response.SurveyForm != null ? response.SurveyForm.Title : string.Empty,
                         response.RespondentName,
                         response.RespondentMobile,
+                        response.SubmittedDate.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
                         response.SubmittedBy,
-                        response.SubmittedDate.ToString("d/M/yyyy HH:mm", CultureInfo.InvariantCulture)
                     };
-                    values.AddRange(questions.Select(question =>
-                    {
-                        var answer = response.Answers.FirstOrDefault(x => x.SurveyQuestionId == question.Id);
-                        return answer == null ? string.Empty : FormatAnswer(answer);
-                    }));
                     builder.AppendLine(string.Join(",", values.Select(CsvEscape)));
                 }
 

@@ -15,8 +15,10 @@
 
     @Html.Partial("_SurveyFormBuilder", Model)
 
-    <button type="submit" class="btn btn-primary">Create Form</button>
-    @Html.RouteLink("Cancel", "SurveyForm", new { action = "Index", templateId = Model.SurveyTemplateId }, new { @class = "btn btn-secondary ms-2" })
+    <div class="survey-form-builder-actions">
+        <button type="submit" class="btn btn-primary">Create Form</button>
+        @Html.RouteLink("Cancel", "SurveyForm", new { action = "Index", templateId = Model.SurveyTemplateId }, new { @class = "btn btn-secondary" })
+    </div>
 }
 
 @section Scripts {

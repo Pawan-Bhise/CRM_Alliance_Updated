@@ -50,10 +50,7 @@
         <div class="mt-3 d-flex gap-2">
             <button type="submit" class="btn btn-primary">Apply Filters</button>
             @Html.ActionLink("Reset", "Index", "SurveyReport", null, new { @class = "btn btn-outline-secondary" })
-            @if (Model.SelectedFormId.HasValue)
-            {
-                @Html.ActionLink("Export CSV", "ExportCsv", "SurveyReport", new { formId = Model.SelectedFormId, categoryId = Model.SelectedCategoryId, fromDate = Model.FromDate, toDate = Model.ToDate }, new { @class = "btn btn-outline-success" })
-            }
+            @Html.ActionLink("Export CSV", "ExportCsv", "SurveyReport", new { templateId = Model.SelectedTemplateId, formId = Model.SelectedFormId, categoryId = Model.SelectedCategoryId, fromDate = Model.FromDate, toDate = Model.ToDate }, new { @class = "btn btn-outline-success" })
         </div>
     </div>
 }

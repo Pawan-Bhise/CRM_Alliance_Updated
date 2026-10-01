@@ -35,15 +35,11 @@ namespace CallCenterSecure.Controllers.Survey
             return View(model);
         }
 
-        public ActionResult ExportCsv(int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate)
+        public ActionResult ExportCsv(int? templateId, int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate)
         {
-            if (!formId.HasValue)
-            {
-                return new HttpStatusCodeResult(400, "A survey form is required.");
-            }
-
-            var bytes = _surveyReportService.ExportCsv(formId, categoryId, fromDate, toDate);
-            return File(bytes, "text/csv", string.Format("survey-responses-{0}.csv", formId.Value));
+            var bytes = _surveyReportService.ExportCsv(templateId, formId, categoryId, fromDate, toDate);
+            var fileScope = formId.HasValue ? formId.Value.ToString() : templateId.HasValue ? "template-" + templateId.Value : "all";
+            return File(bytes, "text/csv", string.Format("survey-responses-{0}.csv", fileScope));
         }
     }
 }

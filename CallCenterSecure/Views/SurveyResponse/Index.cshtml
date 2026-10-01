@@ -5,18 +5,35 @@
 }
 
 <style>
+    .survey-response-page {
+        font-size: 1rem;
+    }
+
+    .survey-response-page .form-label,
+    .survey-response-page .form-control,
+    .survey-response-page .form-select,
+    .survey-response-page .btn {
+        font-size: 1rem;
+    }
+
     #surveyCustomerTable {
         width: 100% !important;
         table-layout: fixed;
-        font-size: 0.72rem;
+        font-size: 0.88rem;
+        line-height: 1.35;
     }
 
     #surveyCustomerTable th,
     #surveyCustomerTable td {
-        padding: 0.35rem 0.3rem;
+        padding: 0.45rem 0.35rem;
         white-space: normal;
         overflow-wrap: anywhere;
         vertical-align: middle;
+    }
+
+    #surveyCustomerTable th {
+        font-size: 0.82rem;
+        font-weight: 700;
     }
 
     #surveyCustomerTable th:nth-child(1),
@@ -47,8 +64,9 @@
     }
 
     #surveyCustomerTable .btn-edit-customer {
-        font-size: 0.68rem;
-        padding: 0.2rem 0.35rem;
+        font-size: 0.82rem;
+        padding: 0.3rem 0.45rem;
+        white-space: nowrap;
     }
 
     #surveyCustomerTable_wrapper,
@@ -58,6 +76,7 @@
     }
 </style>
 
+<div class="survey-response-page">
 <h2>Survey Response</h2>
 
 @if (TempData["SuccessMessage"] != null)
@@ -182,6 +201,7 @@
             }
         </div>
     </div>
+</div>
 </div>
 
 @section Scripts {
