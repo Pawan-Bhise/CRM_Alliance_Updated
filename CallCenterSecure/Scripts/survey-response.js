@@ -1,4 +1,6 @@
 (function () {
+    var customerGridRequestVersion = 0;
+
     function byId(id) {
         return document.getElementById(id);
     }
@@ -44,6 +46,7 @@
     }
 
     function loadCustomerGrid(templateId, formId) {
+        var requestVersion = ++customerGridRequestVersion;
         var table = byId('surveyCustomerTable');
         var message = byId('customerGridMessage');
         var customerId = byId('customerId');
@@ -71,6 +74,10 @@
         }
 
         fetchJson(customerUrl, function (items) {
+            if (requestVersion !== customerGridRequestVersion) {
+                return;
+            }
+
             items.forEach(function (item, index) {
                 var row = document.createElement('tr');
                 var values = [
@@ -117,7 +124,12 @@
             }
 
             if (typeof $ !== 'undefined' && $.fn.DataTable) {
+                if ($.fn.DataTable.isDataTable(table)) {
+                    $(table).DataTable().clear().destroy();
+                }
+
                 $(table).DataTable({
+                    destroy: true,
                     pageLength: 10,
                     order: [[3, 'asc']],
                     scrollX: false,
@@ -194,13 +206,14 @@
 
         template.addEventListener('change', function () {
             var templateId = template.value;
+            customerGridRequestVersion++;
             fillSelect(form, [], 'Title');
             if (customer) {
                 customer.value = '';
             }
-            loadCustomerGrid(templateId, '');
 
             if (!templateId) {
+                loadCustomerGrid('', '');
                 return;
             }
 
@@ -208,8 +221,8 @@
                 fillSelect(form, items, 'Title');
                 if (items.length === 1) {
                     form.value = items[0].Id;
-                    loadCustomerGrid(templateId, form.value);
                 }
+                loadCustomerGrid(templateId, form.value);
             });
 
         });
