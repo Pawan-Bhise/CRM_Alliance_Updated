@@ -7,6 +7,88 @@
 
 <link href="~/Content/jquery-ui.css" rel="stylesheet" />
 
+<style>
+    .survey-response-fill-shell {
+        width: min(100% - 2rem, 1160px);
+        margin: 0 auto 2rem;
+        font-size: 1rem;
+    }
+
+    .survey-response-fill-shell h2 {
+        margin-bottom: 1rem;
+        font-size: 1.75rem;
+    }
+
+    .survey-response-fill-shell .card {
+        border: 1px solid #dce3eb;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+
+    .survey-response-fill-shell .card-body {
+        padding: 1.1rem 1.2rem;
+    }
+
+    .survey-response-fill-shell .form-label {
+        margin-bottom: 0.4rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .survey-response-fill-shell .form-control,
+    .survey-response-fill-shell .form-select {
+        min-height: 42px;
+        padding: 0.55rem 0.75rem;
+        font-size: 1rem;
+    }
+
+    .survey-response-fill-shell textarea.form-control {
+        min-height: 88px;
+    }
+
+    .survey-response-fill-shell .form-check-label,
+    .survey-response-fill-shell .table {
+        font-size: 1rem;
+    }
+
+    .survey-response-fill-shell .survey-question-card {
+        border-left: 4px solid #2b6ca3;
+        margin-bottom: 1rem;
+    }
+
+    .survey-response-fill-shell .survey-question-card .form-label.fw-bold {
+        display: block;
+        margin-bottom: 0.9rem;
+        color: #24364b;
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .survey-response-fill-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+    }
+
+    .survey-response-fill-actions .btn {
+        min-height: 42px;
+        padding: 0.55rem 1rem;
+        font-size: 1rem;
+    }
+
+    @@media (max-width: 767.98px) {
+        .survey-response-fill-shell {
+            width: min(100% - 1rem, 1160px);
+        }
+
+        .survey-response-fill-shell .card-body {
+            padding: 0.9rem;
+        }
+    }
+</style>
+
+<div class="survey-response-fill-shell">
 <h2>Fill Survey Response</h2>
 
 @if (TempData["ErrorMessage"] != null)
@@ -240,9 +322,12 @@
         </div>
     }
 
-    <button type="submit" class="btn btn-primary">Submit Response</button>
-    @Html.RouteLink("Back", "SurveyResponse", new { action = "Index", templateId = Model.SurveyTemplateId, formId = Model.SurveyFormId, customerId = Model.SurveyCustomerDataId }, new { @class = "btn btn-secondary ms-2" })
+    <div class="survey-response-fill-actions">
+        <button type="submit" class="btn btn-primary">Submit Response</button>
+        @Html.RouteLink("Back", "SurveyResponse", new { action = "Index", templateId = Model.SurveyTemplateId, formId = Model.SurveyFormId, customerId = Model.SurveyCustomerDataId }, new { @class = "btn btn-secondary" })
+    </div>
 }
+</div>
 
 @section Scripts {
     <style>

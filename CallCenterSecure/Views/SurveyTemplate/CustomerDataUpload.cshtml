@@ -26,7 +26,7 @@
     Include all required columns; MobileNumber2 is optional and may be left blank or omitted.
 </p>
 
-@using (Html.BeginForm("CustomerDataUpload", "SurveyTemplate", FormMethod.Post, new { enctype = "multipart/form-data", id = "customerDataUploadForm" }))
+@using (Html.BeginForm("CustomerDataUpload", "SurveyTemplate", FormMethod.Post, new { enctype = "multipart/form-data", id = "customerDataUploadForm", data_skip_global_loader = "true" }))
 {
     @Html.AntiForgeryToken()
 

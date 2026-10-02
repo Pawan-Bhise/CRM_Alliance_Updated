@@ -285,6 +285,7 @@ namespace CallCenterSecure.Controllers.Survey
                     {
                         rowNumber++;
                         var rowValues = ReadImportRow(importHeaders, headerIndexes, index => GetCsvString(csv, index));
+                        var rowHasValidationError = false;
 
                         if (string.IsNullOrWhiteSpace(rowValues["ClientName"])
                             && string.IsNullOrWhiteSpace(rowValues["CustomerCode"])
@@ -297,15 +298,18 @@ namespace CallCenterSecure.Controllers.Survey
                         if (string.IsNullOrWhiteSpace(rowValues["ClientName"]))
                         {
                             validationErrors.Add("Row " + rowNumber + ": ClientName is required.");
+                            rowHasValidationError = true;
                         }
 
                         if (string.IsNullOrWhiteSpace(customerCode))
                         {
                             validationErrors.Add("Row " + rowNumber + ": CustomerCode is required.");
+                            rowHasValidationError = true;
                         }
                         else if (seenCustomerCodes.Contains(customerCode))
                         {
                             validationErrors.Add("Row " + rowNumber + ": Duplicate CustomerCode '" + customerCode + "' within file.");
+                            rowHasValidationError = true;
                         }
                         else
                         {
@@ -315,6 +319,7 @@ namespace CallCenterSecure.Controllers.Survey
                         if (string.IsNullOrWhiteSpace(rowValues["MobileNumber1"]))
                         {
                             validationErrors.Add("Row " + rowNumber + ": MobileNumber1 is required.");
+                            rowHasValidationError = true;
                         }
 
                         var customer = new SurveyCustomerData
@@ -343,7 +348,7 @@ namespace CallCenterSecure.Controllers.Survey
                             SurveyTemplateTypeId = surveyTemplateTypeId.Value
                         };
 
-                        if (!validationErrors.Any(error => error.Contains("Row " + rowNumber + ":")))
+                        if (!rowHasValidationError)
                         {
                             customers.Add(customer);
                         }
@@ -373,6 +378,7 @@ namespace CallCenterSecure.Controllers.Survey
                     for (var rowNumber = 2; rowNumber <= lastRow; rowNumber++)
                     {
                         var rowValues = ReadImportRow(importHeaders, headerIndexes, index => worksheet.Cell(rowNumber, index + 1).GetValue<string>()?.Trim());
+                        var rowHasValidationError = false;
 
                         if (string.IsNullOrWhiteSpace(rowValues["ClientName"])
                             && string.IsNullOrWhiteSpace(rowValues["CustomerCode"])
@@ -385,15 +391,18 @@ namespace CallCenterSecure.Controllers.Survey
                         if (string.IsNullOrWhiteSpace(rowValues["ClientName"]))
                         {
                             validationErrors.Add("Row " + rowNumber + ": ClientName is required.");
+                            rowHasValidationError = true;
                         }
 
                         if (string.IsNullOrWhiteSpace(customerCode))
                         {
                             validationErrors.Add("Row " + rowNumber + ": CustomerCode is required.");
+                            rowHasValidationError = true;
                         }
                         else if (seenCustomerCodes.Contains(customerCode))
                         {
                             validationErrors.Add("Row " + rowNumber + ": Duplicate CustomerCode '" + customerCode + "' within file.");
+                            rowHasValidationError = true;
                         }
                         else
                         {
@@ -403,6 +412,7 @@ namespace CallCenterSecure.Controllers.Survey
                         if (string.IsNullOrWhiteSpace(rowValues["MobileNumber1"]))
                         {
                             validationErrors.Add("Row " + rowNumber + ": MobileNumber1 is required.");
+                            rowHasValidationError = true;
                         }
 
                         int? age = null;
@@ -441,7 +451,7 @@ namespace CallCenterSecure.Controllers.Survey
                             SurveyTemplateTypeId = surveyTemplateTypeId.Value
                         };
 
-                        if (!validationErrors.Any(error => error.Contains("Row " + rowNumber + ":")))
+                        if (!rowHasValidationError)
                         {
                             customers.Add(customer);
                         }
@@ -475,7 +485,8 @@ namespace CallCenterSecure.Controllers.Survey
             var existingCustomers = _db.SurveyCustomerData
                 .Where(c => c.SurveyTemplateTypeId == surveyTemplateTypeId.Value)
                 .ToList()
-                .ToDictionary(c => c.CustomerCode ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+                .GroupBy(c => c.CustomerCode ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
 
             foreach (var cust in customers)
             {

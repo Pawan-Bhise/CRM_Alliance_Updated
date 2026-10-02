@@ -25,7 +25,8 @@ namespace CallCenterSecure.Repositories
                 .Include(x => x.SurveyTemplate)
                 .Include(x => x.Questions)
                 .Where(x => x.SurveyTemplateId == surveyTemplateId)
-                .OrderBy(x => x.Id)
+                .OrderByDescending(x => x.CreatedDate)
+                .ThenByDescending(x => x.Id)
                 .ToList();
         }
 

@@ -98,7 +98,9 @@ namespace CallCenterSecure.Controllers.Survey
                 x.FormStatusId,
                 x.CallRemarks
             }).ToList();
-            return Json(data, JsonRequestBehavior.AllowGet);
+            var result = Json(data, JsonRequestBehavior.AllowGet);
+            result.MaxJsonLength = int.MaxValue;
+            return result;
         }
 
         [HttpGet]

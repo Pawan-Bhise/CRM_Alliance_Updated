@@ -44,6 +44,12 @@
         return value === "Multiple Choice Grid" || value === "Checkbox Grid" || value.toLowerCase() === "multiple choice grid" || value.toLowerCase() === "checkbox grid";
     }
 
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+        });
+    }
+
     function renderQuestionPreview(questionEl) {
         var previewSurface = questionEl.querySelector('.preview-surface');
         if (!previewSurface) {
@@ -54,37 +60,31 @@
         var text = (questionEl.querySelector('.question-text').value || 'Untitled question').trim();
         var isRequired = questionEl.querySelector('.question-required').checked;
 
-        var html = '<div class="mb-2"><strong>' + (text || 'Untitled question') + (isRequired ? ' *' : '') + '</strong></div>';
+        var html = '<div class="mb-2"><strong>' + escapeHtml(text || 'Untitled question') + (isRequired ? ' *' : '') + '</strong></div>';
 
-        if (type === 'Short Answer' || type === 'Paragraph') {
-            html += '<input type="text" class="form-control" value="" placeholder="Sample response" />';
-            if (type === 'Paragraph') {
-                html += '<textarea class="form-control mt-2" rows="2" placeholder="Long answer"></textarea>';
-            }
+        if (type === 'Short Answer') {
+            html += '<input type="text" class="form-control" value="" placeholder="Your answer" disabled />';
+        } else if (type === 'Paragraph') {
+            html += '<textarea class="form-control" rows="3" placeholder="Your answer" disabled></textarea>';
         } else if (type === 'Multiple Choice' || type === 'Dropdown' || type === 'Checkboxes') {
             var options = Array.prototype.slice.call(questionEl.querySelectorAll('.option-text')).map(function (input) {
                 return (input.value || '').trim();
             }).filter(function (v) { return v; });
 
             if (!options.length) {
-                options = ['Option 1', 'Option 2', 'Option 3'];
-            }
-
-            if (type === 'Multiple Choice') {
+                html += '<div class="text-muted small">Add options in Question setup to preview them here.</div>';
+            } else if (type === 'Multiple Choice') {
                 html += options.map(function (option) {
-                    return '<div class="form-check mt-2"><input class="form-check-input" type="radio" disabled /><label class="form-check-label">' + option + '</label></div>';
+                    return '<div class="form-check mt-2"><input class="form-check-input" type="radio" disabled /><label class="form-check-label">' + escapeHtml(option) + '</label></div>';
                 }).join('');
             } else if (type === 'Checkboxes') {
                 html += options.map(function (option) {
-                    return '<div class="form-check mt-2"><input class="form-check-input" type="checkbox" disabled /><label class="form-check-label">' + option + '</label></div>';
+                    return '<div class="form-check mt-2"><input class="form-check-input" type="checkbox" disabled /><label class="form-check-label">' + escapeHtml(option) + '</label></div>';
                 }).join('');
             } else if (type === 'Dropdown') {
-                html += '<select class="form-control"><option>' + options.join('</option><option>') + '</option></select>';
+                html += '<select class="form-control" disabled><option>Select an option</option>' + options.map(function (option) { return '<option>' + escapeHtml(option) + '</option>'; }).join('') + '</select>';
             }
         } else if (type === 'Linear Scale' || type === 'NPS (0-10)' || type === 'Ranking') {
-            var min = parseInt(questionEl.querySelector('.scale-min-value').value || (type === 'NPS (0-10)' ? '0' : '1'), 10);
-            var max = parseInt(questionEl.querySelector('.scale-max-value').value || (type === 'NPS (0-10)' ? '10' : '5'), 10);
-
             if (type === 'Ranking') {
                 var ratingMax = parseInt(questionEl.querySelector('.rating-scale-value').value || '5', 10);
                 var ratingOptions = [];
@@ -96,6 +96,16 @@
                 }).join('') + '</div>';
                 return previewSurface.innerHTML = html;
             }
+
+            var minInput = questionEl.querySelector('.scale-min-value').value;
+            var maxInput = questionEl.querySelector('.scale-max-value').value;
+            var min = parseInt(minInput || (type === 'NPS (0-10)' ? '0' : ''), 10);
+            var max = parseInt(maxInput || (type === 'NPS (0-10)' ? '10' : ''), 10);
+            if (!Number.isFinite(min) || !Number.isFinite(max) || min > max) {
+                html += '<div class="text-muted small">Enter valid minimum and maximum values in Question setup to preview this scale.</div>';
+                return previewSurface.innerHTML = html;
+            }
+
             var labels = [
                 questionEl.querySelector('.scale-min-label').value || min,
                 questionEl.querySelector('.scale-max-label').value || max
@@ -103,24 +113,28 @@
 
             var range = [];
             for (var v = min; v <= max; v++) {
-                range.push('<div class="form-check form-check-inline"><input class="form-check-input" type="radio" disabled /><label class="form-check-label">' + v + '</label></div>');
+                range.push('<div class="form-check form-check-inline"><input class="form-check-input" type="radio" disabled /><label class="form-check-label">' + escapeHtml(v) + '</label></div>');
             }
             html += '<div class="preview-scale">' + range.join('') + '</div>';
-            html += '<div class="mt-2 small text-muted">' + labels[0] + ' &nbsp; ' + labels[1] + '</div>';
+            html += '<div class="mt-2 small text-muted">' + escapeHtml(labels[0]) + ' &nbsp; ' + escapeHtml(labels[1]) + '</div>';
         } else if (type === 'Date & Time Picker') {
-            html += '<input type="text" class="form-control" value="" placeholder="YYYY-MM-DD" />';
+            html += '<input type="text" class="form-control" value="" placeholder="YYYY-MM-DD" disabled />';
         } else if (type === 'Multiple Choice Grid' || type === 'Checkbox Grid') {
             var rows = Array.prototype.slice.call(questionEl.querySelectorAll('.grid-row-text')).map(function (input) { return (input.value || '').trim(); }).filter(Boolean);
             var columns = Array.prototype.slice.call(questionEl.querySelectorAll('.grid-column-text')).map(function (input) { return (input.value || '').trim(); }).filter(Boolean);
 
-            if (!rows.length) rows = ['Row 1', 'Row 2'];
-            if (!columns.length) columns = ['Option 1', 'Option 2'];
-
-            html += '<table class="preview-grid-table"><thead><tr><th></th>' + columns.map(function (col) { return '<th>' + col + '</th>'; }).join('') + '</tr></thead><tbody>' + rows.map(function (row) {
-                return '<tr><td>' + row + '</td>' + columns.map(function () { return '<td><input type="' + (type === 'Checkbox Grid' ? 'checkbox' : 'radio') + '" disabled /></td>'; }).join('') + '</tr>';
-            }).join('') + '</tbody></table>';
+            if (!rows.length || !columns.length) {
+                html += '<div class="text-muted small">Add grid rows and columns in Question setup to preview the grid.</div>';
+            }
+            if (rows.length && columns.length) {
+                html += '<table class="preview-grid-table"><thead><tr><th></th>' + columns.map(function (col) { return '<th>' + escapeHtml(col) + '</th>'; }).join('') + '</tr></thead><tbody>' + rows.map(function (row) {
+                    return '<tr><td>' + escapeHtml(row) + '</td>' + columns.map(function () { return '<td><input type="' + (type === 'Checkbox Grid' ? 'checkbox' : 'radio') + '" disabled /></td>'; }).join('') + '</tr>';
+                }).join('') + '</tbody></table>';
+            }
+        } else if (type === 'File Upload') {
+            html += '<input type="file" class="form-control" disabled />';
         } else {
-            html += '<input type="text" class="form-control" value="" placeholder="Sample response" />';
+            html += '<div class="text-muted small">Preview is not available for this question type.</div>';
         }
 
         previewSurface.innerHTML = html;
@@ -323,6 +337,7 @@
             btnAddGridRow.addEventListener("click", function () {
                 addGridRow(questionEl.querySelector(".grid-row-list"));
                 reindexAll();
+                renderQuestionPreview(questionEl);
             });
         }
 
@@ -331,6 +346,7 @@
             btnAddGridCol.addEventListener("click", function () {
                 addGridColumn(questionEl.querySelector(".grid-column-list"));
                 reindexAll();
+                renderQuestionPreview(questionEl);
             });
         }
 
@@ -338,16 +354,19 @@
             if (event.target.classList.contains("btn-remove-option")) {
                 event.target.closest(".option-item").remove();
                 reindexAll();
+                renderQuestionPreview(questionEl);
             }
 
             if (event.target.classList.contains("btn-remove-grid-row")) {
                 event.target.closest(".grid-row-item").remove();
                 reindexAll();
+                renderQuestionPreview(questionEl);
             }
 
             if (event.target.classList.contains("btn-remove-grid-column")) {
                 event.target.closest(".grid-column-item").remove();
                 reindexAll();
+                renderQuestionPreview(questionEl);
             }
         });
 
@@ -547,23 +566,6 @@
         if (addBtn) {
             addBtn.addEventListener("click", addQuestion);
         }
-
-        var floatingBtn = document.createElement('button');
-        floatingBtn.type = 'button';
-        floatingBtn.className = 'btn btn-success btn-lg floating-add-question';
-        floatingBtn.textContent = '+ Add Question';
-        floatingBtn.addEventListener('click', addQuestion);
-
-        var floatWrap = document.createElement('div');
-        floatWrap.className = 'floating-action-bar';
-        floatWrap.appendChild(floatingBtn);
-        document.body.appendChild(floatWrap);
-
-        var bottomButton = document.createElement('div');
-        bottomButton.className = 'bottom-add-question';
-        bottomButton.innerHTML = '<button type="button" class="btn btn-success btn-sm">+ Add Question</button>';
-        bottomButton.querySelector('button').addEventListener('click', addQuestion);
-        container.parentNode.insertBefore(bottomButton, null);
 
         form.addEventListener("submit", function () {
             reindexAll();
