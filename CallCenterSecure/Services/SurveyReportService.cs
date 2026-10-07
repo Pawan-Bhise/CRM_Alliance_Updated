@@ -74,12 +74,55 @@ namespace CallCenterSecure.Services
             {
                 var response = db.SurveyFormResponses.AsNoTracking()
                     .Include(x => x.SurveyForm.SurveyTemplate)
+                    .Include(x => x.SurveyCustomerData)
                     .Include(x => x.Answers.Select(a => a.GridAnswers))
                     .Include(x => x.Answers.Select(a => a.SurveyQuestion))
                     .FirstOrDefault(x => x.Id == responseId);
                 if (response == null)
                 {
                     return null;
+                }
+
+                var customer = response.SurveyCustomerData;
+                SurveyCustomerLookupViewModel customerSnapshot = null;
+                if (customer != null)
+                {
+                    var tracking = db.SurveyCustomerFormTrackings.AsNoTracking()
+                        .Include(x => x.CallStatus)
+                        .Include(x => x.FormStatus)
+                        .FirstOrDefault(x => x.SurveyCustomerDataId == customer.Id
+                            && x.SurveyTemplateTypeId == response.SurveyForm.SurveyTemplateId
+                            && x.SurveyFormId == response.SurveyFormId);
+
+                    customerSnapshot = new SurveyCustomerLookupViewModel
+                    {
+                        Id = customer.Id,
+                        SurveyTemplateTypeId = customer.SurveyTemplateTypeId,
+                        ClientName = customer.ClientName,
+                        Gender = customer.Gender,
+                        LoanProduct = customer.LoanProduct,
+                        CustomerCode = customer.CustomerCode,
+                        MobileNumber1 = customer.MobileNumber1,
+                        MobileNumber2 = customer.MobileNumber2,
+                        Region = customer.Region,
+                        Branch = customer.Branch,
+                        AreaType = customer.AreaType,
+                        Location = customer.Location,
+                        Age = customer.Age,
+                        NumberOfFamilyMembers = customer.NumberOfFamilyMembers,
+                        BusinessCategory = customer.BusinessCategory,
+                        ActivitiesSector = customer.ActivitiesSector,
+                        LevelOfEducation = customer.LevelOfEducation,
+                        IncomeLevel = customer.IncomeLevel,
+                        HouseholdAssets = customer.HouseholdAssets,
+                        PovertyScore = customer.PovertyScore,
+                        LoanCycle = customer.LoanCycle,
+                        DisbursedAmount = customer.DisbursedAmount,
+                        CustomerStatus = customer.CustomerStatus,
+                        CallStatus = tracking != null && tracking.CallStatus != null ? tracking.CallStatus.Name : string.Empty,
+                        FormStatus = tracking != null && tracking.FormStatus != null ? tracking.FormStatus.Name : string.Empty,
+                        CallRemarks = tracking != null ? tracking.CallRemarks : string.Empty
+                    };
                 }
 
                 return new SurveyResponseDetailViewModel
@@ -91,6 +134,7 @@ namespace CallCenterSecure.Services
                     RespondentMobile = response.RespondentMobile,
                     SubmittedBy = response.SubmittedBy,
                     SubmittedDate = response.SubmittedDate,
+                    Customer = customerSnapshot,
                     Answers = response.Answers.OrderBy(x => x.SurveyQuestion.DisplayOrder).Select(x => new SurveyResponseAnswerViewModel
                     {
                         QuestionText = x.SurveyQuestion.QuestionText,

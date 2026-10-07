@@ -138,10 +138,19 @@ namespace CallCenterSecure.Models.ViewModels
         public string MobileNumber2 { get; set; }
         public string Region { get; set; }
         public string Branch { get; set; }
+        public string AreaType { get; set; }
+        public string Location { get; set; }
+        public int? Age { get; set; }
+        public int? NumberOfFamilyMembers { get; set; }
         public string BusinessCategory { get; set; }
         public string ActivitiesSector { get; set; }
+        public string LevelOfEducation { get; set; }
+        public string IncomeLevel { get; set; }
+        public string HouseholdAssets { get; set; }
+        public int? PovertyScore { get; set; }
         public int? LoanCycle { get; set; }
         public string DisbursedAmount { get; set; }
+        public string CustomerStatus { get; set; }
         public string CallStatus { get; set; }
         public int? CallStatusId { get; set; }
         public string FormStatus { get; set; }

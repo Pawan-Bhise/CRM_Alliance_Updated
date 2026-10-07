@@ -423,6 +423,7 @@
     <Compile Include="Migrations\202606281200000_AddSurveyCategoryToSurveyFormResponse.cs" />
     <Compile Include="Migrations\202607011200000_AddUploadJobTable.cs" />
     <Compile Include="Migrations\202609241200000_AddSurveyStatusMastersAndTracking.cs" />
+    <Compile Include="Migrations\202610071200000_AddSurveyCustomerUploadBatchLink.cs" />
     <Compile Include="Migrations\202607011200000_AddUploadJobTable.Designer.cs">
       <DependentUpon>202607011200000_AddUploadJobTable.cs</DependentUpon>
     </Compile>
@@ -552,6 +553,7 @@
     <Content Include="Scripts\Sql\SurveyFormBuilder.sql" />
     <Content Include="Scripts\Sql\SurveyResponse.sql" />
     <Content Include="Scripts\Sql\SurveyStatusMastersAndTracking.sql" />
+    <Content Include="Scripts\Sql\SurveyCustomerUploadBatchLink.sql" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>

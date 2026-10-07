@@ -24,8 +24,40 @@ namespace CallCenterSecure.Repositories
 
         public IEnumerable<SurveyCustomerData> GetCustomersByTemplateId(int templateId)
         {
-            return _db.SurveyCustomerData
-                .Where(x => x.SurveyTemplateTypeId == templateId)
+            var batchColumnsExist = _db.Database.SqlQuery<int>(@"
+SELECT CASE WHEN COL_LENGTH('dbo.UploadJobs', 'SurveyTemplateTypeId') IS NOT NULL
+    AND COL_LENGTH('dbo.SurveyCustomerData', 'UploadJobId') IS NOT NULL THEN 1 ELSE 0 END").Single() == 1;
+
+            if (!batchColumnsExist)
+            {
+                return _db.SurveyCustomerData
+                    .Where(x => x.SurveyTemplateTypeId == templateId)
+                    .OrderBy(x => x.ClientName)
+                    .ToList();
+            }
+
+            var latestUploadJobId = _db.UploadJobs
+                .Where(x => x.Source == "Survey"
+                    && x.Status == "Success"
+                    && x.SurveyTemplateTypeId == templateId)
+                .OrderByDescending(x => x.CompletedOn ?? x.CreatedOn)
+                .ThenByDescending(x => x.UploadJobId)
+                .Select(x => (int?)x.UploadJobId)
+                .FirstOrDefault();
+
+            var customers = _db.SurveyCustomerData
+                .Where(x => x.SurveyTemplateTypeId == templateId);
+
+            if (latestUploadJobId.HasValue)
+            {
+                customers = customers.Where(x => x.UploadJobId == latestUploadJobId.Value);
+            }
+            else
+            {
+                customers = customers.Where(x => x.UploadJobId == null);
+            }
+
+            return customers
                 .OrderBy(x => x.ClientName)
                 .ToList();
         }

@@ -71,6 +71,8 @@ namespace CallCenterSecure.Models
 
         public int? SurveyTemplateTypeId { get; set; }
 
+        public int? UploadJobId { get; set; }
+
         [ForeignKey("SurveyTemplateTypeId")]
         public virtual SurveyTemplateType SurveyTemplateType { get; set; }
     }

@@ -26,6 +26,8 @@ namespace CallCenterSecure.Models
         [MaxLength(50)]
         public string Source { get; set; }
 
+        public int? SurveyTemplateTypeId { get; set; }
+
         public DateTime CreatedOn { get; set; }
         public DateTime? StartedOn { get; set; }
         public DateTime? CompletedOn { get; set; }

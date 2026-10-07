@@ -19,6 +19,41 @@
     </div>
 </div>
 
+@if (Model.Customer != null)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="mb-3">Customer Data at Submission</h4>
+            <div class="row g-3">
+                <div class="col-md-4"><strong>Customer:</strong> @Model.Customer.ClientName</div>
+                <div class="col-md-4"><strong>Customer Code:</strong> @Model.Customer.CustomerCode</div>
+                <div class="col-md-4"><strong>Gender:</strong> @Model.Customer.Gender</div>
+                <div class="col-md-4"><strong>Mobile Number 1:</strong> @Model.Customer.MobileNumber1</div>
+                <div class="col-md-4"><strong>Mobile Number 2:</strong> @Model.Customer.MobileNumber2</div>
+                <div class="col-md-4"><strong>Region / State:</strong> @Model.Customer.Region</div>
+                <div class="col-md-4"><strong>Branch:</strong> @Model.Customer.Branch</div>
+                <div class="col-md-4"><strong>Area Type:</strong> @Model.Customer.AreaType</div>
+                <div class="col-md-4"><strong>Location:</strong> @Model.Customer.Location</div>
+                <div class="col-md-4"><strong>Loan Product:</strong> @Model.Customer.LoanProduct</div>
+                <div class="col-md-4"><strong>Age:</strong> @Model.Customer.Age</div>
+                <div class="col-md-4"><strong>Family Members:</strong> @Model.Customer.NumberOfFamilyMembers</div>
+                <div class="col-md-4"><strong>Business Category:</strong> @Model.Customer.BusinessCategory</div>
+                <div class="col-md-4"><strong>Activities / Sector:</strong> @Model.Customer.ActivitiesSector</div>
+                <div class="col-md-4"><strong>Education:</strong> @Model.Customer.LevelOfEducation</div>
+                <div class="col-md-4"><strong>Income Level:</strong> @Model.Customer.IncomeLevel</div>
+                <div class="col-md-4"><strong>Household Assets:</strong> @Model.Customer.HouseholdAssets</div>
+                <div class="col-md-4"><strong>Poverty Score:</strong> @Model.Customer.PovertyScore</div>
+                <div class="col-md-4"><strong>Loan Cycle:</strong> @Model.Customer.LoanCycle</div>
+                <div class="col-md-4"><strong>Disbursed Amount:</strong> @Model.Customer.DisbursedAmount</div>
+                <div class="col-md-4"><strong>Customer Status:</strong> @Model.Customer.CustomerStatus</div>
+                <div class="col-md-4"><strong>Call Status:</strong> @Model.Customer.CallStatus</div>
+                <div class="col-md-4"><strong>Form Status:</strong> @Model.Customer.FormStatus</div>
+                <div class="col-md-12"><strong>Call Remarks:</strong> @Model.Customer.CallRemarks</div>
+            </div>
+        </div>
+    </div>
+}
+
 <div class="card mb-4">
     <div class="card-body">
         <h4 class="mb-3">Answers</h4>

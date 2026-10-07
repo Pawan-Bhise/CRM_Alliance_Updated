@@ -95,6 +95,7 @@ namespace CallCenterSecure.Models.ViewModels
         public string RespondentMobile { get; set; }
         public string SubmittedBy { get; set; }
         public DateTime SubmittedDate { get; set; }
+        public SurveyCustomerLookupViewModel Customer { get; set; }
         public List<SurveyResponseAnswerViewModel> Answers { get; set; }
     }
 

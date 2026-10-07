@@ -480,66 +480,48 @@ namespace CallCenterSecure.Controllers.Survey
                 return View(Enumerable.Empty<SurveyCustomerData>());
             }
 
-            // Upsert: update existing customers by CustomerCode + template, insert new ones.
-            // This preserves any existing SurveyFormResponse rows that reference customers.
-            var existingCustomers = _db.SurveyCustomerData
-                .Where(c => c.SurveyTemplateTypeId == surveyTemplateTypeId.Value)
-                .ToList()
-                .GroupBy(c => c.CustomerCode ?? string.Empty, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
-
-            foreach (var cust in customers)
-            {
-                if (existingCustomers.TryGetValue(cust.CustomerCode ?? string.Empty, out var existing))
-                {
-                    // Update fields on existing record
-                    existing.ClientName = cust.ClientName;
-                    existing.Gender = cust.Gender;
-                    existing.MobileNumber1 = cust.MobileNumber1;
-                    existing.MobileNumber2 = cust.MobileNumber2;
-                    existing.Region = cust.Region;
-                    existing.Branch = cust.Branch;
-                    existing.AreaType = cust.AreaType;
-                    existing.Location = cust.Location;
-                    existing.LoanProduct = cust.LoanProduct;
-                    existing.Age = cust.Age;
-                    existing.NumberOfFamilyMembers = cust.NumberOfFamilyMembers;
-                    existing.BusinessCategory = cust.BusinessCategory;
-                    existing.ActivitiesSector = cust.ActivitiesSector;
-                    existing.LevelOfEducation = cust.LevelOfEducation;
-                    existing.IncomeLevel = cust.IncomeLevel;
-                    existing.HouseholdAssets = cust.HouseholdAssets;
-                    existing.PovertyScore = cust.PovertyScore;
-                    existing.LoanCycle = cust.LoanCycle;
-                    existing.DisbursedAmount = cust.DisbursedAmount;
-                    existing.CustomerStatus = cust.CustomerStatus;
-                }
-                else
-                {
-                    // Insert new record
-                    _db.SurveyCustomerData.Add(cust);
-                }
-            }
-
-            _db.SaveChanges();
-
             var uploadJob = new UploadJob
             {
                 FileName = file.FileName,
                 FilePath = Path.GetFileName(file.FileName),
-                Status = "Success",
-                Message = "Imported " + customers.Count + " rows" + (!string.IsNullOrWhiteSpace(campaignBatch) ? " | BatchTag: " + campaignBatch : string.Empty),
+                Status = "Processing",
+                Message = "Saving customer upload batch.",
                 ProcessedRows = customers.Count,
                 CreatedOn = DateTime.Now,
                 StartedOn = DateTime.Now,
-                CompletedOn = DateTime.Now,
                 UploadedBy = User.Identity.Name ?? "System",
                 BatchTag = campaignBatch,
-                Source = "Survey"
+                Source = "Survey",
+                SurveyTemplateTypeId = surveyTemplateTypeId.Value
             };
 
-            _db.UploadJobs.Add(uploadJob);
-            _db.SaveChanges();
+            try
+            {
+                using (var transaction = _db.Database.BeginTransaction())
+                {
+                    _db.UploadJobs.Add(uploadJob);
+                    _db.SaveChanges();
+
+                    foreach (var customer in customers)
+                    {
+                        customer.UploadJobId = uploadJob.UploadJobId;
+                    }
+
+                    _db.SurveyCustomerData.AddRange(customers);
+                    _db.SaveChanges();
+
+                    uploadJob.Status = "Success";
+                    uploadJob.Message = "Imported " + customers.Count + " rows" + (!string.IsNullOrWhiteSpace(campaignBatch) ? " | BatchTag: " + campaignBatch : string.Empty);
+                    uploadJob.CompletedOn = DateTime.Now;
+                    _db.SaveChanges();
+                    transaction.Commit();
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Customer upload could not be saved: " + ex.GetBaseException().Message;
+                return RedirectToAction("CustomerDataUpload", new { templateId = surveyTemplateTypeId.Value });
+            }
 
             TempData["SuccessMessage"] = "Customer data uploaded successfully." + (!string.IsNullOrWhiteSpace(campaignBatch) ? " Batch: " + campaignBatch : string.Empty);
             return RedirectToAction("CustomerDataUpload", new { templateId = surveyTemplateTypeId.Value });
