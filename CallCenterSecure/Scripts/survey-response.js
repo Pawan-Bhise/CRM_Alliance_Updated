@@ -45,6 +45,35 @@
         });
     }
 
+    function getCustomerGridStateKey(templateId, formId) {
+        return 'survey-response-grid:' + window.location.pathname + ':' + templateId + ':' + (formId || 'all');
+    }
+
+    function loadCustomerGridState(templateId, formId, rowCount) {
+        try {
+            var storedState = sessionStorage.getItem(getCustomerGridStateKey(templateId, formId));
+            if (!storedState) {
+                return null;
+            }
+
+            var state = JSON.parse(storedState);
+            if (state.length > 0 && rowCount > 0 && state.start >= rowCount) {
+                state.start = Math.floor((rowCount - 1) / state.length) * state.length;
+            }
+            return state;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function saveCustomerGridState(templateId, formId, state) {
+        try {
+            sessionStorage.setItem(getCustomerGridStateKey(templateId, formId), JSON.stringify(state));
+        } catch (error) {
+            // Continue navigation if browser storage is unavailable.
+        }
+    }
+
     function loadCustomerGrid(templateId, formId) {
         var requestVersion = ++customerGridRequestVersion;
         var table = byId('surveyCustomerTable');
@@ -130,6 +159,13 @@
 
                 $(table).DataTable({
                     destroy: true,
+                    stateSave: true,
+                    stateLoadCallback: function () {
+                        return loadCustomerGridState(templateId, formId, items.length);
+                    },
+                    stateSaveCallback: function (settings, state) {
+                        saveCustomerGridState(templateId, formId, state);
+                    },
                     pageLength: 10,
                     order: [[3, 'asc']],
                     scrollX: false,
@@ -237,6 +273,11 @@
             if (!form.value) {
                 alert('Please select a survey form.');
                 return;
+            }
+
+            var table = byId('surveyCustomerTable');
+            if (table && typeof $ !== 'undefined' && $.fn.DataTable && $.fn.DataTable.isDataTable(table)) {
+                $(table).DataTable().state.save();
             }
 
             var url = '/Survey/SurveyResponse/Fill?formId=' + encodeURIComponent(form.value);
