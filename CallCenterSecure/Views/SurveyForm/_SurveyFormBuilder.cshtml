@@ -17,6 +17,19 @@
         gap: 0.75rem;
     }
 
+    .survey-form-builder-add-bottom {
+        width: min(100% - 2rem, 1160px);
+        margin: -1rem auto 2rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    .survey-form-builder-add-bottom .btn {
+        min-height: 42px;
+        padding: 0.55rem 1rem;
+        font-size: 1rem;
+    }
+
     .survey-form-builder-shell .card {
         border-radius: 10px;
         border: 1px solid #e5e7eb;
@@ -181,7 +194,8 @@
 
     @@media (max-width: 767.98px) {
         .survey-form-builder-shell,
-        .survey-form-builder-actions {
+        .survey-form-builder-actions,
+        .survey-form-builder-add-bottom {
             width: min(100% - 1rem, 1160px);
         }
 

@@ -567,6 +567,11 @@
             addBtn.addEventListener("click", addQuestion);
         }
 
+        var addBottomBtn = byId("btnAddQuestionBottom");
+        if (addBottomBtn) {
+            addBottomBtn.addEventListener("click", addQuestion);
+        }
+
         form.addEventListener("submit", function () {
             reindexAll();
         });

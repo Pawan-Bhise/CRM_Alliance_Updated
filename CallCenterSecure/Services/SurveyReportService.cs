@@ -150,19 +150,89 @@ namespace CallCenterSecure.Services
             using (var db = new ApplicationDbContext())
             {
                 var responses = GetFilteredResponses(db, formId, templateId, categoryId, fromDate, toDate);
-                var builder = new StringBuilder();
-                builder.AppendLine(string.Join(",", new[] { "Form", "Respondent", "Mobile", "Submitted", "Submitted By" }.Select(CsvEscape)));
+                var responseFormIds = responses.Select(x => x.SurveyFormId).Distinct().ToList();
+                var formsById = db.SurveyForms.AsNoTracking()
+                    .Include(x => x.Questions)
+                    .Where(x => responseFormIds.Contains(x.Id))
+                    .ToDictionary(x => x.Id);
+                var maxQuestionCount = formsById.Values.Select(x => x.Questions.Count).DefaultIfEmpty(0).Max();
+                var customerIds = responses.Where(x => x.SurveyCustomerDataId.HasValue).Select(x => x.SurveyCustomerDataId.Value).Distinct().ToList();
+                var trackingByCustomerAndForm = customerIds.Any()
+                    ? db.SurveyCustomerFormTrackings.AsNoTracking()
+                        .Include(x => x.CallStatus)
+                        .Include(x => x.FormStatus)
+                        .Where(x => customerIds.Contains(x.SurveyCustomerDataId) && responseFormIds.Contains(x.SurveyFormId))
+                        .ToList()
+                        .GroupBy(x => new { x.SurveyCustomerDataId, x.SurveyFormId })
+                        .ToDictionary(x => Tuple.Create(x.Key.SurveyCustomerDataId, x.Key.SurveyFormId), x => x.First())
+                    : new Dictionary<Tuple<int, int>, SurveyCustomerFormTracking>();
 
-                foreach (var response in responses.OrderByDescending(x => x.SubmittedDate))
+                var builder = new StringBuilder();
+                var headers = new[]
                 {
+                    "ClientName", "Gender", "CustomerCode", "MobileNumber1", "MobileNumber2",
+                    "Region", "Branch", "AreaType", "Location", "LoanProduct", "Age",
+                    "NumberOfFamilyMembers", "BusinessCategory", "ActivitiesSector", "LevelOfEducation",
+                    "IncomeLevel", "HouseholdAssets", "PovertyScore", "LoanCycle", "DisbursedAmount",
+                    "CustomerStatus", "Call Status", "Form Status", "Call Remarks", "Response Id",
+                    "Respondent Name", "Respondent Mobile", "Submitted By", "Submitted Date", "Form"
+                }.Concat(Enumerable.Range(1, maxQuestionCount).Select(index => "Question " + index));
+                var headerList = headers.ToList();
+                builder.AppendLine(string.Join(",", headerList.Select(CsvEscape)));
+
+                foreach (var response in responses.OrderByDescending(x => x.SubmittedDate).ThenByDescending(x => x.Id))
+                {
+                    var customer = response.SurveyCustomerData;
+                    SurveyCustomerFormTracking tracking;
+                    trackingByCustomerAndForm.TryGetValue(Tuple.Create(response.SurveyCustomerDataId.GetValueOrDefault(), response.SurveyFormId), out tracking);
+
                     var values = new List<string>
                     {
-                        response.SurveyForm != null ? response.SurveyForm.Title : string.Empty,
+                        customer != null ? customer.ClientName : string.Empty,
+                        customer != null ? customer.Gender : string.Empty,
+                        customer != null ? customer.CustomerCode : string.Empty,
+                        customer != null ? customer.MobileNumber1 : string.Empty,
+                        customer != null ? customer.MobileNumber2 : string.Empty,
+                        customer != null ? customer.Region : string.Empty,
+                        customer != null ? customer.Branch : string.Empty,
+                        customer != null ? customer.AreaType : string.Empty,
+                        customer != null ? customer.Location : string.Empty,
+                        customer != null ? customer.LoanProduct : string.Empty,
+                        customer != null && customer.Age.HasValue ? customer.Age.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        customer != null && customer.NumberOfFamilyMembers.HasValue ? customer.NumberOfFamilyMembers.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        customer != null ? customer.BusinessCategory : string.Empty,
+                        customer != null ? customer.ActivitiesSector : string.Empty,
+                        customer != null ? customer.LevelOfEducation : string.Empty,
+                        customer != null ? customer.IncomeLevel : string.Empty,
+                        customer != null ? customer.HouseholdAssets : string.Empty,
+                        customer != null && customer.PovertyScore.HasValue ? customer.PovertyScore.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        customer != null && customer.LoanCycle.HasValue ? customer.LoanCycle.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        customer != null ? customer.DisbursedAmount : string.Empty,
+                        customer != null ? customer.CustomerStatus : string.Empty,
+                        tracking != null && tracking.CallStatus != null ? tracking.CallStatus.Name : string.Empty,
+                        tracking != null && tracking.FormStatus != null ? tracking.FormStatus.Name : string.Empty,
+                        tracking != null ? tracking.CallRemarks : string.Empty,
+                        response.Id.ToString(CultureInfo.InvariantCulture),
                         response.RespondentName,
                         response.RespondentMobile,
-                        response.SubmittedDate.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
                         response.SubmittedBy,
+                        response.SubmittedDate.ToString("d/M/yyyy HH:mm", CultureInfo.InvariantCulture),
+                        response.SurveyForm != null ? response.SurveyForm.Title : string.Empty
                     };
+
+                    var responseForm = formsById[response.SurveyFormId];
+                    values.AddRange(responseForm.Questions
+                        .OrderBy(question => question.DisplayOrder)
+                        .Select(question =>
+                        {
+                            var answer = response.Answers.FirstOrDefault(x => x.SurveyQuestionId == question.Id);
+                            return answer == null ? string.Empty : FormatAnswer(answer);
+                        }));
+                    while (values.Count < headerList.Count)
+                    {
+                        values.Add(string.Empty);
+                    }
+
                     builder.AppendLine(string.Join(",", values.Select(CsvEscape)));
                 }
 

@@ -20,6 +20,9 @@
         <button type="submit" class="btn btn-primary">Update Form</button>
         @Html.RouteLink("Cancel", "SurveyForm", new { action = "Index", templateId = Model.SurveyTemplateId }, new { @class = "btn btn-secondary" })
     </div>
+    <div class="survey-form-builder-add-bottom">
+        <button type="button" class="btn btn-success" id="btnAddQuestionBottom">Add Question</button>
+    </div>
 }
 
 @section Scripts {
