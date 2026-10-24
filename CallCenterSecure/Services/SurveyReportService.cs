@@ -11,7 +11,7 @@ namespace CallCenterSecure.Services
 {
     public class SurveyReportService
     {
-        public SurveyReportViewModel GetReport(int? templateId, int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate)
+        public SurveyReportViewModel GetReport(int? templateId, int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate, string reportTab, int page)
         {
             using (var db = new ApplicationDbContext())
             {
@@ -31,6 +31,8 @@ namespace CallCenterSecure.Services
                     FromDate = fromDate,
                     ToDate = toDate,
                     SelectedFormTitle = selectedForm != null ? selectedForm.Title : "All forms",
+                    ReportTab = string.Equals(reportTab, "responses", StringComparison.OrdinalIgnoreCase) ? "responses" : "summary",
+                    PageSize = 50,
                     Templates = db.SurveyTemplateTypes.AsNoTracking().OrderBy(x => x.Id)
                         .Select(x => new SurveyTemplateLookupViewModel { Id = x.Id, Name = x.Name }).ToList(),
                     Forms = forms.Select(x => new SurveyFormLookupViewModel
@@ -41,17 +43,28 @@ namespace CallCenterSecure.Services
                     }).ToList()
                 };
 
-                var responses = GetFilteredResponses(db, selectedForm != null ? (int?)selectedForm.Id : null, templateId, categoryId, fromDate, toDate);
-                report.TotalResponses = responses.Count;
-                report.Responses = responses.OrderByDescending(x => x.SubmittedDate).ThenByDescending(x => x.Id).Select(x => new SurveyResponseSummaryViewModel
+                var responseQuery = GetFilteredResponseQuery(db, selectedForm != null ? (int?)selectedForm.Id : null, templateId, categoryId, fromDate, toDate);
+                report.TotalResponses = responseQuery.Count();
+                report.TotalPages = (int)Math.Ceiling(report.TotalResponses / (double)report.PageSize);
+                report.CurrentPage = report.TotalPages == 0 ? 1 : Math.Max(1, Math.Min(page, report.TotalPages));
+
+                if (report.ReportTab == "responses")
                 {
-                    Id = x.Id,
-                    FormTitle = x.SurveyForm.Title,
-                    RespondentName = x.RespondentName,
-                    RespondentMobile = x.RespondentMobile,
-                    SubmittedBy = x.SubmittedBy,
-                    SubmittedDate = x.SubmittedDate
-                }).ToList();
+                    report.Responses = responseQuery
+                        .Include(x => x.SurveyForm)
+                        .OrderByDescending(x => x.SubmittedDate).ThenByDescending(x => x.Id)
+                        .Skip((report.CurrentPage - 1) * report.PageSize)
+                        .Take(report.PageSize)
+                        .Select(x => new SurveyResponseSummaryViewModel
+                        {
+                            Id = x.Id,
+                            FormTitle = x.SurveyForm.Title,
+                            RespondentName = x.RespondentName,
+                            RespondentMobile = x.RespondentMobile,
+                            SubmittedBy = x.SubmittedBy,
+                            SubmittedDate = x.SubmittedDate
+                        }).ToList();
+                }
 
                 var form = selectedForm == null ? null : db.SurveyForms.AsNoTracking()
                     .Include(x => x.Questions.Select(q => q.Options))
@@ -59,10 +72,14 @@ namespace CallCenterSecure.Services
                     .Include(x => x.Questions.Select(q => q.GridColumns))
                     .FirstOrDefault(x => x.Id == selectedForm.Id);
 
-                report.Questions = form == null
-                    ? new List<SurveyQuestionReportViewModel>()
-                    : form.Questions.OrderBy(x => x.DisplayOrder)
+                if (form != null && report.ReportTab == "summary")
+                {
+                    var responses = responseQuery
+                        .Include(x => x.Answers.Select(a => a.GridAnswers))
+                        .ToList();
+                    report.Questions = form.Questions.OrderBy(x => x.DisplayOrder)
                         .Select(question => BuildQuestionReport(question, responses)).ToList();
+                }
 
                 return report;
             }
@@ -242,12 +259,16 @@ namespace CallCenterSecure.Services
 
         private static List<SurveyFormResponse> GetFilteredResponses(ApplicationDbContext db, int? formId, int? templateId, int? categoryId, DateTime? fromDate, DateTime? toDate)
         {
-            var query = db.SurveyFormResponses.AsNoTracking()
+            return GetFilteredResponseQuery(db, formId, templateId, categoryId, fromDate, toDate)
                 .Include(x => x.SurveyForm)
                 .Include(x => x.SurveyCustomerData)
                 .Include(x => x.Answers.Select(a => a.GridAnswers))
-                .AsQueryable();
+                .ToList();
+        }
 
+        private static IQueryable<SurveyFormResponse> GetFilteredResponseQuery(ApplicationDbContext db, int? formId, int? templateId, int? categoryId, DateTime? fromDate, DateTime? toDate)
+        {
+            var query = db.SurveyFormResponses.AsNoTracking().AsQueryable();
             if (formId.HasValue)
             {
                 query = query.Where(x => x.SurveyFormId == formId.Value);
@@ -272,30 +293,31 @@ namespace CallCenterSecure.Services
                 query = query.Where(x => x.SubmittedDate < toDate.Value.Date.AddDays(1));
             }
 
-            return query.ToList();
+            return query;
         }
 
         private static SurveyQuestionReportViewModel BuildQuestionReport(SurveyQuestion question, List<SurveyFormResponse> responses)
         {
             var answers = responses.SelectMany(x => x.Answers.Where(a => a.SurveyQuestionId == question.Id)).ToList();
             var values = answers.Select(GetPrimaryValue).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+            var answeredResponseCount = answers.Where(HasAnswer).Select(x => x.SurveyFormResponseId).Distinct().Count();
             var report = new SurveyQuestionReportViewModel
             {
                 QuestionId = question.Id,
                 DisplayOrder = question.DisplayOrder,
                 QuestionText = question.QuestionText,
                 QuestionType = question.QuestionType,
-                AnsweredCount = values.Count,
-                UnansweredCount = responses.Count - values.Count
+                AnsweredCount = answeredResponseCount,
+                UnansweredCount = Math.Max(0, responses.Count - answeredResponseCount)
             };
 
             if (question.QuestionType == SurveyQuestionTypeCatalog.Checkboxes)
             {
-                report.Options = BuildOptions(question.Options.Select(x => x.OptionText), answers.SelectMany(GetCheckboxValues), values.Count);
+                report.Options = BuildOptions(question.Options.Select(x => x.OptionText), answers.SelectMany(GetCheckboxValues), report.AnsweredCount);
             }
             else if (question.QuestionType == SurveyQuestionTypeCatalog.MultipleChoice || question.QuestionType == SurveyQuestionTypeCatalog.Dropdown)
             {
-                report.Options = BuildOptions(question.Options.Select(x => x.OptionText), values, values.Count);
+                report.Options = BuildOptions(question.Options.Select(x => x.OptionText), values, report.AnsweredCount);
             }
             else if (question.QuestionType == SurveyQuestionTypeCatalog.Nps)
             {
@@ -323,6 +345,18 @@ namespace CallCenterSecure.Services
             }
 
             return report;
+        }
+
+        private static bool HasAnswer(SurveyFormAnswer answer)
+        {
+            return !string.IsNullOrWhiteSpace(answer.AnswerText)
+                || !string.IsNullOrWhiteSpace(answer.SelectedOption)
+                || !string.IsNullOrWhiteSpace(answer.SelectedOptionsCsv)
+                || !string.IsNullOrWhiteSpace(answer.FileName)
+                || !string.IsNullOrWhiteSpace(answer.FilePath)
+                || (answer.GridAnswers != null && answer.GridAnswers.Any(x =>
+                    !string.IsNullOrWhiteSpace(x.SelectedColumnText)
+                    || !string.IsNullOrWhiteSpace(x.SelectedColumnTextsCsv)));
         }
 
         private static List<SurveyReportOptionViewModel> BuildOptions(IEnumerable<string> declaredOptions, IEnumerable<string> values, int denominator)

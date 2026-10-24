@@ -55,112 +55,139 @@
     </div>
 }
 
-@if (!Model.SelectedFormId.HasValue)
+@if (!Model.SelectedFormId.HasValue && Model.ReportTab == "summary")
 {
-    <div class="alert alert-info">Showing individual responses across all forms matching the selected template and filters. Select a specific form to view its question summary.</div>
+    <div class="alert alert-info">Select a survey form to see its question-by-question summary. Individual responses across matching forms are available in the Individual Responses tab.</div>
 }
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">Total Responses</div><h3 class="mb-0">@Model.TotalResponses</h3></div></div>
-        </div>
-        <div class="col-md-8">
-            <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">Form</div><h3 class="mb-0">@(Model.SelectedFormId.HasValue ? Model.SelectedFormTitle : "All forms")</h3></div></div>
-        </div>
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">Total Responses</div><h3 class="mb-0">@Model.TotalResponses</h3></div></div>
     </div>
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small text-uppercase">Form</div><h3 class="mb-0">@(Model.SelectedFormId.HasValue ? Model.SelectedFormTitle : "All forms")</h3></div></div>
+    </div>
+</div>
 
-@if (Model.SelectedFormId.HasValue)
+<div class="d-flex justify-content-between align-items-center mb-3 border-bottom">
+    <ul class="nav nav-tabs border-0">
+        <li class="nav-item">
+            <a class="nav-link @(Model.ReportTab == "summary" ? "active" : "")" href="@Url.Action("Index", new { templateId = Model.SelectedTemplateId, formId = Model.SelectedFormId, categoryId = Model.SelectedCategoryId, fromDate = Model.FromDate, toDate = Model.ToDate, reportTab = "summary" })">Question Summary</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(Model.ReportTab == "responses" ? "active" : "")" href="@Url.Action("Index", new { templateId = Model.SelectedTemplateId, formId = Model.SelectedFormId, categoryId = Model.SelectedCategoryId, fromDate = Model.FromDate, toDate = Model.ToDate, reportTab = "responses" })">Individual Responses (@Model.TotalResponses)</a>
+        </li>
+    </ul>
+    @Html.ActionLink("Export CSV", "ExportCsv", "SurveyReport", new { templateId = Model.SelectedTemplateId, formId = Model.SelectedFormId, categoryId = Model.SelectedCategoryId, fromDate = Model.FromDate, toDate = Model.ToDate }, new { @class = "btn btn-sm btn-outline-success mb-2" })
+</div>
+
+@if (Model.ReportTab == "summary")
 {
-    <h4 class="mb-3">Question Summary</h4>
-
-    foreach (var question in Model.Questions)
+    if (Model.SelectedFormId.HasValue)
     {
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between gap-3 flex-wrap">
-                    <h5 class="mb-1">@(question.DisplayOrder). @question.QuestionText</h5>
-                    <span class="text-muted">@question.AnsweredCount answered / @question.UnansweredCount unanswered</span>
-                </div>
-                <div class="small text-muted mb-3">@question.QuestionType</div>
-
-                @if (question.Options.Any())
-                {
-                    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Option</th><th>Count</th><th style="width: 45%;">Percentage</th></tr></thead><tbody>
-                    @foreach (var option in question.Options)
-                    {
-                        <tr><td>@option.Label</td><td>@option.Count</td><td>@option.Percentage.ToString("0.00")%</td></tr>
-                    }
-                    </tbody></table></div>
-                }
-                else if (question.NpsScore.HasValue)
-                {
-                    <div class="row g-3"><div class="col-md-3"><strong>NPS</strong><div class="fs-3">@question.NpsScore.Value.ToString("0.00")</div></div><div class="col-md-3"><strong>Promoters</strong><div class="fs-3">@question.Promoters</div></div><div class="col-md-3"><strong>Passives</strong><div class="fs-3">@question.Passives</div></div><div class="col-md-3"><strong>Detractors</strong><div class="fs-3">@question.Detractors</div></div></div>
-                }
-                else if (question.Average.HasValue)
-                {
-                    <div class="row g-3"><div class="col-md-4"><strong>Average</strong><div class="fs-3">@question.Average.Value.ToString("0.00")</div></div><div class="col-md-4"><strong>Minimum</strong><div class="fs-3">@question.Minimum.Value.ToString("0.00")</div></div><div class="col-md-4"><strong>Maximum</strong><div class="fs-3">@question.Maximum.Value.ToString("0.00")</div></div></div>
-                }
-                else if (question.GridRows.Any())
-                {
-                    foreach (var row in question.GridRows)
-                    {
-                        <div class="border-bottom py-2"><strong>@row.RowText</strong><span class="ms-3 text-muted">@string.Join(" | ", row.Options.Select(x => x.Label + ": " + x.Count))</span></div>
-                    }
-                }
-                else if (question.TextAnswers.Any())
-                {
-                    <ul class="mb-0">
-                        @foreach (var answer in question.TextAnswers)
-                        {
-                            <li>@answer</li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <div class="text-muted">No responses for this question.</div>
-                }
-            </div>
-        </div>
-    }
-}
-
-<div class="card mb-4">
-    <div class="card-body">
-        <h4 class="mb-3">Individual Responses</h4>
-        @if (Model.Responses.Any())
+        if (Model.Questions.Any())
         {
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Form</th>
-                            <th>Respondent</th>
-                            <th>Mobile</th>
-                            <th>Submitted</th>
-                            <th>Submitted By</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var response in Model.Responses)
+            foreach (var question in Model.Questions)
+            {
+                var answerRate = Model.TotalResponses == 0 ? 0 : Math.Round((decimal)question.AnsweredCount * 100m / Model.TotalResponses, 1);
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between gap-3 flex-wrap">
+                            <h5 class="mb-1">@(question.DisplayOrder). @question.QuestionText</h5>
+                            <span class="text-muted">@question.AnsweredCount answered / @question.UnansweredCount unanswered</span>
+                        </div>
+                        <div class="small text-muted mb-3">@question.QuestionType · @answerRate% answer rate</div>
+
+                        @if (question.Options.Any())
                         {
-                            <tr>
-                                <td>@response.FormTitle</td>
-                                <td>@(string.IsNullOrWhiteSpace(response.RespondentName) ? "Anonymous" : response.RespondentName)</td>
-                                <td>@response.RespondentMobile</td>
-                                <td>@response.SubmittedDate.ToString("yyyy-MM-dd HH:mm")</td>
-                                <td>@response.SubmittedBy</td>
-                                <td>@Html.ActionLink("View", "Details", "SurveyReport", new { id = response.Id }, new { @class = "btn btn-sm btn-outline-primary" })</td>
-                            </tr>
+                            <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Option</th><th>Count</th><th style="width: 45%;">Percentage</th></tr></thead><tbody>
+                            @foreach (var option in question.Options)
+                            {
+                                <tr><td>@option.Label</td><td>@option.Count</td><td>@option.Percentage.ToString("0.00")%</td></tr>
+                            }
+                            </tbody></table></div>
                         }
-                    </tbody>
-                </table>
-            </div>
+                        else if (question.NpsScore.HasValue)
+                        {
+                            <div class="row g-3"><div class="col-md-3"><strong>NPS</strong><div class="fs-3">@question.NpsScore.Value.ToString("0.00")</div></div><div class="col-md-3"><strong>Promoters</strong><div class="fs-3">@question.Promoters</div></div><div class="col-md-3"><strong>Passives</strong><div class="fs-3">@question.Passives</div></div><div class="col-md-3"><strong>Detractors</strong><div class="fs-3">@question.Detractors</div></div></div>
+                        }
+                        else if (question.Average.HasValue)
+                        {
+                            <div class="row g-3"><div class="col-md-4"><strong>Average</strong><div class="fs-3">@question.Average.Value.ToString("0.00")</div></div><div class="col-md-4"><strong>Minimum</strong><div class="fs-3">@question.Minimum.Value.ToString("0.00")</div></div><div class="col-md-4"><strong>Maximum</strong><div class="fs-3">@question.Maximum.Value.ToString("0.00")</div></div></div>
+                        }
+                        else if (question.GridRows.Any())
+                        {
+                            foreach (var row in question.GridRows)
+                            {
+                                <div class="border-bottom py-2"><strong>@row.RowText</strong><span class="ms-3 text-muted">@string.Join(" | ", row.Options.Select(x => x.Label + ": " + x.Count))</span></div>
+                            }
+                        }
+                        else if (question.TextAnswers.Any())
+                        {
+                            <ul class="mb-0">
+                                @foreach (var answer in question.TextAnswers)
+                                {
+                                    <li>@answer</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <div class="text-muted">No responses for this question.</div>
+                        }
+                    </div>
+                </div>
+            }
         }
         else
         {
-            <div class="text-muted">No responses match the selected filters.</div>
+            <div class="text-muted">No questions are configured for this survey form.</div>
         }
+    }
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="mb-3">Individual Responses</h4>
+            @if (Model.Responses.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead><tr><th>Form</th><th>Respondent</th><th>Mobile</th><th>Submitted</th><th>Submitted By</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var response in Model.Responses)
+                            {
+                                <tr>
+                                    <td>@response.FormTitle</td>
+                                    <td>@(string.IsNullOrWhiteSpace(response.RespondentName) ? "Anonymous" : response.RespondentName)</td>
+                                    <td>@response.RespondentMobile</td>
+                                    <td>@response.SubmittedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@response.SubmittedBy</td>
+                                    <td>@Html.ActionLink("View", "Details", "SurveyReport", new { id = response.Id }, new { @class = "btn btn-sm btn-outline-primary" })</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="small text-muted">Page @Model.CurrentPage of @Model.TotalPages · @Model.TotalResponses responses</span>
+                    <div class="btn-group">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", new { templateId = Model.SelectedTemplateId, formId = Model.SelectedFormId, categoryId = Model.SelectedCategoryId, fromDate = Model.FromDate, toDate = Model.ToDate, reportTab = "responses", page = Model.CurrentPage - 1 })">Previous</a>
+                        }
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", new { templateId = Model.SelectedTemplateId, formId = Model.SelectedFormId, categoryId = Model.SelectedCategoryId, fromDate = Model.FromDate, toDate = Model.ToDate, reportTab = "responses", page = Model.CurrentPage + 1 })">Next</a>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-muted">No responses match the selected filters.</div>
+            }
+        </div>
     </div>
-</div>
+}

@@ -20,6 +20,10 @@ namespace CallCenterSecure.Models.ViewModels
         public DateTime? ToDate { get; set; }
         public string SelectedFormTitle { get; set; }
         public int TotalResponses { get; set; }
+        public string ReportTab { get; set; }
+        public int CurrentPage { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
         public List<SurveyTemplateLookupViewModel> Templates { get; set; }
         public List<SurveyFormLookupViewModel> Forms { get; set; }
         public List<SurveyResponseSummaryViewModel> Responses { get; set; }

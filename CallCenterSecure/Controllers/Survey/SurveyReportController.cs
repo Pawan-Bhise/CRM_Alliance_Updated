@@ -18,9 +18,9 @@ namespace CallCenterSecure.Controllers.Survey
             _surveyReportService = surveyReportService;
         }
 
-        public ActionResult Index(int? templateId, int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate)
+        public ActionResult Index(int? templateId, int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate, string reportTab, int page = 1)
         {
-            var model = _surveyReportService.GetReport(templateId, formId, categoryId, fromDate, toDate);
+            var model = _surveyReportService.GetReport(templateId, formId, categoryId, fromDate, toDate, reportTab, page);
             return View(model);
         }
 
