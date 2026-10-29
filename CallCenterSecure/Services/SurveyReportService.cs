@@ -193,7 +193,8 @@ namespace CallCenterSecure.Services
                     "IncomeLevel", "HouseholdAssets", "PovertyScore", "LoanCycle", "DisbursedAmount",
                     "CustomerStatus", "Call Status", "Form Status", "Call Remarks", "Response Id",
                     "Respondent Name", "Respondent Mobile", "Submitted By", "Submitted Date", "Form"
-                }.Concat(Enumerable.Range(1, maxQuestionCount).Select(index => "Question " + index));
+                }.Concat(Enumerable.Range(1, maxQuestionCount)
+                    .SelectMany(index => new[] { "Question " + index, "Answer " + index }));
                 var headerList = headers.ToList();
                 builder.AppendLine(string.Join(",", headerList.Select(CsvEscape)));
 
@@ -240,10 +241,14 @@ namespace CallCenterSecure.Services
                     var responseForm = formsById[response.SurveyFormId];
                     values.AddRange(responseForm.Questions
                         .OrderBy(question => question.DisplayOrder)
-                        .Select(question =>
+                        .SelectMany(question =>
                         {
                             var answer = response.Answers.FirstOrDefault(x => x.SurveyQuestionId == question.Id);
-                            return answer == null ? string.Empty : FormatAnswer(answer);
+                            return new[]
+                            {
+                                question.QuestionText,
+                                answer == null ? string.Empty : FormatAnswer(answer)
+                            };
                         }));
                     while (values.Count < headerList.Count)
                     {
