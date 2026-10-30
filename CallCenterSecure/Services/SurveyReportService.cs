@@ -11,7 +11,7 @@ namespace CallCenterSecure.Services
 {
     public class SurveyReportService
     {
-        public SurveyReportViewModel GetReport(int? templateId, int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate, string reportTab, int page)
+        public SurveyReportViewModel GetReport(int? templateId, int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate, string reportTab, int page, bool invalidDateFilter = false)
         {
             using (var db = new ApplicationDbContext())
             {
@@ -30,6 +30,11 @@ namespace CallCenterSecure.Services
                     SelectedCategoryId = categoryId,
                     FromDate = fromDate,
                     ToDate = toDate,
+                    DateFilterError = invalidDateFilter
+                        ? "Enter valid From and To dates."
+                        : fromDate.HasValue && toDate.HasValue && fromDate.Value.Date > toDate.Value.Date
+                            ? "The From date must be on or before the To date."
+                            : null,
                     SelectedFormTitle = selectedForm != null ? selectedForm.Title : "All forms",
                     ReportTab = string.Equals(reportTab, "responses", StringComparison.OrdinalIgnoreCase) ? "responses" : "summary",
                     PageSize = 50,
@@ -43,7 +48,7 @@ namespace CallCenterSecure.Services
                     }).ToList()
                 };
 
-                var responseQuery = GetFilteredResponseQuery(db, selectedForm != null ? (int?)selectedForm.Id : null, templateId, categoryId, fromDate, toDate);
+                var responseQuery = GetFilteredResponseQuery(db, selectedForm != null ? (int?)selectedForm.Id : null, templateId, categoryId, fromDate, toDate, invalidDateFilter);
                 report.TotalResponses = responseQuery.Count();
                 report.TotalPages = (int)Math.Ceiling(report.TotalResponses / (double)report.PageSize);
                 report.CurrentPage = report.TotalPages == 0 ? 1 : Math.Max(1, Math.Min(page, report.TotalPages));
@@ -162,23 +167,25 @@ namespace CallCenterSecure.Services
             }
         }
 
-        public byte[] ExportCsv(int? templateId, int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate)
+        public byte[] ExportCsv(int templateId, int formId, int? categoryId, DateTime? fromDate, DateTime? toDate)
         {
             using (var db = new ApplicationDbContext())
             {
-                var responses = GetFilteredResponses(db, formId, templateId, categoryId, fromDate, toDate);
-                var responseFormIds = responses.Select(x => x.SurveyFormId).Distinct().ToList();
-                var formsById = db.SurveyForms.AsNoTracking()
+                var form = db.SurveyForms.AsNoTracking()
                     .Include(x => x.Questions)
-                    .Where(x => responseFormIds.Contains(x.Id))
-                    .ToDictionary(x => x.Id);
-                var maxQuestionCount = formsById.Values.Select(x => x.Questions.Count).DefaultIfEmpty(0).Max();
+                    .FirstOrDefault(x => x.Id == formId && x.SurveyTemplateId == templateId);
+                if (form == null)
+                {
+                    throw new ArgumentException("The selected form does not belong to the selected template.");
+                }
+
+                var responses = GetFilteredResponses(db, formId, templateId, categoryId, fromDate, toDate);
                 var customerIds = responses.Where(x => x.SurveyCustomerDataId.HasValue).Select(x => x.SurveyCustomerDataId.Value).Distinct().ToList();
                 var trackingByCustomerAndForm = customerIds.Any()
                     ? db.SurveyCustomerFormTrackings.AsNoTracking()
                         .Include(x => x.CallStatus)
                         .Include(x => x.FormStatus)
-                        .Where(x => customerIds.Contains(x.SurveyCustomerDataId) && responseFormIds.Contains(x.SurveyFormId))
+                        .Where(x => customerIds.Contains(x.SurveyCustomerDataId) && x.SurveyFormId == formId)
                         .ToList()
                         .GroupBy(x => new { x.SurveyCustomerDataId, x.SurveyFormId })
                         .ToDictionary(x => Tuple.Create(x.Key.SurveyCustomerDataId, x.Key.SurveyFormId), x => x.First())
@@ -193,8 +200,9 @@ namespace CallCenterSecure.Services
                     "IncomeLevel", "HouseholdAssets", "PovertyScore", "LoanCycle", "DisbursedAmount",
                     "CustomerStatus", "Call Status", "Form Status", "Call Remarks", "Response Id",
                     "Respondent Name", "Respondent Mobile", "Submitted By", "Submitted Date", "Form"
-                }.Concat(Enumerable.Range(1, maxQuestionCount)
-                    .SelectMany(index => new[] { "Question " + index, "Answer " + index }));
+                }.Concat(form.Questions
+                    .OrderBy(question => question.DisplayOrder)
+                    .Select(question => question.QuestionText));
                 var headerList = headers.ToList();
                 builder.AppendLine(string.Join(",", headerList.Select(CsvEscape)));
 
@@ -238,22 +246,13 @@ namespace CallCenterSecure.Services
                         response.SurveyForm != null ? response.SurveyForm.Title : string.Empty
                     };
 
-                    var responseForm = formsById[response.SurveyFormId];
-                    values.AddRange(responseForm.Questions
+                    values.AddRange(form.Questions
                         .OrderBy(question => question.DisplayOrder)
-                        .SelectMany(question =>
+                        .Select(question =>
                         {
                             var answer = response.Answers.FirstOrDefault(x => x.SurveyQuestionId == question.Id);
-                            return new[]
-                            {
-                                question.QuestionText,
-                                answer == null ? string.Empty : FormatAnswer(answer)
-                            };
+                            return answer == null ? string.Empty : FormatAnswer(answer);
                         }));
-                    while (values.Count < headerList.Count)
-                    {
-                        values.Add(string.Empty);
-                    }
 
                     builder.AppendLine(string.Join(",", values.Select(CsvEscape)));
                 }
@@ -271,7 +270,7 @@ namespace CallCenterSecure.Services
                 .ToList();
         }
 
-        private static IQueryable<SurveyFormResponse> GetFilteredResponseQuery(ApplicationDbContext db, int? formId, int? templateId, int? categoryId, DateTime? fromDate, DateTime? toDate)
+        private static IQueryable<SurveyFormResponse> GetFilteredResponseQuery(ApplicationDbContext db, int? formId, int? templateId, int? categoryId, DateTime? fromDate, DateTime? toDate, bool invalidDateFilter = false)
         {
             var query = db.SurveyFormResponses.AsNoTracking().AsQueryable();
             if (formId.HasValue)
@@ -288,6 +287,11 @@ namespace CallCenterSecure.Services
                 query = query.Where(x => x.SurveyCategoryId == categoryId.Value);
             }
 
+            if (invalidDateFilter || (fromDate.HasValue && toDate.HasValue && fromDate.Value.Date > toDate.Value.Date))
+            {
+                return query.Where(x => false);
+            }
+
             if (fromDate.HasValue)
             {
                 query = query.Where(x => x.SubmittedDate >= fromDate.Value.Date);
@@ -295,7 +299,11 @@ namespace CallCenterSecure.Services
 
             if (toDate.HasValue)
             {
-                query = query.Where(x => x.SubmittedDate < toDate.Value.Date.AddDays(1));
+                var endDate = toDate.Value.Date;
+                if (endDate < DateTime.MaxValue.Date)
+                {
+                    query = query.Where(x => x.SubmittedDate < endDate.AddDays(1));
+                }
             }
 
             return query;

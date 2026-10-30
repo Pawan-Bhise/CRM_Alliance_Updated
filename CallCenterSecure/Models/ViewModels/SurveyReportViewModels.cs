@@ -18,6 +18,7 @@ namespace CallCenterSecure.Models.ViewModels
         public int? SelectedCategoryId { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
+        public string DateFilterError { get; set; }
         public string SelectedFormTitle { get; set; }
         public int TotalResponses { get; set; }
         public string ReportTab { get; set; }
