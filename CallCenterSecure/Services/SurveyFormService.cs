@@ -50,7 +50,7 @@ namespace CallCenterSecure.Services
                         SurveyTemplateName = x.SurveyTemplate != null ? x.SurveyTemplate.Name : string.Empty,
                         Title = x.Title,
                         Category = x.Category,
-                        QuestionCount = x.Questions != null ? x.Questions.Count : 0,
+                        QuestionCount = x.Questions != null ? x.Questions.Count(question => !question.IsDeleted) : 0,
                         CreatedDate = x.CreatedDate,
                         ModifiedDate = x.ModifiedDate,
                         IsActive = x.IsActive
@@ -94,6 +94,7 @@ namespace CallCenterSecure.Services
                 Category = form.Category,
                 Description = form.Description,
                 Questions = form.Questions
+                    .Where(question => !question.IsDeleted)
                     .OrderBy(q => q.DisplayOrder)
                     .Select(MapQuestionToViewModel)
                     .ToList()
@@ -193,15 +194,33 @@ namespace CallCenterSecure.Services
             existing.ModifiedDate = DateTime.Now;
             existing.IsActive = true;
 
-            var existingQuestions = existing.Questions.ToList();
-            foreach (var question in existingQuestions)
+            var existingQuestions = existing.Questions.Where(question => !question.IsDeleted).ToDictionary(question => question.Id);
+            var updatedQuestions = BuildQuestions(preparedModel);
+            var retainedQuestionIds = new HashSet<int>();
+
+            for (var index = 0; index < preparedModel.Questions.Count; index++)
             {
-                _surveyFormRepository.RemoveQuestion(question);
+                var questionId = preparedModel.Questions[index].Id;
+                var updatedQuestion = updatedQuestions[index];
+                if (questionId > 0)
+                {
+                    SurveyQuestion existingQuestion;
+                    if (!existingQuestions.TryGetValue(questionId, out existingQuestion) || !retainedQuestionIds.Add(questionId))
+                    {
+                        throw new InvalidOperationException("The survey form contains an invalid or duplicate question.");
+                    }
+
+                    _surveyFormRepository.UpdateQuestion(existingQuestion, updatedQuestion);
+                }
+                else
+                {
+                    existing.Questions.Add(updatedQuestion);
+                }
             }
 
-            foreach (var question in BuildQuestions(preparedModel))
+            foreach (var question in existingQuestions.Values.Where(question => !retainedQuestionIds.Contains(question.Id)))
             {
-                existing.Questions.Add(question);
+                _surveyFormRepository.RemoveQuestion(question);
             }
 
             _surveyFormRepository.SaveChanges();
@@ -242,7 +261,7 @@ namespace CallCenterSecure.Services
             worksheet.Cell(8, 6).Value = "Parent Option";
 
             var questionRow = 9;
-            foreach (var question in form.Questions.OrderBy(x => x.DisplayOrder))
+            foreach (var question in form.Questions.Where(question => !question.IsDeleted).OrderBy(x => x.DisplayOrder))
             {
                 worksheet.Cell(questionRow, 1).Value = question.DisplayOrder;
                 worksheet.Cell(questionRow, 2).Value = question.QuestionText;
@@ -281,6 +300,7 @@ namespace CallCenterSecure.Services
                 ModifiedBy = null,
                 IsActive = true,
                 Questions = source.Questions
+                    .Where(question => !question.IsDeleted)
                     .OrderBy(q => q.DisplayOrder)
                     .Select(q => new SurveyQuestion
                     {

@@ -61,40 +61,43 @@ namespace CallCenterSecure.Repositories
 
         public void RemoveQuestion(SurveyQuestion question)
         {
-            // Remove any answers that reference this question first to avoid FK constraint errors
-            var answers = _db.SurveyFormAnswers
-                .Where(a => a.SurveyQuestionId == question.Id)
-                .ToList();
+            question.IsDeleted = true;
+        }
 
-            foreach (var ans in answers)
+        public void UpdateQuestion(SurveyQuestion existing, SurveyQuestion updated)
+        {
+            existing.QuestionText = updated.QuestionText;
+            existing.QuestionType = updated.QuestionType;
+            existing.DisplayOrder = updated.DisplayOrder;
+            existing.IsRequired = updated.IsRequired;
+            existing.ConditionalParentQuestionIndex = updated.ConditionalParentQuestionIndex;
+            existing.ConditionalParentOptionText = updated.ConditionalParentOptionText;
+            existing.MinValue = updated.MinValue;
+            existing.MaxValue = updated.MaxValue;
+            existing.MinLabel = updated.MinLabel;
+            existing.MaxLabel = updated.MaxLabel;
+
+            _db.SurveyQuestionOptions.RemoveRange(existing.Options.ToList());
+            _db.SurveyGridRows.RemoveRange(existing.GridRows.ToList());
+            _db.SurveyGridColumns.RemoveRange(existing.GridColumns.ToList());
+
+            foreach (var option in updated.Options)
             {
-                // Remove any grid answers tied to the answer
-                var gridAnswers = _db.SurveyFormGridAnswers.Where(g => g.SurveyFormAnswerId == ans.Id).ToList();
-                if (gridAnswers.Any())
-                {
-                    _db.SurveyFormGridAnswers.RemoveRange(gridAnswers);
-                }
-
-                _db.SurveyFormAnswers.Remove(ans);
+                option.SurveyQuestionId = existing.Id;
+                _db.SurveyQuestionOptions.Add(option);
             }
 
-            // Remove question child collections (options / grid rows / grid columns) to keep the model consistent
-            if (question.Options != null && question.Options.Any())
+            foreach (var row in updated.GridRows)
             {
-                _db.SurveyQuestionOptions.RemoveRange(question.Options);
+                row.SurveyQuestionId = existing.Id;
+                _db.SurveyGridRows.Add(row);
             }
 
-            if (question.GridRows != null && question.GridRows.Any())
+            foreach (var column in updated.GridColumns)
             {
-                _db.SurveyGridRows.RemoveRange(question.GridRows);
+                column.SurveyQuestionId = existing.Id;
+                _db.SurveyGridColumns.Add(column);
             }
-
-            if (question.GridColumns != null && question.GridColumns.Any())
-            {
-                _db.SurveyGridColumns.RemoveRange(question.GridColumns);
-            }
-
-            _db.SurveyQuestions.Remove(question);
         }
 
         public void SaveChanges()

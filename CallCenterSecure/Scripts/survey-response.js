@@ -300,6 +300,10 @@
             var $hidden = $('.ranking-hidden[data-question-index="' + qIdx + '"]');
             $hidden.empty();
 
+            if ($list.closest('.survey-question-card').attr('data-skipped') === 'true') {
+                return;
+            }
+
             var items = $list.children();
             for (var k = 0; k < items.length; k++) {
                 var val = $(items[k]).data('value');
@@ -439,6 +443,33 @@
         return false;
     }
 
+    function clearQuestionAnswer(questionCard) {
+        questionCard.querySelectorAll('input, select, textarea').forEach(function (input) {
+            if (!input.name || input.name.indexOf('Questions[') !== 0 || input.type === 'hidden') {
+                return;
+            }
+
+            if (input.type === 'radio' || input.type === 'checkbox') {
+                input.checked = false;
+            } else if (input.type === 'file') {
+                input.value = '';
+            } else {
+                input.value = '';
+            }
+        });
+
+        questionCard.querySelectorAll('.ranking-list').forEach(function (list) {
+            list.setAttribute('data-completed', 'false');
+        });
+        questionCard.querySelectorAll('.ranking-hidden').forEach(function (container) {
+            container.innerHTML = '';
+        });
+        questionCard.querySelectorAll('.survey-rating-option').forEach(function (option) {
+            option.classList.remove('is-selected');
+        });
+        questionCard.setAttribute('data-skipped', 'true');
+    }
+
     function updateConditionalVisibility(responseForm) {
         if (!responseForm) {
             return;
@@ -458,7 +489,7 @@
             }
 
             var previousVisible = previousCard.style.display !== 'none';
-            var previousAnswered = hasAnswerValue(previousCard);
+            var previousAnswered = hasAnswerValue(previousCard) || previousCard.getAttribute('data-skipped') === 'true';
             card.style.display = (previousVisible && previousAnswered) ? '' : 'none';
         });
     }
@@ -507,26 +538,55 @@
                 input.addEventListener('change', function () {
                     updateRatingVisual(input);
                     serializeRankingSelections(responseForm);
+                    if (hasAnswerValue(card)) {
+                        card.setAttribute('data-skipped', 'false');
+                    }
                     updateConditionalVisibility(responseForm);
                 });
 
                 if (shouldTriggerOnBlur(input)) {
                     input.addEventListener('blur', function () {
                         serializeRankingSelections(responseForm);
+                        if (hasAnswerValue(card)) {
+                            card.setAttribute('data-skipped', 'false');
+                        }
                         updateConditionalVisibility(responseForm);
                     });
                 } else if (input.type === 'radio' || input.type === 'checkbox') {
                     input.addEventListener('click', function () {
                         updateRatingVisual(input);
                         serializeRankingSelections(responseForm);
+                        if (hasAnswerValue(card)) {
+                            card.setAttribute('data-skipped', 'false');
+                        }
                         updateConditionalVisibility(responseForm);
                     });
                 } else if (input.type === 'select-one' || input.tagName && input.tagName.toLowerCase() === 'select') {
                     input.addEventListener('change', function () {
                         serializeRankingSelections(responseForm);
+                        if (hasAnswerValue(card)) {
+                            card.setAttribute('data-skipped', 'false');
+                        }
                         updateConditionalVisibility(responseForm);
                     });
                 }
+            });
+        });
+
+        responseForm.querySelectorAll('.btn-skip-question').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var card = button.closest('.survey-question-card');
+                if (!card || card.style.display === 'none') {
+                    return;
+                }
+
+                var requiredInput = card.querySelector('input[name$=".IsRequired"]');
+                if (requiredInput && (requiredInput.value === 'True' || requiredInput.value === 'true')) {
+                    return;
+                }
+
+                clearQuestionAnswer(card);
+                updateConditionalVisibility(responseForm);
             });
         });
 
@@ -554,6 +614,10 @@
                 var qIdx = $list.data('question-index');
                 // remove any existing hidden inputs for this question
                 $('.ranking-hidden[data-question-index="' + qIdx + '"]').empty();
+                if ($list.closest('.survey-question-card').attr('data-skipped') === 'true') {
+                    return;
+                }
+
                 var items = $list.children();
                 for (var k = 0; k < items.length; k++) {
                     var val = $(items[k]).data('value');
@@ -619,6 +683,7 @@
                 stop: function () {
                     var $list = $(this);
                     $list.attr('data-completed', 'true');
+                    $list.closest('.survey-question-card').attr('data-skipped', 'false');
                     serializeRankingSelections(responseForm);
                     updateConditionalVisibility(responseForm);
                 }

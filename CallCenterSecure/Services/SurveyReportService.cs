@@ -82,8 +82,10 @@ namespace CallCenterSecure.Services
                     var responses = responseQuery
                         .Include(x => x.Answers.Select(a => a.GridAnswers))
                         .ToList();
-                    report.Questions = form.Questions.OrderBy(x => x.DisplayOrder)
-                        .Select(question => BuildQuestionReport(question, responses)).ToList();
+                    var questionSnapshots = GetQuestionSnapshots(db, selectedForm.Id);
+                    report.Questions = BuildQuestionVersions(form.Questions, questionSnapshots)
+                        .Select(version => BuildQuestionReport(version.Question, responses, version.QuestionText, version.QuestionType, version.DisplayOrder, version.IsCurrent))
+                        .ToList();
                 }
 
                 return report;
@@ -157,10 +159,12 @@ namespace CallCenterSecure.Services
                     SubmittedBy = response.SubmittedBy,
                     SubmittedDate = response.SubmittedDate,
                     Customer = customerSnapshot,
-                    Answers = response.Answers.OrderBy(x => x.SurveyQuestion.DisplayOrder).Select(x => new SurveyResponseAnswerViewModel
+                    Answers = response.Answers
+                        .OrderBy(x => x.QuestionDisplayOrderSnapshot ?? (x.SurveyQuestion != null ? x.SurveyQuestion.DisplayOrder : int.MaxValue))
+                        .Select(x => new SurveyResponseAnswerViewModel
                     {
-                        QuestionText = x.SurveyQuestion.QuestionText,
-                        QuestionType = x.SurveyQuestion.QuestionType,
+                        QuestionText = x.QuestionTextSnapshot ?? (x.SurveyQuestion != null ? x.SurveyQuestion.QuestionText : string.Empty),
+                        QuestionType = x.QuestionTypeSnapshot ?? (x.SurveyQuestion != null ? x.SurveyQuestion.QuestionType : string.Empty),
                         Answer = FormatAnswer(x)
                     }).ToList()
                 };
@@ -180,6 +184,41 @@ namespace CallCenterSecure.Services
                 }
 
                 var responses = GetFilteredResponses(db, formId, templateId, categoryId, fromDate, toDate);
+                var questionSnapshots = GetQuestionSnapshots(db, formId);
+                var questions = form.Questions
+                    .OrderBy(question => question.DisplayOrder)
+                    .Select(question => new SurveyQuestionExportColumn
+                    {
+                        QuestionId = question.Id,
+                        QuestionText = question.QuestionText,
+                        QuestionType = question.QuestionType,
+                        DisplayOrder = question.DisplayOrder,
+                        IsCurrent = !question.IsDeleted
+                    })
+                    .ToList();
+
+                var currentQuestions = form.Questions.Where(question => !question.IsDeleted).ToDictionary(question => question.Id);
+                var historicalQuestionVersions = questionSnapshots
+                    .Select(snapshot => new SurveyQuestionExportColumn
+                    {
+                        QuestionId = snapshot.QuestionId,
+                        QuestionText = snapshot.QuestionText,
+                        QuestionType = snapshot.QuestionType,
+                        DisplayOrder = snapshot.DisplayOrder,
+                        IsCurrent = currentQuestions.ContainsKey(snapshot.QuestionId)
+                            && string.Equals(currentQuestions[snapshot.QuestionId].QuestionText, snapshot.QuestionText, StringComparison.Ordinal)
+                            && string.Equals(currentQuestions[snapshot.QuestionId].QuestionType, snapshot.QuestionType, StringComparison.Ordinal)
+                    })
+                    .Where(version =>
+                    {
+                        return !questions.Any(question => question.QuestionId == version.QuestionId
+                            && string.Equals(question.QuestionText, version.QuestionText, StringComparison.Ordinal)
+                            && string.Equals(question.QuestionType, version.QuestionType, StringComparison.Ordinal));
+                    })
+                    .ToList();
+                questions.AddRange(historicalQuestionVersions);
+                questions = BuildExportQuestionColumns(questions);
+
                 var customerIds = responses.Where(x => x.SurveyCustomerDataId.HasValue).Select(x => x.SurveyCustomerDataId.Value).Distinct().ToList();
                 var trackingByCustomerAndForm = customerIds.Any()
                     ? db.SurveyCustomerFormTrackings.AsNoTracking()
@@ -200,9 +239,7 @@ namespace CallCenterSecure.Services
                     "IncomeLevel", "HouseholdAssets", "PovertyScore", "LoanCycle", "DisbursedAmount",
                     "CustomerStatus", "Call Status", "Form Status", "Call Remarks", "Response Id",
                     "Respondent Name", "Respondent Mobile", "Submitted By", "Submitted Date", "Form"
-                }.Concat(form.Questions
-                    .OrderBy(question => question.DisplayOrder)
-                    .Select(question => question.QuestionText));
+                }.Concat(questions.Select(question => question.Header));
                 var headerList = headers.ToList();
                 builder.AppendLine(string.Join(",", headerList.Select(CsvEscape)));
 
@@ -214,10 +251,10 @@ namespace CallCenterSecure.Services
 
                     var values = new List<string>
                     {
-                        customer != null ? customer.ClientName : string.Empty,
+                        customer != null && !string.IsNullOrWhiteSpace(customer.ClientName) ? customer.ClientName : response.RespondentName,
                         customer != null ? customer.Gender : string.Empty,
                         customer != null ? customer.CustomerCode : string.Empty,
-                        customer != null ? customer.MobileNumber1 : string.Empty,
+                        customer != null && !string.IsNullOrWhiteSpace(customer.MobileNumber1) ? customer.MobileNumber1 : response.RespondentMobile,
                         customer != null ? customer.MobileNumber2 : string.Empty,
                         customer != null ? customer.Region : string.Empty,
                         customer != null ? customer.Branch : string.Empty,
@@ -246,11 +283,11 @@ namespace CallCenterSecure.Services
                         response.SurveyForm != null ? response.SurveyForm.Title : string.Empty
                     };
 
-                    values.AddRange(form.Questions
-                        .OrderBy(question => question.DisplayOrder)
-                        .Select(question =>
+                    values.AddRange(questions.Select(question =>
                         {
-                            var answer = response.Answers.FirstOrDefault(x => x.SurveyQuestionId == question.Id);
+                            var answer = response.Answers.FirstOrDefault(x => x.SurveyQuestionId == question.QuestionId
+                                && string.Equals(x.QuestionTextSnapshot ?? question.QuestionText, question.QuestionText, StringComparison.Ordinal)
+                                && string.Equals(x.QuestionTypeSnapshot ?? question.QuestionType, question.QuestionType, StringComparison.Ordinal));
                             return answer == null ? string.Empty : FormatAnswer(answer);
                         }));
 
@@ -309,30 +346,125 @@ namespace CallCenterSecure.Services
             return query;
         }
 
-        private static SurveyQuestionReportViewModel BuildQuestionReport(SurveyQuestion question, List<SurveyFormResponse> responses)
+        private static List<SurveyQuestionVersion> BuildQuestionVersions(
+            IEnumerable<SurveyQuestion> formQuestions,
+            List<SurveyQuestionVersion> questionSnapshots)
         {
-            var answers = responses.SelectMany(x => x.Answers.Where(a => a.SurveyQuestionId == question.Id)).ToList();
+            var versions = formQuestions.Select(question => new SurveyQuestionVersion
+            {
+                Question = question,
+                QuestionId = question.Id,
+                QuestionText = question.QuestionText,
+                QuestionType = question.QuestionType,
+                DisplayOrder = question.DisplayOrder,
+                IsCurrent = !question.IsDeleted
+            }).ToList();
+
+            var currentQuestions = formQuestions.Where(question => !question.IsDeleted).ToDictionary(question => question.Id);
+            var historicalVersions = questionSnapshots
+                .Select(snapshot =>
+                {
+                    SurveyQuestion currentQuestion;
+                    var isCurrent = currentQuestions.TryGetValue(snapshot.QuestionId, out currentQuestion)
+                        && string.Equals(currentQuestion.QuestionText, snapshot.QuestionText, StringComparison.Ordinal)
+                        && string.Equals(currentQuestion.QuestionType, snapshot.QuestionType, StringComparison.Ordinal);
+                    return new SurveyQuestionVersion
+                    {
+                        Question = isCurrent ? currentQuestion : new SurveyQuestion
+                        {
+                            Id = snapshot.QuestionId,
+                            QuestionText = snapshot.QuestionText,
+                            QuestionType = snapshot.QuestionType,
+                            DisplayOrder = snapshot.DisplayOrder
+                        },
+                        QuestionId = snapshot.QuestionId,
+                        QuestionText = snapshot.QuestionText,
+                        QuestionType = snapshot.QuestionType,
+                        DisplayOrder = snapshot.DisplayOrder,
+                        IsCurrent = isCurrent
+                    };
+                })
+                .Where(version => !versions.Any(existing => existing.QuestionId == version.QuestionId
+                    && string.Equals(existing.QuestionText, version.QuestionText, StringComparison.Ordinal)
+                    && string.Equals(existing.QuestionType, version.QuestionType, StringComparison.Ordinal)))
+                .ToList();
+
+            versions.AddRange(historicalVersions);
+            return versions
+                .GroupBy(version => new { version.QuestionId, version.QuestionText, version.QuestionType })
+                .Select(group => group.OrderByDescending(version => version.IsCurrent).First())
+                .OrderBy(version => version.DisplayOrder)
+                .ThenBy(version => version.QuestionId)
+                .ThenBy(version => version.IsCurrent)
+                .ToList();
+        }
+
+        private static List<SurveyQuestionVersion> GetQuestionSnapshots(ApplicationDbContext db, int formId)
+        {
+            return db.SurveyFormAnswers.AsNoTracking()
+                .Where(answer => answer.SurveyFormResponse.SurveyFormId == formId
+                    && answer.QuestionTextSnapshot != null
+                    && answer.QuestionTypeSnapshot != null)
+                .Select(answer => new
+                {
+                    answer.SurveyQuestionId,
+                    answer.QuestionTextSnapshot,
+                    answer.QuestionTypeSnapshot,
+                    answer.QuestionDisplayOrderSnapshot
+                })
+                .ToList()
+                .GroupBy(snapshot => new
+                {
+                    snapshot.SurveyQuestionId,
+                    snapshot.QuestionTextSnapshot,
+                    snapshot.QuestionTypeSnapshot,
+                    snapshot.QuestionDisplayOrderSnapshot
+                })
+                .Select(group => new SurveyQuestionVersion
+                {
+                    QuestionId = group.Key.SurveyQuestionId,
+                    QuestionText = group.Key.QuestionTextSnapshot,
+                    QuestionType = group.Key.QuestionTypeSnapshot,
+                    DisplayOrder = group.Key.QuestionDisplayOrderSnapshot ?? int.MaxValue
+                })
+                .ToList();
+        }
+
+        private static SurveyQuestionReportViewModel BuildQuestionReport(
+            SurveyQuestion question,
+            List<SurveyFormResponse> responses,
+            string questionText,
+            string questionType,
+            int displayOrder,
+            bool isCurrent)
+        {
+            var answers = responses.SelectMany(response => response.Answers.Where(answer =>
+                answer.SurveyQuestionId == question.Id
+                && ((answer.QuestionTextSnapshot == null && isCurrent)
+                    || string.Equals(answer.QuestionTextSnapshot, questionText, StringComparison.Ordinal))
+                && ((answer.QuestionTypeSnapshot == null && isCurrent)
+                    || string.Equals(answer.QuestionTypeSnapshot, questionType, StringComparison.Ordinal)))).ToList();
             var values = answers.Select(GetPrimaryValue).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
             var answeredResponseCount = answers.Where(HasAnswer).Select(x => x.SurveyFormResponseId).Distinct().Count();
             var report = new SurveyQuestionReportViewModel
             {
                 QuestionId = question.Id,
-                DisplayOrder = question.DisplayOrder,
-                QuestionText = question.QuestionText,
-                QuestionType = question.QuestionType,
+                DisplayOrder = displayOrder,
+                QuestionText = questionText,
+                QuestionType = questionType,
                 AnsweredCount = answeredResponseCount,
                 UnansweredCount = Math.Max(0, responses.Count - answeredResponseCount)
             };
 
-            if (question.QuestionType == SurveyQuestionTypeCatalog.Checkboxes)
+            if (questionType == SurveyQuestionTypeCatalog.Checkboxes)
             {
                 report.Options = BuildOptions(question.Options.Select(x => x.OptionText), answers.SelectMany(GetCheckboxValues), report.AnsweredCount);
             }
-            else if (question.QuestionType == SurveyQuestionTypeCatalog.MultipleChoice || question.QuestionType == SurveyQuestionTypeCatalog.Dropdown)
+            else if (questionType == SurveyQuestionTypeCatalog.MultipleChoice || questionType == SurveyQuestionTypeCatalog.Dropdown)
             {
                 report.Options = BuildOptions(question.Options.Select(x => x.OptionText), values, report.AnsweredCount);
             }
-            else if (question.QuestionType == SurveyQuestionTypeCatalog.Nps)
+            else if (questionType == SurveyQuestionTypeCatalog.Nps)
             {
                 AddNumericSummary(report, values);
                 report.Promoters = values.Count(IsPromoter);
@@ -340,16 +472,19 @@ namespace CallCenterSecure.Services
                 report.Detractors = values.Count(IsDetractor);
                 report.NpsScore = values.Count == 0 ? (double?)null : Math.Round((report.Promoters - report.Detractors) * 100d / values.Count, 2);
             }
-            else if (question.QuestionType == SurveyQuestionTypeCatalog.LinearScale || question.QuestionType == SurveyQuestionTypeCatalog.Ranking)
+            else if (questionType == SurveyQuestionTypeCatalog.LinearScale || questionType == SurveyQuestionTypeCatalog.Ranking)
             {
                 AddNumericSummary(report, values);
             }
-            else if (question.QuestionType == SurveyQuestionTypeCatalog.MultipleChoiceGrid || question.QuestionType == SurveyQuestionTypeCatalog.CheckboxGrid)
+            else if (questionType == SurveyQuestionTypeCatalog.MultipleChoiceGrid || questionType == SurveyQuestionTypeCatalog.CheckboxGrid)
             {
-                report.GridRows = question.GridRows.OrderBy(x => x.DisplayOrder).Select(row => new SurveyReportGridRowViewModel
+                var gridRows = question.GridRows.Any()
+                    ? question.GridRows.OrderBy(row => row.DisplayOrder).Select(row => row.RowText).ToList()
+                    : answers.SelectMany(answer => answer.GridAnswers).Select(answer => answer.RowText).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                report.GridRows = gridRows.Select(rowText => new SurveyReportGridRowViewModel
                 {
-                    RowText = row.RowText,
-                    Options = BuildGridOptions(question, answers, row.RowText)
+                    RowText = rowText,
+                    Options = BuildGridOptions(question, answers, rowText)
                 }).ToList();
             }
             else
@@ -358,6 +493,50 @@ namespace CallCenterSecure.Services
             }
 
             return report;
+        }
+
+        private static List<SurveyQuestionExportColumn> BuildExportQuestionColumns(List<SurveyQuestionExportColumn> questions)
+        {
+            var distinctQuestions = questions
+                .GroupBy(question => new { question.QuestionId, question.QuestionText, question.QuestionType })
+                .Select(group => group.OrderByDescending(question => question.IsCurrent).First())
+                .OrderBy(question => question.DisplayOrder)
+                .ThenBy(question => question.QuestionId)
+                .ThenBy(question => question.IsCurrent)
+                .ToList();
+
+            foreach (var group in distinctQuestions.GroupBy(question => question.QuestionId))
+            {
+                var versions = group.ToList();
+                if (versions.Count > 1)
+                {
+                    var historicalVersions = versions.Where(question => !question.IsCurrent)
+                        .OrderBy(question => question.DisplayOrder)
+                        .ThenBy(question => question.QuestionText, StringComparer.Ordinal)
+                        .ToList();
+                    for (var index = 0; index < historicalVersions.Count; index++)
+                    {
+                        historicalVersions[index].Header = historicalVersions.Count == 1
+                            ? historicalVersions[index].QuestionText + " (Historical)"
+                            : historicalVersions[index].QuestionText + " (Historical version " + (index + 1) + ")";
+                    }
+                }
+            }
+
+            foreach (var question in distinctQuestions.Where(question => question.Header == null))
+            {
+                question.Header = question.QuestionText;
+            }
+
+            foreach (var duplicateHeader in distinctQuestions.GroupBy(question => question.Header, StringComparer.OrdinalIgnoreCase).Where(group => group.Count() > 1))
+            {
+                foreach (var question in duplicateHeader)
+                {
+                    question.Header = string.Format("{0} (Question {1}, ID {2})", question.Header, question.DisplayOrder, question.QuestionId);
+                }
+            }
+
+            return distinctQuestions;
         }
 
         private static bool HasAnswer(SurveyFormAnswer answer)
@@ -483,6 +662,26 @@ namespace CallCenterSecure.Services
         {
             var number = ParseNumber(value);
             return number.HasValue && number.Value <= 6;
+        }
+
+        private sealed class SurveyQuestionVersion
+        {
+            public SurveyQuestion Question { get; set; }
+            public int QuestionId { get; set; }
+            public string QuestionText { get; set; }
+            public string QuestionType { get; set; }
+            public int DisplayOrder { get; set; }
+            public bool IsCurrent { get; set; }
+        }
+
+        private sealed class SurveyQuestionExportColumn
+        {
+            public int QuestionId { get; set; }
+            public string QuestionText { get; set; }
+            public string QuestionType { get; set; }
+            public int DisplayOrder { get; set; }
+            public bool IsCurrent { get; set; }
+            public string Header { get; set; }
         }
 
         private static string CsvEscape(string value)

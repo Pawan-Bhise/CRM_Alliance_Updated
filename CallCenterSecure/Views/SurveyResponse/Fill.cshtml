@@ -318,6 +318,13 @@
                         </table>
                     </div>
                 }
+
+                @if (!question.IsRequired)
+                {
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-outline-secondary btn-skip-question">Skip</button>
+                    </div>
+                }
             </div>
         </div>
     }

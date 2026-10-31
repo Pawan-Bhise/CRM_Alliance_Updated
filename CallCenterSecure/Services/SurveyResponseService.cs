@@ -335,9 +335,17 @@ namespace CallCenterSecure.Services
 
             foreach (var question in hydrated.Questions)
             {
+                if (!HasAnswer(question))
+                {
+                    continue;
+                }
+
                 var answer = new SurveyFormAnswer
                 {
                     SurveyQuestionId = question.SurveyQuestionId,
+                    QuestionTextSnapshot = question.QuestionText,
+                    QuestionTypeSnapshot = question.QuestionType,
+                    QuestionDisplayOrderSnapshot = question.DisplayOrder,
                     AnswerText = TrimOrNull(question.AnswerText),
                     SelectedOption = TrimOrNull(question.SelectedOption),
                     SelectedOptionsCsv = question.SelectedOptions != null && question.SelectedOptions.Any() ? string.Join(",", question.SelectedOptions.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim())) : null
@@ -355,6 +363,11 @@ namespace CallCenterSecure.Services
                     var gridAnswers = new List<SurveyFormGridAnswer>();
                     foreach (var row in question.GridAnswers)
                     {
+                        if (row == null)
+                        {
+                            continue;
+                        }
+
                         gridAnswers.Add(new SurveyFormGridAnswer
                         {
                             RowText = row.RowText,
@@ -391,6 +404,17 @@ namespace CallCenterSecure.Services
 
             _surveyResponseRepository.AddResponse(response);
             _surveyResponseRepository.SaveChanges();
+        }
+
+        private static bool HasAnswer(SurveyQuestionResponseViewModel question)
+        {
+            return !string.IsNullOrWhiteSpace(question.AnswerText)
+                || !string.IsNullOrWhiteSpace(question.SelectedOption)
+                || (question.SelectedOptions != null && question.SelectedOptions.Any(value => !string.IsNullOrWhiteSpace(value)))
+                || (question.File != null && question.File.ContentLength > 0)
+                || (question.GridAnswers != null && question.GridAnswers.Any(row => row != null && (
+                    !string.IsNullOrWhiteSpace(row.SelectedColumnText)
+                    || (row.SelectedColumnTexts != null && row.SelectedColumnTexts.Any(value => !string.IsNullOrWhiteSpace(value))))));
         }
 
         private static List<SurveyCategoryLookupViewModel> GetCategories()

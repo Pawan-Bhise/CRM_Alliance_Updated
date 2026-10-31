@@ -32,6 +32,8 @@ namespace CallCenterSecure.Models
 
         public bool IsRequired { get; set; }
 
+        public bool IsDeleted { get; set; }
+
         public int? ConditionalParentQuestionIndex { get; set; }
 
         [MaxLength(500)]

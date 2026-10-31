@@ -20,6 +20,14 @@ namespace CallCenterSecure.Models
         [Required]
         public int SurveyQuestionId { get; set; }
 
+        [MaxLength(1000)]
+        public string QuestionTextSnapshot { get; set; }
+
+        [MaxLength(50)]
+        public string QuestionTypeSnapshot { get; set; }
+
+        public int? QuestionDisplayOrderSnapshot { get; set; }
+
         [MaxLength(2000)]
         public string AnswerText { get; set; }
 

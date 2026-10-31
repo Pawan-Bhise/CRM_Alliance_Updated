@@ -19,6 +19,8 @@ namespace CallCenterSecure.Services
                     .Where(x => HasCallObjective(x, 2) && HasTicketType(x, 3));
 
                 var rows = query.ToList();
+                var ticketStatuses = db.TicketStatuses.AsNoTracking()
+                    .ToDictionary(x => x.Id, x => x.Name);
                 var branchNames = db.RegionBranches.AsNoTracking()
                     .ToDictionary(x => x.Id, x => x.BranchName);
                 var productNames = db.Products.AsNoTracking()
@@ -30,8 +32,8 @@ namespace CallCenterSecure.Services
                 {
                     Filter = new ReportFilterViewModel { FromDate = fromDate, ToDate = toDate },
                     TotalTickets = rows.Count,
-                    ResolvedCount = rows.Count(x => IsClosed(x.Cmp_ComplainStatus)),
-                    UnresolvedCount = rows.Count(x => !IsClosed(x.Cmp_ComplainStatus)),
+                    ResolvedCount = rows.Count(x => IsResolvedTicket(x.TicketStatus, ticketStatuses)),
+                    UnresolvedCount = rows.Count(x => !IsResolvedTicket(x.TicketStatus, ticketStatuses)),
                     AverageResponseTimeMinutes = CalculateAverageMinutes(rows.Select(CalculateResponseMinutes)),
                     AverageCsatScore = null,
                     Notes = "CSAT is not stored in the current schema. Response time uses call duration when available."
@@ -178,9 +180,30 @@ namespace CallCenterSecure.Services
             return value;
         }
 
-        private static bool IsClosed(string status)
+        private static bool IsResolvedTicket(string status, Dictionary<int, string> ticketStatuses)
         {
-            return !string.IsNullOrWhiteSpace(status) && status.Trim().Equals("Closed", StringComparison.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return false;
+            }
+
+            var statusName = status.Trim();
+            int statusId;
+            if (int.TryParse(statusName, out statusId))
+            {
+                string mappedStatusName;
+                if (!ticketStatuses.TryGetValue(statusId, out mappedStatusName))
+                {
+                    return false;
+                }
+
+                statusName = mappedStatusName;
+            }
+
+            return statusName.Equals("Completed", StringComparison.OrdinalIgnoreCase)
+                || statusName.Equals("Complete", StringComparison.OrdinalIgnoreCase)
+                || statusName.Equals("Resolved", StringComparison.OrdinalIgnoreCase)
+                || statusName.Equals("Closed", StringComparison.OrdinalIgnoreCase);
         }
 
         private static double? CalculateResponseMinutes(AllianceInbound inbound)

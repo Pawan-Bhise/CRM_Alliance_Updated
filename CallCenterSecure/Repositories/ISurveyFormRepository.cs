@@ -12,6 +12,7 @@ namespace CallCenterSecure.Repositories
         void AddForm(SurveyForm form);
         void RemoveForm(SurveyForm form);
         void RemoveQuestion(SurveyQuestion question);
+        void UpdateQuestion(SurveyQuestion existing, SurveyQuestion updated);
         void SaveChanges();
     }
 }

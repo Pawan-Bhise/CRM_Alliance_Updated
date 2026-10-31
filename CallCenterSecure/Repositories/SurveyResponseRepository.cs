@@ -84,12 +84,18 @@ SELECT CASE WHEN COL_LENGTH('dbo.UploadJobs', 'SurveyTemplateTypeId') IS NOT NUL
 
         public SurveyForm GetFormWithQuestions(int formId)
         {
-            return _db.SurveyForms
+            var form = _db.SurveyForms
                 .Include(x => x.SurveyTemplate)
                 .Include(x => x.Questions.Select(q => q.Options))
                 .Include(x => x.Questions.Select(q => q.GridRows))
                 .Include(x => x.Questions.Select(q => q.GridColumns))
                 .FirstOrDefault(x => x.Id == formId && x.IsActive);
+            if (form != null)
+            {
+                form.Questions = form.Questions.Where(question => !question.IsDeleted).ToList();
+            }
+
+            return form;
         }
 
         public SurveyCustomerData GetCustomerById(int customerId)
