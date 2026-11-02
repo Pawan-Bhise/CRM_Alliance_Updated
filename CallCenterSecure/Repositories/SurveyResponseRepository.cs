@@ -85,6 +85,7 @@ SELECT CASE WHEN COL_LENGTH('dbo.UploadJobs', 'SurveyTemplateTypeId') IS NOT NUL
         public SurveyForm GetFormWithQuestions(int formId)
         {
             var form = _db.SurveyForms
+                .AsNoTracking()
                 .Include(x => x.SurveyTemplate)
                 .Include(x => x.Questions.Select(q => q.Options))
                 .Include(x => x.Questions.Select(q => q.GridRows))
