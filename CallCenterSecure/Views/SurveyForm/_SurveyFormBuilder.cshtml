@@ -261,6 +261,7 @@
                 <div class="question-body">
                     <input type="hidden" class="question-id" value="@q.Id" />
                     <input type="hidden" class="question-order" value="@q.DisplayOrder" />
+                    <input type="hidden" class="question-type-locked" value="@q.QuestionType" />
 
                     <div class="question-setup-heading">Question setup</div>
                     <div class="row g-3">
@@ -270,7 +271,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Question Type</label>
-                            <select class="form-control question-type">
+                            <select class="form-control question-type" @(q.Id > 0 ? "disabled=\"disabled\"" : "")>
                                 <option value="@SurveyQuestionTypeCatalog.ShortAnswer" @(q.QuestionType == SurveyQuestionTypeCatalog.ShortAnswer ? "selected" : "")>@SurveyQuestionTypeCatalog.ShortAnswer</option>
                                 <option value="@SurveyQuestionTypeCatalog.Paragraph" @(q.QuestionType == SurveyQuestionTypeCatalog.Paragraph ? "selected" : "")>@SurveyQuestionTypeCatalog.Paragraph</option>
                                 <option value="@SurveyQuestionTypeCatalog.MultipleChoice" @(q.QuestionType == SurveyQuestionTypeCatalog.MultipleChoice ? "selected" : "")>@SurveyQuestionTypeCatalog.MultipleChoice</option>
@@ -284,6 +285,10 @@
                                 <option value="@SurveyQuestionTypeCatalog.MultipleChoiceGrid" @(q.QuestionType == SurveyQuestionTypeCatalog.MultipleChoiceGrid ? "selected" : "")>@SurveyQuestionTypeCatalog.MultipleChoiceGrid</option>
                                 <option value="@SurveyQuestionTypeCatalog.CheckboxGrid" @(q.QuestionType == SurveyQuestionTypeCatalog.CheckboxGrid ? "selected" : "")>@SurveyQuestionTypeCatalog.CheckboxGrid</option>
                             </select>
+                            @if (q.Id > 0)
+                            {
+                                <small class="form-text text-muted">Question type cannot be changed after this question is created.</small>
+                            }
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
                             <div class="form-check">
@@ -424,6 +429,7 @@
         <div class="question-body">
             <input type="hidden" class="question-id" value="0" />
             <input type="hidden" class="question-order" value="0" />
+            <input type="hidden" class="question-type-locked" value="" />
 
             <div class="question-setup-heading">Question setup</div>
             <div class="row g-3">

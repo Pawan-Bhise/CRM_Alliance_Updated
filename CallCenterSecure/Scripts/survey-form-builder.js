@@ -428,7 +428,18 @@
             setName(questionEl.querySelector(".question-id"), "Questions[" + questionIndex + "].Id");
             setName(questionEl.querySelector(".question-order"), "Questions[" + questionIndex + "].DisplayOrder", questionIndex + 1);
             setName(questionEl.querySelector(".question-text"), "Questions[" + questionIndex + "].QuestionText");
-            setName(questionEl.querySelector(".question-type"), "Questions[" + questionIndex + "].QuestionType");
+            var questionId = parseInt(questionEl.querySelector(".question-id").value, 10) || 0;
+            var questionType = questionEl.querySelector(".question-type");
+            var lockedQuestionType = questionEl.querySelector(".question-type-locked");
+            if (questionId > 0) {
+                questionType.disabled = true;
+                setName(questionType, null);
+                setName(lockedQuestionType, "Questions[" + questionIndex + "].QuestionType", questionType.value);
+            } else {
+                questionType.disabled = false;
+                setName(questionType, "Questions[" + questionIndex + "].QuestionType");
+                setName(lockedQuestionType, null);
+            }
             setName(questionEl.querySelector(".question-required"), "Questions[" + questionIndex + "].IsRequired");
             setName(questionEl.querySelector(".conditional-parent-question"), "Questions[" + questionIndex + "].ConditionalParentQuestionIndex");
             setName(questionEl.querySelector(".conditional-parent-option"), "Questions[" + questionIndex + "].ConditionalParentOptionText");

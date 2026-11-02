@@ -106,6 +106,25 @@ namespace CallCenterSecure.Services
         public SurveyFormBuilderViewModel PrepareBuilderModel(SurveyFormBuilderViewModel model)
         {
             var templates = _surveyFormRepository.GetAllTemplates().ToList();
+            if (model.Id > 0)
+            {
+                var existingForm = _surveyFormRepository.GetFormById(model.Id);
+                if (existingForm != null)
+                {
+                    var existingQuestionTypes = existingForm.Questions
+                        .Where(question => !question.IsDeleted)
+                        .ToDictionary(question => question.Id, question => question.QuestionType);
+                    foreach (var question in model.Questions ?? new List<SurveyQuestionBuilderViewModel>())
+                    {
+                        string existingQuestionType;
+                        if (question.Id > 0 && existingQuestionTypes.TryGetValue(question.Id, out existingQuestionType))
+                        {
+                            question.QuestionType = existingQuestionType;
+                        }
+                    }
+                }
+            }
+
             model.SurveyTemplates = templates.Select(x => new SelectListItem
             {
                 Value = x.Id.ToString(),
@@ -183,6 +202,18 @@ namespace CallCenterSecure.Services
                 throw new InvalidOperationException("Survey form not found.");
             }
 
+            var existingQuestions = existing.Questions.Where(question => !question.IsDeleted).ToDictionary(question => question.Id);
+            foreach (var question in model.Questions ?? new List<SurveyQuestionBuilderViewModel>())
+            {
+                SurveyQuestion existingQuestion;
+                if (question.Id > 0
+                    && existingQuestions.TryGetValue(question.Id, out existingQuestion)
+                    && !string.Equals(existingQuestion.QuestionType, (question.QuestionType ?? string.Empty).Trim(), StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException("The question type cannot be changed after the question is created. Add a new question with the required type instead.");
+                }
+            }
+
             ValidateTemplate(model.SurveyTemplateId);
             var preparedModel = PrepareAndValidateModel(model);
 
@@ -194,7 +225,6 @@ namespace CallCenterSecure.Services
             existing.ModifiedDate = DateTime.Now;
             existing.IsActive = true;
 
-            var existingQuestions = existing.Questions.Where(question => !question.IsDeleted).ToDictionary(question => question.Id);
             var updatedQuestions = BuildQuestions(preparedModel);
             var retainedQuestionIds = new HashSet<int>();
 
