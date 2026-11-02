@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Entity.Validation;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -403,7 +404,20 @@ namespace CallCenterSecure.Services
             }
 
             _surveyResponseRepository.AddResponse(response);
-            _surveyResponseRepository.SaveChanges();
+            try
+            {
+                _surveyResponseRepository.SaveChanges();
+            }
+            catch (DbEntityValidationException exception)
+            {
+                var validationErrors = exception.EntityValidationErrors
+                    .SelectMany(entity => entity.ValidationErrors.Select(error =>
+                        entity.Entry.Entity.GetType().Name + "." + error.PropertyName + ": " + error.ErrorMessage))
+                    .ToList();
+                throw new InvalidOperationException(
+                    "Survey response could not be saved. " + string.Join(" ", validationErrors),
+                    exception);
+            }
         }
 
         private static bool HasAnswer(SurveyQuestionResponseViewModel question)

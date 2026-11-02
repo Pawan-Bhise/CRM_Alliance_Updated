@@ -28,7 +28,6 @@ namespace CallCenterSecure.Models
 
         public int? QuestionDisplayOrderSnapshot { get; set; }
 
-        [MaxLength(2000)]
         public string AnswerText { get; set; }
 
         [MaxLength(500)]

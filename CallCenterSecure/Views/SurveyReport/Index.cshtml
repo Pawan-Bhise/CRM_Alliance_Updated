@@ -4,6 +4,41 @@
     ViewBag.Title = "Survey Reports";
 }
 
+<style>
+    .survey-text-answer-list {
+        display: grid;
+        gap: 0.5rem;
+        padding-left: 0;
+        list-style: none;
+    }
+
+    .survey-text-answer {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.35rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .survey-text-answer summary {
+        cursor: pointer;
+    }
+
+    .survey-answer-preview {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow-wrap: anywhere;
+    }
+
+    .survey-answer-full {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid #e2e8f0;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+</style>
+
 <h2 class="mb-3">Survey Reports</h2>
 
 @using (Html.BeginForm("Index", "SurveyReport", FormMethod.Get, new { @class = "card mb-4" }))
@@ -134,12 +169,41 @@
                         }
                         else if (question.TextAnswers.Any())
                         {
-                            <ul class="mb-0">
-                                @foreach (var answer in question.TextAnswers)
+                            var previewCount = Math.Min(3, question.TextAnswers.Count);
+                            <ul class="survey-text-answer-list mb-0">
+                                @for (var answerIndex = 0; answerIndex < previewCount; answerIndex++)
                                 {
-                                    <li>@answer</li>
+                                    var answer = question.TextAnswers[answerIndex];
+                                    <li>
+                                        <details class="survey-text-answer">
+                                            <summary><span class="survey-answer-preview">@answer</span></summary>
+                                            <div class="survey-answer-full">@answer</div>
+                                        </details>
+                                    </li>
                                 }
                             </ul>
+                            if (question.TextAnswers.Count > previewCount)
+                            {
+                                <details class="mt-2">
+                                    <summary class="text-primary">View @((question.TextAnswers.Count - previewCount)) more responses</summary>
+                                    <ul class="survey-text-answer-list mt-2 mb-0">
+                                        @for (var answerIndex = previewCount; answerIndex < question.TextAnswers.Count; answerIndex++)
+                                        {
+                                            var answer = question.TextAnswers[answerIndex];
+                                            <li>
+                                                <details class="survey-text-answer">
+                                                    <summary><span class="survey-answer-preview">@answer</span></summary>
+                                                    <div class="survey-answer-full">@answer</div>
+                                                </details>
+                                            </li>
+                                        }
+                                    </ul>
+                                </details>
+                            }
+                            if (question.AnsweredCount > question.TextAnswers.Count)
+                            {
+                                <div class="small text-muted mt-2">Showing the first @question.TextAnswers.Count text answers. Use Individual Responses to browse all submissions.</div>
+                            }
                         }
                         else
                         {
