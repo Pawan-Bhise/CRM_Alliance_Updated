@@ -16,6 +16,7 @@ namespace CallCenter.Models.ViewModels
 
         public string TicketTypeId { get; set; }
         public string TicketStatusId { get; set; }
+        public string CallObjectiveId { get; set; }
         public List<InboundGridData> InboundList { get; set; }
         public string Prev_TicketId { get; set; }
     }

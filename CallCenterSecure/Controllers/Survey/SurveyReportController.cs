@@ -1,6 +1,9 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Web;
 using System.Web.Mvc;
+using CallCenter.CustomAuthentication;
 using CallCenterSecure.Services;
 
 namespace CallCenterSecure.Controllers.Survey
@@ -35,6 +38,39 @@ namespace CallCenterSecure.Controllers.Survey
             }
 
             return View(model);
+        }
+
+        [CustomAuthorize(Roles = "Admin|Supervisor|Agent")]
+        public ActionResult DownloadAnswerFile(int answerId)
+        {
+            if (answerId <= 0)
+            {
+                return new HttpStatusCodeResult(400);
+            }
+
+            var storedFileName = _surveyReportService.GetResponseFileName(answerId);
+            if (string.IsNullOrWhiteSpace(storedFileName))
+            {
+                return HttpNotFound();
+            }
+
+            var safeFileName = Path.GetFileName(storedFileName);
+            if (!string.Equals(safeFileName, storedFileName, StringComparison.Ordinal)
+                || !new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".jpg", ".jpeg", ".png" }
+                    .Contains(Path.GetExtension(safeFileName), StringComparer.OrdinalIgnoreCase))
+            {
+                return HttpNotFound();
+            }
+
+            var uploadDirectory = Server.MapPath("~/Uploads/SurveyResponses");
+            var fullPath = Path.GetFullPath(Path.Combine(uploadDirectory, safeFileName));
+            var uploadDirectoryWithSeparator = Path.GetFullPath(uploadDirectory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!fullPath.StartsWith(uploadDirectoryWithSeparator, StringComparison.OrdinalIgnoreCase) || !System.IO.File.Exists(fullPath))
+            {
+                return HttpNotFound();
+            }
+
+            return File(fullPath, MimeMapping.GetMimeMapping(safeFileName), safeFileName);
         }
 
         public ActionResult ExportCsv(int? templateId, int? formId, int? categoryId, DateTime? fromDate, DateTime? toDate)

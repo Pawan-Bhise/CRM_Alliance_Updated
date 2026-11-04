@@ -485,6 +485,7 @@ namespace CallCenter.Controllers
         {
             ViewBag.TicketTypes = new SelectList(db.TicketTypes.Select(t => new { Value = t.Id, Text = t.Name }), "Value", "Text");
             ViewBag.TicketStatuses = new SelectList(db.TicketStatuses.Select(ts => new { Value = ts.Id, Text = ts.Name }), "Value", "Text");
+            ViewBag.CallObjectives = new SelectList(db.CallObjectives.OrderBy(x => x.Name).Select(x => new { Value = x.Id, Text = x.Name }), "Value", "Text");
         }
 
         public ActionResult Index(AllianceInboundIndexVM filter)
@@ -506,6 +507,9 @@ namespace CallCenter.Controllers
 
             if (!string.IsNullOrWhiteSpace(filter.TicketTypeId))
                 query = query.Where(x => x.TicketTypeId == filter.TicketTypeId);
+
+            if (!string.IsNullOrWhiteSpace(filter.CallObjectiveId))
+                query = query.Where(x => x.CallObjectiveId == filter.CallObjectiveId);
 
             if (!string.IsNullOrWhiteSpace(filter.TicketStatusId))
                 query = query.Where(x => x.TicketStatusId == filter.TicketStatusId);
@@ -786,6 +790,7 @@ namespace CallCenter.Controllers
                 {
                     "TicketTypeId",
                     "TicketStatusId",
+                    "CallObjectiveId",
                     "Cmp_Designation"
                 };
 

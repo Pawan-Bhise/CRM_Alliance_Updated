@@ -10,6 +10,7 @@ namespace CallCenterSecure.Repositories
         IEnumerable<SurveyCustomerData> GetCustomersByTemplateId(int templateId);
         IEnumerable<SurveyCustomerData> GetCustomersByPhone(string phoneNumber);
         SurveyForm GetFormWithQuestions(int formId);
+        IDictionary<int, int> GetLatestResponseIds(int templateId, int formId);
         SurveyCustomerData GetCustomerById(int customerId);
         SurveyCustomerFormTracking GetCustomerFormTracking(int customerId, int templateId, int formId);
         IEnumerable<SurveyCustomerFormTracking> GetCustomerFormTrackings(int templateId, int formId);

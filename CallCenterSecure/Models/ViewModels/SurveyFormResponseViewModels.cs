@@ -155,6 +155,7 @@ namespace CallCenterSecure.Models.ViewModels
         public int? CallStatusId { get; set; }
         public string FormStatus { get; set; }
         public int? FormStatusId { get; set; }
+        public int? LatestResponseId { get; set; }
         public string CallRemarks { get; set; }
     }
 

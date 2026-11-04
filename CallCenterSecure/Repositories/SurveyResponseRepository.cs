@@ -99,6 +99,26 @@ SELECT CASE WHEN COL_LENGTH('dbo.UploadJobs', 'SurveyTemplateTypeId') IS NOT NUL
             return form;
         }
 
+        public IDictionary<int, int> GetLatestResponseIds(int templateId, int formId)
+        {
+            var responses = _db.SurveyFormResponses.AsNoTracking()
+                .Where(response => response.SurveyFormId == formId
+                    && response.SurveyForm.SurveyTemplateId == templateId
+                    && response.SurveyCustomerDataId.HasValue)
+                .OrderByDescending(response => response.SubmittedDate)
+                .ThenByDescending(response => response.Id)
+                .Select(response => new
+                {
+                    CustomerId = response.SurveyCustomerDataId.Value,
+                    ResponseId = response.Id
+                })
+                .ToList();
+
+            return responses
+                .GroupBy(response => response.CustomerId)
+                .ToDictionary(group => group.Key, group => group.First().ResponseId);
+        }
+
         public SurveyCustomerData GetCustomerById(int customerId)
         {
             return _db.SurveyCustomerData.FirstOrDefault(x => x.Id == customerId);

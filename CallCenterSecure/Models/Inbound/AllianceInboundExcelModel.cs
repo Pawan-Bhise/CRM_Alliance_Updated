@@ -13,6 +13,7 @@ namespace CallCenterSecure.Models.Inbound
         public string TicketID { get; set; }
 
         public string CallObjective { get; set; }
+        public string CallObjectiveId { get; set; }
         public string Region { get; set; }
         public string Branch { get; set; }
         public string ClientName { get; set; }

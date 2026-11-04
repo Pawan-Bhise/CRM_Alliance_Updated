@@ -106,8 +106,10 @@ namespace CallCenterSecure.Models.ViewModels
 
     public class SurveyResponseAnswerViewModel
     {
+        public int Id { get; set; }
         public string QuestionText { get; set; }
         public string QuestionType { get; set; }
         public string Answer { get; set; }
+        public string FileName { get; set; }
     }
 }

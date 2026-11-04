@@ -96,6 +96,7 @@ namespace CallCenterSecure.Controllers.Survey
                 x.CallStatusId,
                 x.FormStatus,
                 x.FormStatusId,
+                x.LatestResponseId,
                 x.CallRemarks
             }).ToList();
             var result = Json(data, JsonRequestBehavior.AllowGet);

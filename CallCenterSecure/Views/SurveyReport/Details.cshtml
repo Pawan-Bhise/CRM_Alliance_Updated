@@ -62,7 +62,17 @@
             <div class="border-bottom py-3">
                 <div class="fw-bold">@answer.QuestionText</div>
                 <div class="small text-muted">@answer.QuestionType</div>
-                <div class="mt-1">@(string.IsNullOrWhiteSpace(answer.Answer) ? "No answer" : answer.Answer)</div>
+                @if (!string.IsNullOrWhiteSpace(answer.FileName))
+                {
+                    <div class="mt-2">
+                        <span class="me-2">@answer.FileName</span>
+                        @Html.ActionLink("Download", "DownloadAnswerFile", "SurveyReport", new { answerId = answer.Id }, new { @class = "btn btn-sm btn-outline-primary" })
+                    </div>
+                }
+                else
+                {
+                    <div class="mt-1">@(string.IsNullOrWhiteSpace(answer.Answer) ? "No answer" : answer.Answer)</div>
+                }
             </div>
         }
     </div>

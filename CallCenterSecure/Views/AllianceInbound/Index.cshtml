@@ -91,6 +91,11 @@
                 </div>
 
                 <div class="col-md-2">
+                    @Html.Label("Call Objective")
+                    @Html.DropDownListFor(m => m.CallObjectiveId, (SelectList)ViewBag.CallObjectives, "Select Call Objective", new { @class = "form-control" })
+                </div>
+
+                <div class="col-md-2">
                     @Html.Label("Ticket Status")
                     @Html.DropDownListFor(m => m.TicketStatusId, (SelectList)ViewBag.TicketStatuses, "Select Ticket Status", new { @class = "form-control" })
                 </div>

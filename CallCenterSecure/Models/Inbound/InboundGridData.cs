@@ -14,6 +14,7 @@ namespace CallCenterSecure.Models.Inbound
         public string TicketTypeId { get; set; }
         public string TicketStatus { get; set; }
         public string TicketStatusId { get; set; }
+        public string CallObjectiveId { get; set; }
         public DateTime DateTime { get; set; } = DateTime.Now;
         public string CallObjective { get; set; }
         public string Branch { get; set; }

@@ -109,9 +109,12 @@
 
             items.forEach(function (item, index) {
                 var row = document.createElement('tr');
+                var responseAction = item.LatestResponseId
+                    ? ' <a class="btn btn-sm btn-outline-secondary" href="/Survey/SurveyReport/Details/' + encodeURIComponent(item.LatestResponseId) + '">Latest Response</a>'
+                    : '';
                 var values = [
                     '<input type="radio" name="selectedCustomer" value="' + item.Id + '" aria-label="Select customer"' + (customerId && customerId.value === String(item.Id) ? ' checked' : '') + '>',
-                    '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-customer" data-customer-id="' + item.Id + '" data-call-status-id="' + (item.CallStatusId || '') + '" data-form-status="' + (item.FormStatus || '') + '" data-call-remarks="' + (item.CallRemarks || '').replace(/"/g, '&quot;') + '">Edit</button>',
+                    '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-customer" data-customer-id="' + item.Id + '" data-call-status-id="' + (item.CallStatusId || '') + '" data-form-status="' + (item.FormStatus || '') + '" data-call-remarks="' + (item.CallRemarks || '').replace(/"/g, '&quot;') + '">Edit</button>' + responseAction,
                     index + 1,
                     item.ClientName,
                     item.Gender,

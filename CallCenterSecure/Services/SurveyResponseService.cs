@@ -98,6 +98,9 @@ namespace CallCenterSecure.Services
                 }
 
                 var selectedFormId = formId;
+                var latestResponseIds = selectedFormId.HasValue
+                    ? _surveyResponseRepository.GetLatestResponseIds(model.SelectedTemplateId.Value, selectedFormId.Value)
+                    : new Dictionary<int, int>();
                 var trackingByCustomer = new Dictionary<int, SurveyCustomerFormTracking>();
                 if (selectedFormId.HasValue)
                 {
@@ -137,6 +140,7 @@ namespace CallCenterSecure.Services
                         CallStatusId = trackingByCustomer.ContainsKey(x.Id) ? trackingByCustomer[x.Id].CallStatusId : null,
                         FormStatus = trackingByCustomer.ContainsKey(x.Id) && trackingByCustomer[x.Id].FormStatus != null ? trackingByCustomer[x.Id].FormStatus.Name : "Not Started",
                         FormStatusId = trackingByCustomer.ContainsKey(x.Id) ? trackingByCustomer[x.Id].FormStatusId : null,
+                        LatestResponseId = latestResponseIds.ContainsKey(x.Id) ? (int?)latestResponseIds[x.Id] : null,
                         CallRemarks = trackingByCustomer.ContainsKey(x.Id) ? trackingByCustomer[x.Id].CallRemarks : string.Empty
                     }).ToList();
             }

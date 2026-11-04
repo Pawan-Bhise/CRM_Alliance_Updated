@@ -94,6 +94,7 @@ namespace CallCenterSecure.Repositories
                 ai.TicketStatus AS TicketStatusId,
                 ai.DateTime,
                 co.Name AS CallObjective,
+                ai.CallObjective AS CallObjectiveId,
                 ab.BranchName AS Branch,
                 ai.ClientName,
                 ai.PhoneNumber,
@@ -122,7 +123,7 @@ namespace CallCenterSecure.Repositories
 
                 string sql = @"
                 select ai.AllianceInboundId,ai.DateTime,ai.TicketID,
-                co.Name AS CallObjective,rb.Region AS Region,rbb.BranchName AS Branch,ai.ClientName,ai.PhoneNumber,
+                co.Name AS CallObjective,ai.CallObjective AS CallObjectiveId,rb.Region AS Region,rbb.BranchName AS Branch,ai.ClientName,ai.PhoneNumber,
                 ai.Address,
                 o.Name as Origin,
                 p.Name AS [Product], ai.DetailConversation, ai.Response,tt.id AS TicketTypeId,

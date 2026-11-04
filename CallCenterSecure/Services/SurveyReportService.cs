@@ -163,11 +163,26 @@ namespace CallCenterSecure.Services
                         .OrderBy(x => x.QuestionDisplayOrderSnapshot ?? (x.SurveyQuestion != null ? x.SurveyQuestion.DisplayOrder : int.MaxValue))
                         .Select(x => new SurveyResponseAnswerViewModel
                     {
+                        Id = x.Id,
                         QuestionText = x.QuestionTextSnapshot ?? (x.SurveyQuestion != null ? x.SurveyQuestion.QuestionText : string.Empty),
                         QuestionType = x.QuestionTypeSnapshot ?? (x.SurveyQuestion != null ? x.SurveyQuestion.QuestionType : string.Empty),
-                        Answer = FormatAnswer(x)
+                        Answer = FormatAnswer(x),
+                        FileName = x.FileName
                     }).ToList()
                 };
+            }
+        }
+
+        public string GetResponseFileName(int answerId)
+        {
+            using (var db = new ApplicationDbContext())
+            {
+                return db.SurveyFormAnswers.AsNoTracking()
+                    .Where(answer => answer.Id == answerId
+                        && answer.FileName != null
+                        && answer.FilePath != null)
+                    .Select(answer => answer.FileName)
+                    .FirstOrDefault();
             }
         }
 
