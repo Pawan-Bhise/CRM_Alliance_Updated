@@ -110,11 +110,11 @@
             items.forEach(function (item, index) {
                 var row = document.createElement('tr');
                 var responseAction = item.LatestResponseId
-                    ? ' <a class="btn btn-sm btn-outline-secondary" href="/Survey/SurveyReport/Details/' + encodeURIComponent(item.LatestResponseId) + '">Latest Response</a>'
+                    ? '<a class="btn btn-sm btn-outline-secondary" href="/Survey/SurveyReport/Details/' + encodeURIComponent(item.LatestResponseId) + '">View</a>'
                     : '';
                 var values = [
                     '<input type="radio" name="selectedCustomer" value="' + item.Id + '" aria-label="Select customer"' + (customerId && customerId.value === String(item.Id) ? ' checked' : '') + '>',
-                    '<button type="button" class="btn btn-sm btn-outline-primary btn-edit-customer" data-customer-id="' + item.Id + '" data-call-status-id="' + (item.CallStatusId || '') + '" data-form-status="' + (item.FormStatus || '') + '" data-call-remarks="' + (item.CallRemarks || '').replace(/"/g, '&quot;') + '">Edit</button>' + responseAction,
+                    '<div class="survey-customer-actions"><button type="button" class="btn btn-sm btn-outline-primary btn-edit-customer" data-customer-id="' + item.Id + '" data-call-status-id="' + (item.CallStatusId || '') + '" data-form-status="' + (item.FormStatus || '') + '" data-call-remarks="' + (item.CallRemarks || '').replace(/"/g, '&quot;') + '">Edit</button>' + responseAction + '</div>',
                     index + 1,
                     item.ClientName,
                     item.Gender,
