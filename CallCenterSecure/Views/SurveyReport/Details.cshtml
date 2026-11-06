@@ -78,4 +78,14 @@
     </div>
 </div>
 
-@Html.ActionLink("Back to Survey Reports", "Index", "SurveyReport", null, new { @class = "btn btn-outline-secondary" })
+@Html.ActionLink(
+    "Back to Survey Responses",
+    "Index",
+    "SurveyResponse",
+    new
+    {
+        templateId = Model.ReturnTemplateId,
+        formId = Model.ReturnFormId,
+        customerId = Model.ReturnCustomerId
+    },
+    new { @class = "btn btn-outline-secondary" })

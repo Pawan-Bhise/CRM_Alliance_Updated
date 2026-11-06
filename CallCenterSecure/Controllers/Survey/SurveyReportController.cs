@@ -29,7 +29,7 @@ namespace CallCenterSecure.Controllers.Survey
             return View(model);
         }
 
-        public ActionResult Details(int id)
+        public ActionResult Details(int id, int? returnTemplateId, int? returnFormId, int? returnCustomerId)
         {
             var model = _surveyReportService.GetResponseDetail(id);
             if (model == null)
@@ -37,6 +37,9 @@ namespace CallCenterSecure.Controllers.Survey
                 return HttpNotFound();
             }
 
+            model.ReturnTemplateId = returnTemplateId;
+            model.ReturnFormId = returnFormId;
+            model.ReturnCustomerId = returnCustomerId;
             return View(model);
         }
 

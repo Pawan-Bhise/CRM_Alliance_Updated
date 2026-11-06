@@ -110,7 +110,10 @@
             items.forEach(function (item, index) {
                 var row = document.createElement('tr');
                 var responseAction = item.LatestResponseId
-                    ? '<a class="btn btn-sm btn-outline-secondary" href="/Survey/SurveyReport/Details/' + encodeURIComponent(item.LatestResponseId) + '">View</a>'
+                    ? '<a class="btn btn-sm btn-outline-secondary" href="/Survey/SurveyReport/Details/' + encodeURIComponent(item.LatestResponseId)
+                        + '?returnTemplateId=' + encodeURIComponent(templateId)
+                        + '&returnFormId=' + encodeURIComponent(formId || '')
+                        + '&returnCustomerId=' + encodeURIComponent(item.Id) + '">View</a>'
                     : '';
                 var values = [
                     '<input type="radio" name="selectedCustomer" value="' + item.Id + '" aria-label="Select customer"' + (customerId && customerId.value === String(item.Id) ? ' checked' : '') + '>',
