@@ -143,11 +143,6 @@
                     row.appendChild(cell);
                 });
 
-                row.querySelector('input[name="selectedCustomer"]').addEventListener('change', function () {
-                    if (customerId) {
-                        customerId.value = this.value;
-                    }
-                });
                 tbody.appendChild(row);
             });
 
@@ -179,11 +174,6 @@
                 });
             }
 
-            table.querySelectorAll('.btn-edit-customer').forEach(function (button) {
-                button.addEventListener('click', function () {
-                    openCustomerStatusEditor(this, templateId, formId || '');
-                });
-            });
         }, function (errorMessage) {
             if (message) {
                 message.textContent = errorMessage + ' Verify the selected template and its customer records.';
@@ -238,9 +228,25 @@
         var form = byId('formId');
         var customer = byId('customerId');
         var btnStart = byId('btnStartResponse');
+        var customerTable = byId('surveyCustomerTable');
 
         if (!template || !form || !btnStart) {
             return;
+        }
+
+        if (customerTable) {
+            customerTable.addEventListener('click', function (event) {
+                var editButton = event.target.closest('.btn-edit-customer');
+                if (editButton && customerTable.contains(editButton)) {
+                    openCustomerStatusEditor(editButton, template.value, form.value || '');
+                }
+            });
+
+            customerTable.addEventListener('change', function (event) {
+                if (event.target.matches('input[name="selectedCustomer"]') && customer) {
+                    customer.value = event.target.value;
+                }
+            });
         }
 
         template.addEventListener('change', function () {
